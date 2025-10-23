@@ -68,3 +68,37 @@ pub fn ast_node_derive(input: TokenStream) -> TokenStream {
         Err(err) => TokenStream::from(err.into_compile_error()),
     }
 }
+
+#[proc_macro_derive(Keyword)]
+pub fn ast_keyword_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let name = input.ident;
+
+    let out = match input.data {
+        Data::Union(_) => Err(Error::new(name.span(), "Unions cannot be AST nodes")),
+        Data::Enum(e) => {
+            let fields = &e.variants;
+            let name_rep = vec![&name; fields.len()];
+            let field_names = fields.iter().map(|f| &f.ident);
+
+            Ok(quote! {
+                impl Node for #name {
+                    fn span(&self) -> Span {
+                        match self {
+                            #(#name_rep::#field_names(x) => x.span()),*
+                        }
+                    }
+                }
+            })
+        },
+        Data::Struct(_) => {
+            Err(Error::new(name.span(), "Struc"))
+        }
+    };
+
+    match out {
+        Ok(ts) => ts.into(),
+        Err(err) => TokenStream::from(err.into_compile_error()),
+    }
+}

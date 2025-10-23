@@ -1,4 +1,3 @@
-use fpp_core::span::Span;
 use crate::common::*;
 use crate::component::{DefComponent, SpecPortInstance};
 use crate::state_machine::DefStateMachine;
@@ -12,7 +11,6 @@ pub mod visit;
 
 
 /** Abstract type definition */
-#[derive(fpp_derive::Ast)]
 pub struct DefAbsType {
     name: Ident,
 }
@@ -52,23 +50,12 @@ pub struct SpecInit {
     code: StringNode,
 }
 
-impl Node for SpecInit {
-    fn span(&self) -> Span {
-        Span::merge(self.phase.span(), self.code.span())
-    }
-}
-
 /** Constant definition */
 pub struct DefConstant {
     name: Ident,
     value: Expr,
 }
 
-impl Node for DefConstant {
-    fn span(&self) -> Span {
-        self.name.span()
-    }
-}
 
 /** Enum definition */
 pub struct DefEnum {
@@ -77,32 +64,18 @@ pub struct DefEnum {
     constants: Vec<Annotated<DefEnumConstant>>,
 }
 
-impl Node for DefEnum {
-    fn span(&self) -> Span {
-        self.name.span()
-    }
-}
-
 /** Enum constant definition */
 pub struct DefEnumConstant {
     name: Ident,
     value: Option<Expr>,
 }
 
-impl Node for DefEnumConstant {
-    fn span(&self) -> Span {
-        self.name.span()
-    }
-}
-
 /** Module definition */
-#[derive(fpp_derive::Ast)]
 pub struct DefModule {
     name: Ident,
-    members: Vec<Annotated<ModuleMember>>,
+    members: NodeList<Annotated<ModuleMember>>,
 }
 
-#[derive(fpp_derive::Ast)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -158,10 +131,6 @@ pub struct StructTypeMember {
     format: Option<StringNode>,
 }
 
-impl Node for StructTypeMember {
-    fn span(&self) -> Span { self.name.span() }
-}
-
 /** Struct definition */
 pub struct DefStruct {
     name: Ident,
@@ -179,15 +148,7 @@ pub struct SpecInclude {
     file: StringNode,
 }
 
-impl Node for SpecInclude {
-    fn span(&self) -> Span { self.file.span() }
-}
-
 /** Import specifier */
 pub struct SpecImport {
     sym: QualIdent,
-}
-
-impl Node for SpecImport {
-    fn span(&self) -> Span { self.sym.span() }
 }

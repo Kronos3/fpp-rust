@@ -8,7 +8,6 @@ pub enum ComponentKind {
 }
 
 /** Component definition */
-#[derive(fpp_derive::Ast)]
 pub struct DefComponent {
     kind: ComponentKind,
     name: Ident,
@@ -29,7 +28,6 @@ pub enum QueueFull {
     Hook,
 }
 
-#[derive(fpp_derive::Ast)]
 pub struct SpecCommand {
     kind: InputPortKind,
     name: Ident,
@@ -39,7 +37,6 @@ pub struct SpecCommand {
     queue_full: Option<QueueFull>,
 }
 
-#[derive(fpp_derive::Ast)]
 pub struct SpecContainer {
     name: Ident,
     id: Option<Expr>,
@@ -56,7 +53,6 @@ pub enum EventSeverity {
     WarningLow,
 }
 
-#[derive(fpp_derive::Ast)]
 pub struct SpecEvent {
     name: Ident,
     params: FormalParamList,
