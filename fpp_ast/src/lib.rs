@@ -42,9 +42,9 @@ pub enum IntegerType {
 pub enum TypeName {
     Floating(FloatType),
     Integer(IntegerType),
-    QualIdent(QualIdent),
+    QualIdent(AstNode<QualIdent>),
     Bool(),
-    String(Option<Expr>),
+    String(Option<AstNode<Expr>>),
 }
 
 // #[derive(fpp_derive::Ast)]
@@ -57,15 +57,15 @@ pub enum QualIdent {
 }
 
 pub enum Expr {
-    Array(Vec<Expr>),
+    Array(Vec<AstNode<Expr>>),
     Binop {
-        left: Box<Expr>,
+        left: Box<AstNode<Expr>>,
         op: Binop,
-        right: Box<Expr>,
+        right: Box<AstNode<Expr>>,
     },
     Dot {
-        left: Box<Expr>,
-        right: Ident,
+        left: Box<AstNode<Expr>>,
+        right: AstNode<Ident>,
     },
     Ident(Ident),
     LiteralBool(AstNode<bool>),
@@ -74,7 +74,7 @@ pub enum Expr {
     Paren(Box<Expr>),
     Unop {
         op: AstNode<Unop>,
-        e: Box<Expr>,
+        e: Box<AstNode<Expr>>,
     },
 }
 
@@ -84,9 +84,9 @@ pub enum FormalParamKind {
 }
 
 pub struct FormalParam {
-    kind: FormalParamKind,
-    name: Ident,
-    type_name: AstNode<TypeName>,
+    pub kind: FormalParamKind,
+    pub name: Ident,
+    pub type_name: AstNode<TypeName>,
 }
 
 pub type FormalParamList = Vec<Annotated<FormalParam>>;
@@ -258,22 +258,22 @@ pub struct StructTypeMember {
 
 /** Struct definition */
 pub struct DefStruct {
-    name: Ident,
-    members: Vec<Annotated<StructTypeMember>>,
-    default: Option<AstNode<Expr>>,
+    pub name: Ident,
+    pub members: Vec<Annotated<StructTypeMember>>,
+    pub default: Option<AstNode<Expr>>,
 }
 
 pub struct DefPort {
-    name: Ident,
-    params: FormalParamList,
+    pub name: Ident,
+    pub params: FormalParamList,
 }
 
 /** Include specifier */
 pub struct SpecInclude {
-    file: AstNode<String>,
+    pub file: AstNode<String>,
 }
 
 /** Import specifier */
 pub struct SpecImport {
-    sym: AstNode<QualIdent>,
+    pub sym: AstNode<QualIdent>,
 }

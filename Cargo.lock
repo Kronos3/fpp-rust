@@ -9,10 +9,6 @@ version = "0.1.0"
 [[package]]
 name = "fpp_ast"
 version = "0.1.0"
-dependencies = [
- "fpp_core",
- "memchr",
-]
 
 [[package]]
 name = "fpp_core"

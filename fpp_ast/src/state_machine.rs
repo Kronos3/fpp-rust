@@ -1,8 +1,8 @@
-use crate::{*};
+use crate::*;
 
 pub struct DefStateMachine {
-    name: Ident,
-    members: Vec<StateMachineMember>,
+    pub name: Ident,
+    pub members: Vec<StateMachineMember>,
 }
 
 pub enum StateMachineMember {
@@ -16,39 +16,39 @@ pub enum StateMachineMember {
 
 /** Action definition */
 pub struct DefAction {
-    name: Ident,
-    type_name: Option<AstNode<TypeName>>,
+    pub name: Ident,
+    pub type_name: Option<AstNode<TypeName>>,
 }
 
 /** Choice definition */
 pub struct DefChoice {
-    name: Ident,
-    guard: AstNode<Ident>,
-    if_transition: AstNode<TransitionExpr>,
-    else_transition: AstNode<TransitionExpr>,
+    pub name: Ident,
+    pub guard: AstNode<Ident>,
+    pub if_transition: AstNode<TransitionExpr>,
+    pub else_transition: AstNode<TransitionExpr>,
 }
 
 /** Guard definition */
 pub struct DefGuard {
-    name: Ident,
-    type_name: Option<AstNode<TypeName>>,
+    pub name: Ident,
+    pub type_name: Option<AstNode<TypeName>>,
 }
 
 /** Transition expression */
 pub struct TransitionExpr {
-    actions: Vec<AstNode<Ident>>,
-    target: AstNode<QualIdent>,
+    pub actions: Vec<AstNode<Ident>>,
+    pub target: AstNode<QualIdent>,
 }
 
 /** Signal definition */
 pub struct DefSignal {
-    name: Ident,
-    type_name: Option<AstNode<TypeName>>,
+    pub name: Ident,
+    pub type_name: Option<AstNode<TypeName>>,
 }
 
 pub struct DefState {
-    name: Ident,
-    members: Vec<StateMember>,
+    pub name: Ident,
+    pub members: Vec<StateMember>,
 }
 
 pub enum StateMember {
@@ -59,28 +59,28 @@ pub enum StateMember {
 
 /** Initial state specifier */
 pub struct SpecInitialTransition {
-    transition: AstNode<TransitionExpr>
+    pub transition: AstNode<TransitionExpr>,
 }
 
 /** State entry specifier */
 pub struct SpecStateEntry {
-    actions: Vec<AstNode<Ident>>
+    pub actions: Vec<AstNode<Ident>>,
 }
 
 /** State exit specifier */
-pub struct SpecStateExit{
-    actions: Vec<AstNode<Ident>>
+pub struct SpecStateExit {
+    pub actions: Vec<AstNode<Ident>>,
 }
 
 /** Transition specifier */
-pub struct SpecStateTransition{
-    signal: AstNode<Ident>,
-    guard: Option<AstNode<Ident>>,
-    transition_or_do: TransitionOrDo,
+pub struct SpecStateTransition {
+    pub signal: AstNode<Ident>,
+    pub guard: Option<AstNode<Ident>>,
+    pub transition_or_do: TransitionOrDo,
 }
 
 /** Transition or do within transition specifier */
 pub enum TransitionOrDo {
     Transition(AstNode<TransitionExpr>),
-    Do(Vec<AstNode<Ident>>)
+    Do(Vec<AstNode<Ident>>),
 }

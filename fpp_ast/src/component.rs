@@ -37,18 +37,18 @@ pub enum QueueFull {
 }
 
 pub struct SpecCommand {
-    kind: InputPortKind,
-    name: Ident,
-    params: FormalParamList,
-    opcode: Option<Expr>,
-    priority: Option<Expr>,
-    queue_full: Option<QueueFull>,
+    pub kind: InputPortKind,
+    pub name: Ident,
+    pub params: FormalParamList,
+    pub opcode: Option<Expr>,
+    pub priority: Option<Expr>,
+    pub queue_full: Option<QueueFull>,
 }
 
 pub struct SpecContainer {
-    name: Ident,
-    id: Option<Expr>,
-    default_priority: Option<Expr>,
+    pub name: Ident,
+    pub id: Option<Expr>,
+    pub default_priority: Option<Expr>,
 }
 
 pub enum EventSeverity {
@@ -62,29 +62,29 @@ pub enum EventSeverity {
 }
 
 pub struct SpecEvent {
-    name: Ident,
-    params: FormalParamList,
-    severity: EventSeverity,
-    id: Option<Expr>,
-    format: AstNode<String>,
-    throttle: Option<Expr>,
+    pub name: Ident,
+    pub params: FormalParamList,
+    pub severity: EventSeverity,
+    pub id: Option<Expr>,
+    pub format: AstNode<String>,
+    pub throttle: Option<Expr>,
 }
 
 /** Internal port specifier */
 pub struct SpecInternalPort {
-    name: Ident,
-    params: FormalParamList,
-    priority: Option<Expr>,
-    queue_full: QueueFull,
+    pub name: Ident,
+    pub params: FormalParamList,
+    pub priority: Option<Expr>,
+    pub queue_full: QueueFull,
 }
 
 pub struct SpecParam {
-    name: Ident,
-    type_name: TypeName,
-    default: Option<Expr>,
-    id: Option<Expr>,
-    set_opcode: Option<Expr>,
-    save_opcode: Option<Expr>,
+    pub name: Ident,
+    pub type_name: AstNode<TypeName>,
+    pub default: Option<AstNode<Expr>>,
+    pub id: Option<AstNode<Expr>>,
+    pub set_opcode: Option<AstNode<Expr>>,
+    pub save_opcode: Option<AstNode<Expr>>,
 }
 
 pub enum GeneralPortInstanceKind {
@@ -107,22 +107,22 @@ pub enum SpecialPortInstanceKind {
 }
 
 pub struct SpecPortMatching {
-    port1: Ident,
-    port2: Ident,
+    pub port1: Ident,
+    pub port2: Ident,
 }
 
 pub struct SpecRecord {
-    name: Ident,
-    record_type: TypeName,
-    is_array: bool,
-    id: Option<Expr>,
+    pub name: Ident,
+    pub record_type: TypeName,
+    pub is_array: bool,
+    pub id: Option<Expr>,
 }
 
 pub struct SpecStateMachineInstance {
-    name: Ident,
-    state_machine: QualIdent,
-    priority: Option<Expr>,
-    queue_full: Option<QueueFull>
+    pub name: Ident,
+    pub state_machine: QualIdent,
+    pub priority: Option<Expr>,
+    pub queue_full: Option<QueueFull>
 }
 
 pub enum TlmChannelUpdate {
@@ -137,16 +137,16 @@ pub enum TlmChannelLimitKind {
 }
 
 pub struct TlmChannelLimit {
-    kind: TlmChannelLimitKind,
-    value: Expr,
+    pub kind: TlmChannelLimitKind,
+    pub value: Expr,
 }
 
 pub struct SpecTlmChannel {
-    name: Ident,
-    type_name: TypeName,
-    id: Option<Expr>,
-    update: Option<TlmChannelUpdate>,
-    format: Option<AstNode<String>>,
-    low: Vec<TlmChannelLimit>,
-    high: Vec<TlmChannelLimit>
+    pub name: Ident,
+    pub type_name: TypeName,
+    pub id: Option<Expr>,
+    pub update: Option<TlmChannelUpdate>,
+    pub format: Option<AstNode<String>>,
+    pub low: Vec<TlmChannelLimit>,
+    pub high: Vec<TlmChannelLimit>
 }

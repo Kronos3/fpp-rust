@@ -2,8 +2,8 @@ use crate::{*};
 
 /** Topology definition */
 pub struct DefTopology {
-    name: Ident,
-    members: Vec<TopologyMember>,
+    pub name: Ident,
+    pub members: Vec<TopologyMember>,
 }
 
 pub enum TopologyMember {
@@ -20,21 +20,21 @@ pub enum CompInstanceVisibility {
 }
 
 pub struct SpecCompInstance {
-    visibility: CompInstanceVisibility,
-    instance: QualIdent,
+    pub visibility: CompInstanceVisibility,
+    pub instance: QualIdent,
 }
 
 pub struct PortInstanceIdentifier {
-    component_instance: QualIdent,
-    port_name: Ident,
+    pub component_instance: QualIdent,
+    pub port_name: Ident,
 }
 
 pub struct Connection {
-    is_unmatched: bool,
-    from_port: PortInstanceIdentifier,
-    from_index: Option<Expr>,
-    to_port: PortInstanceIdentifier,
-    to_index: Option<Expr>,
+    pub is_unmatched: bool,
+    pub from_port: PortInstanceIdentifier,
+    pub from_index: Option<Expr>,
+    pub to_port: PortInstanceIdentifier,
+    pub to_index: Option<Expr>,
 }
 
 pub enum ConnectionPatternKind {
@@ -61,14 +61,14 @@ pub enum SpecConnectionGraph {
 }
 
 pub struct TlmChannelIdentifier {
-    component_instance: QualIdent,
-    channel_name: Ident,
+    pub component_instance: QualIdent,
+    pub channel_name: Ident,
 }
 
 pub struct SpecTlmPacketSet {
-    name: Ident,
-    members: Vec<TlmPacketSetMember>,
-    omitted: Vec<TlmChannelIdentifier>,
+    pub name: Ident,
+    pub members: Vec<TlmPacketSetMember>,
+    pub omitted: Vec<TlmChannelIdentifier>,
 }
 
 pub enum TlmPacketSetMember {
@@ -77,10 +77,10 @@ pub enum TlmPacketSetMember {
 }
 
 pub struct SpecTlmPacket {
-    name: Ident,
-    id: Option<Expr>,
-    group: Expr,
-    members: Vec<TlmPacketMember>,
+    pub name: Ident,
+    pub id: Option<Expr>,
+    pub group: Expr,
+    pub members: Vec<TlmPacketMember>,
 }
 
 pub enum TlmPacketMember {
