@@ -1,17 +1,25 @@
-use crate::common::{Expr, FormalParamList, Ident, StringNode};
 use crate::{*};
 
-pub enum ComponentKind {
-    Active,
-    Passive,
-    Queued,
-}
-
-/** Component definition */
-pub struct DefComponent {
-    kind: ComponentKind,
-    name: Ident,
-    members: Vec<Annotated<ComponentMember>>,
+pub enum ComponentMember {
+    DefAbsType(AnnotatedNode<DefAbsType>),
+    DefAliasType(AnnotatedNode<DefAliasType>),
+    DefArray(AnnotatedNode<DefArray>),
+    DefConstant(AnnotatedNode<DefConstant>),
+    DefEnum(AnnotatedNode<DefEnum>),
+    DefStateMachine(AnnotatedNode<DefStateMachine>),
+    DefStruct(AnnotatedNode<DefStruct>),
+    SpecCommand(AnnotatedNode<SpecCommand>),
+    SpecContainer(AnnotatedNode<SpecContainer>),
+    SpecEvent(AnnotatedNode<SpecEvent>),
+    SpecInclude(AnnotatedNode<SpecInclude>),
+    SpecInternalPort(AnnotatedNode<SpecInternalPort>),
+    SpecParam(AnnotatedNode<SpecParam>),
+    SpecPortInstance(AnnotatedNode<SpecPortInstance>),
+    SpecPortMatching(AnnotatedNode<SpecPortMatching>),
+    SpecRecord(AnnotatedNode<SpecRecord>),
+    SpecStateMachineInstance(AnnotatedNode<SpecStateMachineInstance>),
+    SpecTlmChannel(AnnotatedNode<SpecTlmChannel>),
+    SpecImportInterface(AnnotatedNode<SpecImport>),
 }
 
 pub enum InputPortKind {
@@ -58,7 +66,7 @@ pub struct SpecEvent {
     params: FormalParamList,
     severity: EventSeverity,
     id: Option<Expr>,
-    format: StringNode,
+    format: AstNode<String>,
     throttle: Option<Expr>,
 }
 
@@ -96,24 +104,6 @@ pub enum SpecialPortInstanceKind {
     Telemetry,
     TextEvent,
     TimeGet,
-}
-
-pub enum SpecPortInstance {
-    General{
-        kind: GeneralPortInstanceKind,
-        name: Ident,
-        size: Option<Expr>,
-        port: Option<QualIdent>,
-        priority: Option<Expr>,
-        queue_full: Option<QueueFull>,
-    },
-    Special{
-        input_kind: Option<InputPortKind>,
-        kind: SpecialPortInstanceKind,
-        name: Ident,
-        priority: Option<Expr>,
-        queue_full: Option<QueueFull>,
-    }
 }
 
 pub struct SpecPortMatching {
@@ -156,29 +146,7 @@ pub struct SpecTlmChannel {
     type_name: TypeName,
     id: Option<Expr>,
     update: Option<TlmChannelUpdate>,
-    format: Option<StringNode>,
+    format: Option<AstNode<String>>,
     low: Vec<TlmChannelLimit>,
     high: Vec<TlmChannelLimit>
-}
-
-pub enum ComponentMember {
-    DefAbsType(DefAbsType),
-    DefAliasType(DefAliasType),
-    DefArray(DefArray),
-    DefConstant(DefConstant),
-    DefEnum(DefEnum),
-    DefStateMachine(DefStateMachine),
-    DefStruct(DefStruct),
-    SpecCommand(SpecCommand),
-    SpecContainer(SpecContainer),
-    SpecEvent(SpecEvent),
-    SpecInclude(SpecInclude),
-    SpecInternalPort(SpecInternalPort),
-    SpecParam(SpecParam),
-    SpecPortInstance(SpecPortInstance),
-    SpecPortMatching(SpecPortMatching),
-    SpecRecord(SpecRecord),
-    SpecStateMachineInstance(SpecStateMachineInstance),
-    SpecTlmChannel(SpecTlmChannel),
-    SpecImportInterface(SpecImport),
 }

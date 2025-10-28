@@ -1,87 +1,86 @@
-use crate::common::{Annotated, Ident, NodeList, QualIdent, TypeName};
+use crate::{*};
 
 pub struct DefStateMachine {
     name: Ident,
-    members: NodeList<StateMachineMember>,
+    members: Vec<StateMachineMember>,
 }
 
 pub enum StateMachineMember {
-    DefAction(DefAction),
-    DefChoice(DefChoice),
-    DefGuard(DefGuard),
-    DefSignal(DefSignal),
-    DefState(DefState),
-    SpecInitialTransition(SpecInitialTransition),
+    DefAction(AnnotatedNode<DefAction>),
+    DefChoice(AnnotatedNode<DefChoice>),
+    DefGuard(AnnotatedNode<DefGuard>),
+    DefSignal(AnnotatedNode<DefSignal>),
+    DefState(AnnotatedNode<DefState>),
+    SpecInitialTransition(AnnotatedNode<SpecInitialTransition>),
 }
 
 /** Action definition */
 pub struct DefAction {
     name: Ident,
-    type_name: Option<TypeName>,
+    type_name: Option<AstNode<TypeName>>,
 }
 
 /** Choice definition */
 pub struct DefChoice {
     name: Ident,
-    guard: Ident,
-    if_transition: TransitionExpr,
-    else_transition: TransitionExpr,
+    guard: AstNode<Ident>,
+    if_transition: AstNode<TransitionExpr>,
+    else_transition: AstNode<TransitionExpr>,
 }
 
 /** Guard definition */
 pub struct DefGuard {
     name: Ident,
-    type_name: Option<TypeName>,
+    type_name: Option<AstNode<TypeName>>,
 }
 
 /** Transition expression */
 pub struct TransitionExpr {
-    actions: NodeList<Ident>,
-    target: QualIdent,
+    actions: Vec<AstNode<Ident>>,
+    target: AstNode<QualIdent>,
 }
 
 /** Signal definition */
 pub struct DefSignal {
     name: Ident,
-    type_name: Option<TypeName>,
+    type_name: Option<AstNode<TypeName>>,
 }
 
 pub struct DefState {
     name: Ident,
-    members: NodeList<Annotated<StateMember>>,
+    members: Vec<StateMember>,
 }
 
 pub enum StateMember {
-    DefChoice(DefChoice),
-    DefState(DefState),
-    SpecInitialTransition(SpecInitialTransition),
-
+    DefChoice(AnnotatedNode<DefChoice>),
+    DefState(AnnotatedNode<DefState>),
+    SpecInitialTransition(AnnotatedNode<SpecInitialTransition>),
 }
 
 /** Initial state specifier */
 pub struct SpecInitialTransition {
-    transition: TransitionExpr
+    transition: AstNode<TransitionExpr>
 }
 
 /** State entry specifier */
 pub struct SpecStateEntry {
-    actions: NodeList<Ident>
+    actions: Vec<AstNode<Ident>>
 }
 
 /** State exit specifier */
 pub struct SpecStateExit{
-    actions: NodeList<Ident>
+    actions: Vec<AstNode<Ident>>
 }
 
 /** Transition specifier */
 pub struct SpecStateTransition{
-    signal: Ident,
-    guard: Option<Ident>,
+    signal: AstNode<Ident>,
+    guard: Option<AstNode<Ident>>,
     transition_or_do: TransitionOrDo,
 }
 
 /** Transition or do within transition specifier */
 pub enum TransitionOrDo {
-    Transition(TransitionExpr),
-    Do(NodeList<Ident>)
+    Transition(AstNode<TransitionExpr>),
+    Do(Vec<AstNode<Ident>>)
 }

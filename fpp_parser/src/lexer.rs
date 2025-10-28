@@ -26,7 +26,6 @@ impl<'a> Lexer<'a> {
             match self.cursor.next_token_kind() {
                 TokenKind::EOF => return None,
                 TokenKind::Whitespace => {},
-                TokenKind::Error(err) => todo!(),
                 kind => {
                     return Some(Token::new(
                         kind, self.file, start, self.cursor.pos_within_token(),

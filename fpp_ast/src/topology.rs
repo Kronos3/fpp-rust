@@ -1,5 +1,4 @@
-use crate::common::{Expr, Ident, QualIdent};
-use crate::{SpecImport, SpecInclude};
+use crate::{*};
 
 /** Topology definition */
 pub struct DefTopology {
