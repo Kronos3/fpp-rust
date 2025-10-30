@@ -4,13 +4,20 @@ pub mod topology;
 pub mod visit;
 
 pub use component::{*};
+use fpp_core::Positioned;
 pub use state_machine::{*};
 pub use topology::{*};
 pub use visit::{*};
 
 pub struct AstNode<T> {
-    pub id: i64,
+    pub id: fpp_core::NodeId,
     pub data: T,
+}
+
+impl<T> Positioned for AstNode<T> {
+    fn span(&self) -> fpp_core::Span {
+        fpp_core::Positioned::span(&self.id)
+    }
 }
 
 pub struct Annotated<T> {
@@ -269,7 +276,7 @@ pub struct StructTypeMember {
 /** Struct definition */
 pub struct DefStruct {
     pub name: Ident,
-    pub members: Vec<Annotated<StructTypeMember>>,
+    pub members: Vec<Annotated<AstNode<StructTypeMember>>>,
     pub default: Option<AstNode<Expr>>,
 }
 

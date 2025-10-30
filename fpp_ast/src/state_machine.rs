@@ -2,7 +2,7 @@ use crate::*;
 
 pub struct DefStateMachine {
     pub name: Ident,
-    pub members: Vec<Annotated<StateMachineMember>>,
+    pub members: Option<Vec<Annotated<StateMachineMember>>>,
 }
 
 pub enum StateMachineMember {
@@ -12,6 +12,7 @@ pub enum StateMachineMember {
     DefSignal(AstNode<DefSignal>),
     DefState(AstNode<DefState>),
     SpecInitialTransition(AstNode<SpecInitialTransition>),
+
 }
 
 /** Action definition */
@@ -23,7 +24,7 @@ pub struct DefAction {
 /** Choice definition */
 pub struct DefChoice {
     pub name: Ident,
-    pub guard: AstNode<Ident>,
+    pub guard: Ident,
     pub if_transition: AstNode<TransitionExpr>,
     pub else_transition: AstNode<TransitionExpr>,
 }
@@ -36,7 +37,7 @@ pub struct DefGuard {
 
 /** Transition expression */
 pub struct TransitionExpr {
-    pub actions: Vec<AstNode<Ident>>,
+    pub actions: Vec<Ident>,
     pub target: AstNode<QualIdent>,
 }
 
@@ -55,6 +56,9 @@ pub enum StateMember {
     DefChoice(AstNode<DefChoice>),
     DefState(AstNode<DefState>),
     SpecInitialTransition(AstNode<SpecInitialTransition>),
+    SpecStateEntry(AstNode<SpecStateEntry>),
+    SpecStateExit(AstNode<SpecStateExit>),
+    SpecStateTransition(AstNode<SpecStateTransition>)
 }
 
 /** Initial state specifier */
@@ -64,23 +68,25 @@ pub struct SpecInitialTransition {
 
 /** State entry specifier */
 pub struct SpecStateEntry {
-    pub actions: Vec<AstNode<Ident>>,
+    pub actions: AstNode<DoExpr>,
 }
 
 /** State exit specifier */
 pub struct SpecStateExit {
-    pub actions: Vec<AstNode<Ident>>,
+    pub actions: AstNode<DoExpr>,
 }
 
 /** Transition specifier */
 pub struct SpecStateTransition {
-    pub signal: AstNode<Ident>,
-    pub guard: Option<AstNode<Ident>>,
+    pub signal: Ident,
+    pub guard: Option<Ident>,
     pub transition_or_do: TransitionOrDo,
 }
+
+pub struct DoExpr(pub Vec<Ident>);
 
 /** Transition or do within transition specifier */
 pub enum TransitionOrDo {
     Transition(AstNode<TransitionExpr>),
-    Do(Vec<AstNode<Ident>>),
+    Do(AstNode<DoExpr>),
 }

@@ -1,14 +1,5 @@
-use fpp_core::file::SourceFile;
-use fpp_core::span::{Position};
-use crate::token::{Token, TokenKind};
-
-// pub(crate) struct ParseError {
-//     pub expected: TokenKind,
-//     pub got: Option<Token>,
-//     pub source_file: SourceFile,
-//     pub pos: Position,
-//     pub msg: &'static str
-// }
+use fpp_core::{SourceFile, Position};
+use crate::token::{TokenKind};
 
 #[derive(Debug)]
 pub(crate) enum ParseError {
@@ -26,6 +17,8 @@ pub(crate) enum ParseError {
         pos: Position,
         msg: &'static str
     },
+
+    NotImplemented
 }
 
 pub type ParseResult<T> = Result<T, ParseError>;

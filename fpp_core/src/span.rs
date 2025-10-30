@@ -1,10 +1,11 @@
-use crate::diagnostic::Diagnostic;
 use crate::context::with;
+use crate::diagnostic::Diagnostic;
 use crate::diagnostic::Level;
 use crate::file::SourceFile;
 
+#[derive(Clone, Copy)]
 pub struct Span {
-    handle: usize
+    handle: usize,
 }
 
 macro_rules! diagnostic_method {
@@ -20,36 +21,38 @@ macro_rules! diagnostic_method {
 #[derive(Debug)]
 pub struct Position {
     pos: u32,
-    source_file: SourceFile
+    source_file: SourceFile,
 }
 
 impl Span {
     pub(crate) fn internal_new(handle: usize) -> Span {
-        Span{handle}
+        Span { handle }
     }
 
-    pub fn new(
-        file: SourceFile,
-        start: u32,
-        length: u32,
-    ) -> Span {
+    pub fn new(file: SourceFile, start: u32, length: u32) -> Span {
         with(|w| w.add_span(file, start, length))
-    }
-
-    pub fn eof() -> Span {
-        
     }
 
     /// Gets the start position of the span
     pub fn start(&self) -> Position {
-        with(|w| w)
+        let pos = with(|w| w.span_start(self));
+        let source_file = with(|w| w.span_file(self));
+
+        Position { pos, source_file }
     }
 
     /// Creates an empty span pointing to directly after this span.
-    pub fn end(&self) -> Position {}
+    pub fn end(&self) -> Position {
+        let pos = with(|w| w.span_end(self));
+        let source_file = with(|w| w.span_file(self));
+
+        Position { pos, source_file }
+    }
 
     /// The path to the source file in which this span occurs, for display purposes.
-    pub fn file(&self) -> SourceFile {}
+    pub fn file(&self) -> SourceFile {
+        with(|w| w.span_file(self))
+    }
 
     diagnostic_method!(error, Level::Error);
     diagnostic_method!(warning, Level::Warning);
@@ -61,16 +64,21 @@ impl Position {
     pub fn start(source_file: SourceFile) -> Position {
         Position {
             pos: 0,
-            source_file
+            source_file,
         }
+    }
+
+    pub fn pos(&self) -> u32 {
+        self.pos
     }
 
     /// Get the zero indexed line number at this position in the source file
     pub fn line(&self) -> u32 {
+        0
     }
 
     /// Get the zero indexed column number at this position in the source file
     pub fn column(&self) -> u32 {
-
+        0
     }
 }

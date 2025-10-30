@@ -1,4 +1,10 @@
-pub mod file;
-pub mod context;
-pub mod span;
+mod context;
 mod diagnostic;
+mod file;
+mod span;
+mod node;
+
+pub use diagnostic::*;
+pub use file::*;
+pub use span::*;
+pub use node::*;

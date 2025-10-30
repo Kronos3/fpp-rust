@@ -1,13 +1,17 @@
 pub type BytePos = u32;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SourceFile {
     file_id: u16,
 }
 
 impl SourceFile {
     pub fn read(&self) -> String {
-        &self.contents
+        "".to_string()
+    }
+
+    pub fn len(&self) -> usize {
+        0
     }
 }
 

@@ -1,6 +1,6 @@
 use std::str::Chars;
-use fpp_core::file::SourceFile;
 use crate::token::{Token, TokenKind};
+use fpp_core::SourceFile;
 
 pub struct Lexer<'a> {
     pos: u32,
@@ -9,6 +9,7 @@ pub struct Lexer<'a> {
     len_remaining: usize,
 
     /// Iterator over chars. Slightly faster than a &str.
+    // content: String,
     chars: Chars<'a>,
 
     #[cfg(debug_assertions)]
@@ -18,18 +19,16 @@ pub struct Lexer<'a> {
 pub(crate) const EOF_CHAR: char = '\0';
 
 impl<'a> Lexer<'a> {
-    pub fn new(file: SourceFile) -> Lexer<'a> {
-        let input = file.read();
-
-        Lexer{
+    pub fn new(file: SourceFile, chars: Chars<'a>) -> Lexer<'a> {
+        Lexer {
             pos: 0,
             file,
-            len_remaining: input.len(),
-            chars: input.chars(),
+            chars,
+            len_remaining: file.len(),
             prev: EOF_CHAR,
         }
     }
-    
+
     pub fn file(&self) -> SourceFile {
         self.file
     }
@@ -42,12 +41,8 @@ impl<'a> Lexer<'a> {
 
             match self.next_token_kind() {
                 TokenKind::EOF => return None,
-                TokenKind::Whitespace => {},
-                kind => {
-                    return Some(Token::new(
-                        kind, self.file, start, self.pos_within_token(),
-                    ))
-                }
+                TokenKind::Whitespace => {}
+                kind => return Some(Token::new(kind, self.file, start, self.pos_within_token())),
             }
         }
     }

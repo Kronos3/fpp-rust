@@ -1,16 +1,25 @@
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenKind};
-use fpp_core::span::Position;
+use fpp_core::{Positioned, SourceFile};
 use std::collections::VecDeque;
+use std::str::Chars;
 
 pub struct Cursor<'a> {
     lexer: Lexer<'a>,
     token_queue: VecDeque<Token>,
-    last_consumed_span: Option<fpp_core::span::Span>,
+    last_consumed_span: Option<fpp_core::Span>,
 }
 
-impl Cursor {
+impl<'a> Cursor<'a> {
+    pub(crate) fn new(source_file: SourceFile, chars: Chars<'a>) -> Cursor<'a> {
+        Cursor {
+            lexer: Lexer::new(source_file, chars),
+            token_queue: Default::default(),
+            last_consumed_span: None,
+        }
+    }
+
     /// Look ahead 'n' tokens and get the token kind
     /// This will pull in tokens from the lexer when needed
     pub fn peek(&mut self, n: usize) -> TokenKind {
@@ -29,6 +38,10 @@ impl Cursor {
         }
     }
 
+    pub fn last_token_span(&self) -> Option<fpp_core::Span> {
+        self.last_consumed_span
+    }
+
     /// Generate a new error while expecting a certain type of token
     /// Messages here are meant to only be simple literals, the full error message
     /// will be formatted given other context information.
@@ -43,7 +56,7 @@ impl Cursor {
             got,
             source_file: self.lexer.file(),
             pos: match self.last_consumed_span {
-                None => Position::start(self.lexer.file()),
+                None => fpp_core::Position::start(self.lexer.file()),
                 Some(span) => span.end(),
             },
             msg,
@@ -64,7 +77,7 @@ impl Cursor {
             expected: expected_one_of,
             source_file: self.lexer.file(),
             pos: match self.last_consumed_span {
-                None => Position::start(self.lexer.file()),
+                None => fpp_core::Position::start(self.lexer.file()),
                 Some(span) => span.end(),
             },
             msg,

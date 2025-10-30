@@ -1,6 +1,6 @@
 use std::cell::Cell;
-use std::collections::HashMap;
 use crate::file::SourceFile;
+use crate::NodeId;
 use crate::span::Span;
 
 struct SpanData {
@@ -30,7 +30,11 @@ impl CompilerContext {
 }
 
 pub(crate) trait CompilerInterface {
-    fn empty_span() -> Span;
+    /** Ast Node related functions */
+    fn add_node(&self, span: &Span) -> NodeId;
+    fn node_span(&self, node: &NodeId) -> Span;
+
+    /** Span related functions */
 
     fn add_span(
         &self,
@@ -39,9 +43,11 @@ pub(crate) trait CompilerInterface {
         length: u32
     ) -> Span;
 
-    fn span_line(&self, s: Span) -> u32;
-    fn span_column(&self, s: Span) -> u32;
-    fn span_file(&self, s: Span) -> SourceFile;
+    fn span_start(&self, s: &Span) -> u32;
+    fn span_end(&self, s: &Span) -> u32;
+    fn span_line(&self, s: &Span) -> u32;
+    fn span_column(&self, s: &Span) -> u32;
+    fn span_file(&self, s: &Span) -> SourceFile;
 }
 
 // A thread local variable that stores a pointer to [`CompilerInterface`].

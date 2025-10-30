@@ -1,7 +1,6 @@
-use fpp_core::file::{BytePos, SourceFile};
-use fpp_core::span::Span;
+use fpp_core::{BytePos, Positioned, Span, SourceFile};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {
     Action,
     Active,
@@ -116,7 +115,7 @@ pub enum KeywordKind {
     Yellow,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     EOF,
     Whitespace,
@@ -181,11 +180,13 @@ impl Token {
         self.kind
     }
 
-    pub fn span(&self) -> Span {
-        self.span
-    }
-
     pub fn text(&self) -> &str {
         &self.text
+    }
+}
+
+impl Positioned for Token {
+    fn span(&self) -> Span {
+        self.span
     }
 }

@@ -53,9 +53,7 @@ impl<'a> Lexer<'a> {
             '$' => {
                 if is_identifier_first(self.first()) {
                     self.eat_while(is_identifier_rest);
-                    TokenKind::Identifier {
-                        force_identifier: true,
-                    }
+                    TokenKind::Identifier
                 } else {
                     TokenKind::Unknown('$')
                 }
