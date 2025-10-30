@@ -1,11 +1,12 @@
-use crate::component::{ComponentMember, GeneralPortInstanceKind, InputPortKind, QueueFull, SpecialPortInstanceKind};
-use crate::state_machine::DefStateMachine;
-use crate::topology::DefTopology;
-
 pub mod component;
 pub mod state_machine;
 pub mod topology;
 pub mod visit;
+
+pub use component::{*};
+pub use state_machine::{*};
+pub use topology::{*};
+pub use visit::{*};
 
 pub struct AstNode<T> {
     pub id: i64,
@@ -13,15 +14,13 @@ pub struct AstNode<T> {
 }
 
 pub struct Annotated<T> {
-    pub pre_annotation: String,
+    pub pre_annotation: Vec<String>,
     pub data: T,
-    pub post_annotation: String,
+    pub post_annotation: Vec<String>,
 }
 
-pub struct AnnotatedNode<T>(Annotated<AstNode<T>>);
-
 /** Identifier */
-pub type Ident = String;
+pub type Ident = AstNode<String>;
 
 pub enum FloatType {
     F32,
@@ -56,22 +55,33 @@ pub enum QualIdent {
     },
 }
 
+pub struct StructMember {
+    pub name: Ident,
+    pub value: AstNode<Expr>
+}
+
 pub enum Expr {
     Array(Vec<AstNode<Expr>>),
+    ArraySubscript {
+        e1: Box<AstNode<Expr>>,
+        e2: Box<AstNode<Expr>>
+    },
     Binop {
         left: Box<AstNode<Expr>>,
         op: Binop,
         right: Box<AstNode<Expr>>,
     },
     Dot {
-        left: Box<AstNode<Expr>>,
-        right: AstNode<Ident>,
+        e: Box<AstNode<Expr>>,
+        id: AstNode<Ident>,
     },
     Ident(Ident),
-    LiteralBool(AstNode<bool>),
-    LiteralInt(AstNode<String>),
-    LiteralFloat(AstNode<String>),
+    LiteralBool(bool),
+    LiteralInt(String),
+    LiteralFloat(String),
+    LiteralString(String),
     Paren(Box<Expr>),
+    Struct(Vec<StructMember>),
     Unop {
         op: AstNode<Unop>,
         e: Box<AstNode<Expr>>,
@@ -121,7 +131,7 @@ pub struct DefArray {
     pub size: AstNode<Expr>,
     pub elt_type: AstNode<TypeName>,
     pub default: Option<AstNode<Expr>>,
-    pub format: Option<AstNode<Expr>>,
+    pub format: Option<AstNode<String>>,
 }
 
 pub enum ComponentKind {
@@ -134,7 +144,7 @@ pub enum ComponentKind {
 pub struct DefComponent {
     pub kind: ComponentKind,
     pub name: Ident,
-    pub members: Vec<ComponentMember>,
+    pub members: Vec<Annotated<ComponentMember>>,
 }
 
 /** Component instance definition */
@@ -144,11 +154,11 @@ pub struct DefComponentInstance {
     pub base_id: AstNode<Expr>,
     pub impl_type: Option<AstNode<String>>,
     pub file: Option<AstNode<String>>,
-    pub queue_size: Option<Expr>,
-    pub stack_size: Option<Expr>,
-    pub priority: Option<Expr>,
-    pub cpu: Option<Expr>,
-    pub init_specs: Vec<Annotated<SpecInit>>,
+    pub queue_size: Option<AstNode<Expr>>,
+    pub stack_size: Option<AstNode<Expr>>,
+    pub priority: Option<AstNode<Expr>>,
+    pub cpu: Option<AstNode<Expr>>,
+    pub init_specs: Vec<Annotated<AstNode<SpecInit>>>,
 }
 
 /** Init specifier */
@@ -180,25 +190,25 @@ pub struct DefEnumConstant {
 /** Module definition */
 pub struct DefModule {
     pub name: Ident,
-    pub members: Vec<ModuleMember>,
+    pub members: Vec<Annotated<ModuleMember>>,
 }
 
 pub enum ModuleMember {
-    DefAbsType(AnnotatedNode<DefAbsType>),
-    DefAliasType(AnnotatedNode<DefAliasType>),
-    DefArray(AnnotatedNode<DefArray>),
-    DefComponent(AnnotatedNode<DefComponent>),
-    DefComponentInstance(AnnotatedNode<DefComponentInstance>),
-    DefConstant(AnnotatedNode<DefConstant>),
-    DefEnum(AnnotatedNode<DefEnum>),
-    DefInterface(AnnotatedNode<DefInterface>),
-    DefModule(AnnotatedNode<DefModule>),
-    DefPort(AnnotatedNode<DefPort>),
-    DefStateMachine(AnnotatedNode<DefStateMachine>),
-    DefStruct(AnnotatedNode<DefStruct>),
-    DefTopology(AnnotatedNode<DefTopology>),
-    SpecInclude(AnnotatedNode<SpecInclude>),
-    SpecLoc(AnnotatedNode<SpecLoc>),
+    DefAbsType(AstNode<DefAbsType>),
+    DefAliasType(AstNode<DefAliasType>),
+    DefArray(AstNode<DefArray>),
+    DefComponent(AstNode<DefComponent>),
+    DefComponentInstance(AstNode<DefComponentInstance>),
+    DefConstant(AstNode<DefConstant>),
+    DefEnum(AstNode<DefEnum>),
+    DefInterface(AstNode<DefInterface>),
+    DefModule(AstNode<DefModule>),
+    DefPort(AstNode<DefPort>),
+    DefStateMachine(AstNode<DefStateMachine>),
+    DefStruct(AstNode<DefStruct>),
+    DefTopology(AstNode<DefTopology>),
+    SpecInclude(AstNode<SpecInclude>),
+    SpecLoc(AstNode<SpecLoc>),
 }
 
 pub enum SpecLocKind {
@@ -239,14 +249,14 @@ pub enum SpecPortInstance {
 
 /** Interface member */
 pub enum InterfaceMember {
-    SpecPortInstance(AnnotatedNode<SpecPortInstance>),
-    SpecImport(AnnotatedNode<SpecImport>),
+    SpecPortInstance(AstNode<SpecPortInstance>),
+    SpecImport(AstNode<SpecImport>),
 }
 
 /** Interface definition */
 pub struct DefInterface {
     pub name: Ident,
-    pub members: Vec<InterfaceMember>,
+    pub members: Vec<Annotated<InterfaceMember>>,
 }
 
 pub struct StructTypeMember {

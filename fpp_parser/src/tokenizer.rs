@@ -1,4 +1,4 @@
-use crate::cursor::Cursor;
+use crate::lexer::Lexer;
 use crate::token::TokenKind;
 
 /** Verify if a character is within the number base system */
@@ -35,7 +35,7 @@ fn is_identifier_rest(c: char) -> bool {
     }
 }
 
-impl<'a> Cursor<'a> {
+impl<'a> Lexer<'a> {
     pub fn next_token_kind(&mut self) -> TokenKind {
         let first_char = match self.bump() {
             Some(c) => c,

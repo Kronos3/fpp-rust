@@ -1,7 +1,7 @@
 use fpp_core::file::{BytePos, SourceFile};
 use fpp_core::span::Span;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum KeywordKind {
     Action,
     Active,
@@ -31,6 +31,7 @@ pub enum KeywordKind {
     Enum,
     Event,
     Exit,
+    External,
     F32,
     F64,
     False,
@@ -115,19 +116,14 @@ pub enum KeywordKind {
     Yellow,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TokenKind {
     EOF,
     Whitespace,
     Unknown(char),
     Error(&'static str),
 
-    // Identifier (or keyword),
-    Identifier {
-        // This is an escaped keyword
-        // '$bool' for example
-        force_identifier: bool,
-    },
+    Identifier,
 
     // Annotations,
     PostAnnotation,
@@ -169,15 +165,27 @@ pub enum TokenKind {
 pub struct Token {
     kind: TokenKind,
     span: Span,
-    data: String,
+    text: String,
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, file: &SourceFile, start: BytePos, length: u32) -> Token {
+    pub fn new(kind: TokenKind, file: SourceFile, start: BytePos, length: u32) -> Token {
         Token {
             kind,
             span: Span::new(file, start, length),
-            data: "".to_string(),
+            text: "".to_string(),
         }
+    }
+
+    pub fn kind(&self) -> TokenKind {
+        self.kind
+    }
+
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    pub fn text(&self) -> &str {
+        &self.text
     }
 }

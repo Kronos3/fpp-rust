@@ -17,6 +17,7 @@ macro_rules! diagnostic_method {
     };
 }
 
+#[derive(Debug)]
 pub struct Position {
     pos: u32,
     source_file: SourceFile
@@ -33,6 +34,10 @@ impl Span {
         length: u32,
     ) -> Span {
         with(|w| w.add_span(file, start, length))
+    }
+
+    pub fn eof() -> Span {
+        
     }
 
     /// Gets the start position of the span
@@ -52,10 +57,16 @@ impl Span {
     diagnostic_method!(help, Level::Help);
 }
 
-pub impl Position {
+impl Position {
+    pub fn start(source_file: SourceFile) -> Position {
+        Position {
+            pos: 0,
+            source_file
+        }
+    }
+
     /// Get the zero indexed line number at this position in the source file
     pub fn line(&self) -> u32 {
-
     }
 
     /// Get the zero indexed column number at this position in the source file

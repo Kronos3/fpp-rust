@@ -1,118 +1,106 @@
-use std::str::Chars;
+use crate::error::{ParseError, ParseResult};
+use crate::lexer::Lexer;
+use crate::token::{Token, TokenKind};
+use fpp_core::span::Position;
+use std::collections::VecDeque;
 
-/// Peekable iterator over a char sequence.
-///
-/// Next characters can be peeked via `first` method,
-/// and position can be shifted forward via `bump` method.
 pub struct Cursor<'a> {
-    len_remaining: usize,
-    /// Iterator over chars. Slightly faster than a &str.
-    chars: Chars<'a>,
-    #[cfg(debug_assertions)]
-    prev: char,
+    lexer: Lexer<'a>,
+    token_queue: VecDeque<Token>,
+    last_consumed_span: Option<fpp_core::span::Span>,
 }
 
-pub(crate) const EOF_CHAR: char = '\0';
+impl Cursor {
+    /// Look ahead 'n' tokens and get the token kind
+    /// This will pull in tokens from the lexer when needed
+    pub fn peek(&mut self, n: usize) -> TokenKind {
+        if self.token_queue.len() > n {
+            self.token_queue.get(n).unwrap().kind()
+        } else {
+            // Queue up as many tokens as we need
+            for _ in 0..n {
+                match self.lexer.next_token() {
+                    None => return TokenKind::EOF,
+                    Some(tok) => self.token_queue.push_back(tok),
+                }
+            }
 
-impl<'a> Cursor<'a> {
-    pub fn new(input: &'a str) -> Cursor<'a> {
-        Cursor {
-            len_remaining: input.len(),
-            chars: input.chars(),
-            #[cfg(debug_assertions)]
-            prev: EOF_CHAR,
+            self.token_queue.get(n).unwrap().kind()
         }
     }
 
-    pub fn as_str(&self) -> &'a str {
-        self.chars.as_str()
-    }
-
-    /// Returns the last eaten symbol (or `'\0'` in release builds).
-    /// (For debug assertions only.)
-    pub(crate) fn prev(&self) -> char {
-        #[cfg(debug_assertions)]
-        {
-            self.prev
-        }
-
-        #[cfg(not(debug_assertions))]
-        {
-            EOF_CHAR
-        }
-    }
-
-    /// Peeks the next symbol from the input stream without consuming it.
-    /// If requested position doesn't exist, `EOF_CHAR` is returned.
-    /// However, getting `EOF_CHAR` doesn't always mean actual end of file,
-    /// it should be checked with `is_eof` method.
-    pub fn first(&self) -> char {
-        // `.next()` optimizes better than `.nth(0)`
-        self.chars.clone().next().unwrap_or(EOF_CHAR)
-    }
-
-    /// Peeks the second symbol from the input stream without consuming it.
-    pub(crate) fn second(&self) -> char {
-        // `.next()` optimizes better than `.nth(1)`
-        let mut iter = self.chars.clone();
-        iter.next();
-        iter.next().unwrap_or(EOF_CHAR)
-    }
-
-    /// Peeks the third symbol from the input stream without consuming it.
-    pub fn third(&self) -> char {
-        // `.next()` optimizes better than `.nth(1)`
-        let mut iter = self.chars.clone();
-        iter.next();
-        iter.next();
-        iter.next().unwrap_or(EOF_CHAR)
-    }
-
-    /// Checks if there is nothing more to consume.
-    pub(crate) fn is_eof(&self) -> bool {
-        self.chars.as_str().is_empty()
-    }
-
-    /// Returns amount of already consumed symbols.
-    pub(crate) fn pos_within_token(&self) -> u32 {
-        (self.len_remaining - self.chars.as_str().len()) as u32
-    }
-
-    /// Resets the number of bytes consumed to 0.
-    pub(crate) fn reset_pos_within_token(&mut self) {
-        self.len_remaining = self.chars.as_str().len();
-    }
-
-    /// Moves to the next character.
-    pub(crate) fn bump(&mut self) -> Option<char> {
-        let c = self.chars.next()?;
-
-        #[cfg(debug_assertions)]
-        {
-            self.prev = c;
-        }
-
-        Some(c)
-    }
-
-    /// Moves to a substring by a number of bytes.
-    pub(crate) fn bump_bytes(&mut self, n: usize) {
-        self.chars = self.as_str()[n..].chars();
-    }
-
-    /// Eats symbols while predicate returns true or until the end of file is reached.
-    pub(crate) fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
-        // It was tried making optimized version of this for eg. line comments, but
-        // LLVM can inline all of this and compile it down to fast iteration over bytes.
-        while predicate(self.first()) && !self.is_eof() {
-            self.bump();
+    /// Generate a new error while expecting a certain type of token
+    /// Messages here are meant to only be simple literals, the full error message
+    /// will be formatted given other context information.
+    pub fn err_expected_token(
+        &self,
+        msg: &'static str,
+        expected: TokenKind,
+        got: TokenKind,
+    ) -> ParseError {
+        ParseError::ExpectedToken {
+            expected,
+            got,
+            source_file: self.lexer.file(),
+            pos: match self.last_consumed_span {
+                None => Position::start(self.lexer.file()),
+                Some(span) => span.end(),
+            },
+            msg,
         }
     }
 
-    pub(crate) fn eat_until(&mut self, byte: u8) {
-        self.chars = match memchr::memchr(byte, self.as_str().as_bytes()) {
-            Some(index) => self.as_str()[index..].chars(),
-            None => "".chars(),
+    /// Insert a single token into the front of the queue to be pulled next
+    // pub fn insert(&mut self, token: Token) {
+    //     self.token_queue.push_front(token)
+    // }
+
+    pub fn err_expected_one_of(
+        &self,
+        msg: &'static str,
+        expected_one_of: Vec<TokenKind>,
+    ) -> ParseError {
+        ParseError::ExpectedOneOf {
+            expected: expected_one_of,
+            source_file: self.lexer.file(),
+            pos: match self.last_consumed_span {
+                None => Position::start(self.lexer.file()),
+                Some(span) => span.end(),
+            },
+            msg,
+        }
+    }
+
+    /// Consume the next token in the stream
+    /// Returns None if EOF has been reached
+    pub fn next(&mut self) -> Option<Token> {
+        // Try to pull token off the queue
+        let tok = match self.token_queue.pop_front() {
+            // No more tokens in our queue, go to the lexer
+            None => self.lexer.next_token(),
+            Some(tok) => Some(tok),
+        };
+
+        match tok {
+            Some(tok) => {
+                self.last_consumed_span = Some(tok.span());
+                Some(tok)
+            }
+            None => None,
+        }
+    }
+
+    #[inline]
+    pub fn consume(&mut self, kind: TokenKind) -> ParseResult<Token> {
+        match self.next() {
+            None => Err(self.err_expected_token("unexpected end of file", kind, TokenKind::EOF)),
+            Some(tok) => {
+                if tok.kind() != kind {
+                    Err(self.err_expected_token("unexpected token", kind, tok.kind()))
+                } else {
+                    Ok(tok)
+                }
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ use crate::{*};
 /** Topology definition */
 pub struct DefTopology {
     pub name: Ident,
-    pub members: Vec<TopologyMember>,
+    pub members: Vec<Annotated<TopologyMember>>,
 }
 
 pub enum TopologyMember {
@@ -67,8 +67,8 @@ pub struct TlmChannelIdentifier {
 
 pub struct SpecTlmPacketSet {
     pub name: Ident,
-    pub members: Vec<TlmPacketSetMember>,
-    pub omitted: Vec<TlmChannelIdentifier>,
+    pub members: Vec<Annotated<TlmPacketSetMember>>,
+    pub omitted: Vec<Annotated<TlmChannelIdentifier>>,
 }
 
 pub enum TlmPacketSetMember {

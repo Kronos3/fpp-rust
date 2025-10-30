@@ -30,6 +30,8 @@ impl CompilerContext {
 }
 
 pub(crate) trait CompilerInterface {
+    fn empty_span() -> Span;
+
     fn add_span(
         &self,
         file: SourceFile,

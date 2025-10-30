@@ -2,16 +2,16 @@ use crate::*;
 
 pub struct DefStateMachine {
     pub name: Ident,
-    pub members: Vec<StateMachineMember>,
+    pub members: Vec<Annotated<StateMachineMember>>,
 }
 
 pub enum StateMachineMember {
-    DefAction(AnnotatedNode<DefAction>),
-    DefChoice(AnnotatedNode<DefChoice>),
-    DefGuard(AnnotatedNode<DefGuard>),
-    DefSignal(AnnotatedNode<DefSignal>),
-    DefState(AnnotatedNode<DefState>),
-    SpecInitialTransition(AnnotatedNode<SpecInitialTransition>),
+    DefAction(AstNode<DefAction>),
+    DefChoice(AstNode<DefChoice>),
+    DefGuard(AstNode<DefGuard>),
+    DefSignal(AstNode<DefSignal>),
+    DefState(AstNode<DefState>),
+    SpecInitialTransition(AstNode<SpecInitialTransition>),
 }
 
 /** Action definition */
@@ -48,13 +48,13 @@ pub struct DefSignal {
 
 pub struct DefState {
     pub name: Ident,
-    pub members: Vec<StateMember>,
+    pub members: Vec<Annotated<StateMember>>,
 }
 
 pub enum StateMember {
-    DefChoice(AnnotatedNode<DefChoice>),
-    DefState(AnnotatedNode<DefState>),
-    SpecInitialTransition(AnnotatedNode<SpecInitialTransition>),
+    DefChoice(AstNode<DefChoice>),
+    DefState(AstNode<DefState>),
+    SpecInitialTransition(AstNode<SpecInitialTransition>),
 }
 
 /** Initial state specifier */
