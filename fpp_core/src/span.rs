@@ -29,6 +29,10 @@ impl Span {
         Span { handle }
     }
 
+    pub fn eof(source_file: SourceFile) -> Span {
+        todo!()
+    }
+
     pub fn new(file: SourceFile, start: u32, length: u32) -> Span {
         with(|w| w.add_span(file, start, length))
     }

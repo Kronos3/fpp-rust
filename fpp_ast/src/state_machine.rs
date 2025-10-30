@@ -37,7 +37,7 @@ pub struct DefGuard {
 
 /** Transition expression */
 pub struct TransitionExpr {
-    pub actions: Vec<Ident>,
+    pub actions: DoExpr,
     pub target: AstNode<QualIdent>,
 }
 
@@ -68,12 +68,12 @@ pub struct SpecInitialTransition {
 
 /** State entry specifier */
 pub struct SpecStateEntry {
-    pub actions: AstNode<DoExpr>,
+    pub actions: DoExpr,
 }
 
 /** State exit specifier */
 pub struct SpecStateExit {
-    pub actions: AstNode<DoExpr>,
+    pub actions: DoExpr,
 }
 
 /** Transition specifier */
@@ -88,5 +88,5 @@ pub struct DoExpr(pub Vec<Ident>);
 /** Transition or do within transition specifier */
 pub enum TransitionOrDo {
     Transition(AstNode<TransitionExpr>),
-    Do(AstNode<DoExpr>),
+    Do(DoExpr),
 }

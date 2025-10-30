@@ -94,7 +94,7 @@ pub enum KeywordKind {
     Size,
     Stack,
     State,
-    String,
+    String_,
     Struct,
     Sync,
     Telemetry,

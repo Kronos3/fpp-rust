@@ -57,7 +57,7 @@ pub enum TypeName {
 pub enum QualIdent {
     Unqualified(Ident),
     Qualified {
-        qualifier: Box<QualIdent>,
+        qualifier: Box<AstNode<QualIdent>>,
         name: Ident,
     },
 }

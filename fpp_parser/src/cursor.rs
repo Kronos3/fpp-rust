@@ -20,21 +20,35 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    /// Look ahead 'n' tokens and get the token kind
-    /// This will pull in tokens from the lexer when needed
-    pub fn peek(&mut self, n: usize) -> TokenKind {
+    fn peek_internal(&mut self, n: usize) -> Option<&Token> {
         if self.token_queue.len() > n {
-            self.token_queue.get(n).unwrap().kind()
+            Some(self.token_queue.get(n).unwrap())
         } else {
             // Queue up as many tokens as we need
             for _ in 0..n {
                 match self.lexer.next_token() {
-                    None => return TokenKind::EOF,
+                    None => return None,
                     Some(tok) => self.token_queue.push_back(tok),
                 }
             }
 
-            self.token_queue.get(n).unwrap().kind()
+            Some(self.token_queue.get(n).unwrap())
+        }
+    }
+
+    pub fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
+        match self.peek_internal(n) {
+            Some(tok) => Some(tok.span()),
+            _ => None,
+        }
+    }
+
+    /// Look ahead 'n' tokens and get the token kind
+    /// This will pull in tokens from the lexer when needed
+    pub fn peek(&mut self, n: usize) -> TokenKind {
+        match self.peek_internal(n) {
+            Some(tok) => tok.kind(),
+            _ => TokenKind::EOF,
         }
     }
 
@@ -60,6 +74,16 @@ impl<'a> Cursor<'a> {
                 Some(span) => span.end(),
             },
             msg,
+        }
+    }
+
+    pub fn err_unexpected_eof(&self) -> ParseError {
+        ParseError::UnexpectedEof {
+            source_file: self.lexer.file(),
+            pos: match self.last_consumed_span {
+                None => fpp_core::Position::start(self.lexer.file()),
+                Some(span) => span.end(),
+            },
         }
     }
 

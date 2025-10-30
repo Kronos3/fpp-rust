@@ -18,6 +18,11 @@ pub(crate) enum ParseError {
         msg: &'static str
     },
 
+    UnexpectedEof {
+        source_file: SourceFile,
+        pos: Position,
+    },
+
     NotImplemented
 }
 

@@ -120,8 +120,8 @@ pub struct SpecRecord {
 
 pub struct SpecStateMachineInstance {
     pub name: Ident,
-    pub state_machine: QualIdent,
-    pub priority: Option<Expr>,
+    pub state_machine: AstNode<QualIdent>,
+    pub priority: Option<AstNode<Expr>>,
     pub queue_full: Option<QueueFull>
 }
 

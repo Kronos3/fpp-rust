@@ -5,6 +5,9 @@ use fpp_ast::*;
 use fpp_core::{Positioned, SourceFile};
 use std::str::Chars;
 
+use crate::token::KeywordKind::*;
+use crate::token::TokenKind::*;
+
 struct Parser<'a> {
     cursor: Cursor<'a>,
 }
@@ -21,6 +24,10 @@ impl<'a> Parser<'a> {
         Parser {
             cursor: Cursor::new(source_file, chars),
         }
+    }
+
+    pub(crate) fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
+        self.cursor.peek_span(n)
     }
 
     pub(crate) fn peek(&mut self, n: usize) -> TokenKind {
@@ -53,13 +60,13 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn ident(&mut self) -> ParseResult<Ident> {
-        let ident = self.consume(TokenKind::Identifier)?;
+        let ident = self.consume(Identifier)?;
         Ok(self.node(ident.text().to_string(), ident.span()))
     }
 
     fn alias_type(&mut self) -> ParseResult<AstNode<DefAliasType>> {
-        let first = self.consume_keyword(KeywordKind::Type)?;
-        self.consume(TokenKind::Equals)?;
+        let first = self.consume_keyword(Type)?;
+        self.consume(Equals)?;
         let name = self.ident()?;
         let type_name = self.type_name()?;
 
@@ -67,17 +74,17 @@ impl<'a> Parser<'a> {
     }
 
     fn abs_type(&mut self) -> ParseResult<AstNode<DefAbsType>> {
-        let first = self.consume_keyword(KeywordKind::Type)?;
+        let first = self.consume_keyword(Type)?;
         let name = self.ident()?;
 
         Ok(self.node(DefAbsType { name }, first.span()))
     }
 
     fn def_action(&mut self) -> ParseResult<AstNode<DefAction>> {
-        let first = self.consume_keyword(KeywordKind::Action)?;
+        let first = self.consume_keyword(Action)?;
         let name = self.ident()?;
         let type_name = match self.peek(0) {
-            TokenKind::Colon => {
+            Colon => {
                 self.next();
                 Some(self.type_name()?)
             }
@@ -88,16 +95,16 @@ impl<'a> Parser<'a> {
     }
 
     fn def_array(&mut self) -> ParseResult<AstNode<DefArray>> {
-        let first = self.consume_keyword(KeywordKind::Array)?;
+        let first = self.consume_keyword(Array)?;
         let name = self.ident()?;
 
-        self.consume(TokenKind::Equals)?;
+        self.consume(Equals)?;
 
         let size = self.index()?;
         let elt_type = self.type_name()?;
 
         let default = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Default) => {
+            Keyword(Default) => {
                 self.next();
                 Some(self.expr()?)
             }
@@ -105,7 +112,7 @@ impl<'a> Parser<'a> {
         };
 
         let format = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Format) => {
+            Keyword(Format) => {
                 self.next();
                 Some(self.lit_string()?)
             }
@@ -125,19 +132,19 @@ impl<'a> Parser<'a> {
     }
 
     fn def_choice(&mut self) -> ParseResult<AstNode<DefChoice>> {
-        let first = self.consume_keyword(KeywordKind::Choice)?;
+        let first = self.consume_keyword(Choice)?;
         let name = self.ident()?;
 
-        self.consume(TokenKind::LeftCurly)?;
+        self.consume(LeftCurly)?;
 
-        self.consume_keyword(KeywordKind::If)?;
+        self.consume_keyword(If)?;
         let guard = self.ident()?;
         let if_transition = self.transition_expr()?;
 
-        self.consume_keyword(KeywordKind::Else)?;
+        self.consume_keyword(Else)?;
         let else_transition = self.transition_expr()?;
 
-        self.consume(TokenKind::RightCurly)?;
+        self.consume(RightCurly)?;
 
         Ok(self.node(
             DefChoice {
@@ -152,16 +159,13 @@ impl<'a> Parser<'a> {
 
     fn component(&mut self) -> ParseResult<AstNode<DefComponent>> {
         let (kind, first) = self.component_kind()?;
-        self.consume_keyword(KeywordKind::Component)?;
+        self.consume_keyword(Component)?;
         let name = self.ident()?;
 
-        self.consume(TokenKind::LeftCurly)?;
-        let members = self.annotated_element_sequence(
-            &Parser::component_member,
-            TokenKind::Semi,
-            TokenKind::RightCurly,
-        )?;
-        self.consume(TokenKind::RightCurly)?;
+        self.consume(LeftCurly)?;
+        let members =
+            self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly)?;
+        self.consume(RightCurly)?;
 
         Ok(self.node(
             DefComponent {
@@ -175,16 +179,12 @@ impl<'a> Parser<'a> {
 
     fn component_kind(&mut self) -> ParseResult<(ComponentKind, Token)> {
         let ck = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Active) => Ok(ComponentKind::Active),
-            TokenKind::Keyword(KeywordKind::Passive) => Ok(ComponentKind::Passive),
-            TokenKind::Keyword(KeywordKind::Queued) => Ok(ComponentKind::Queued),
+            Keyword(Active) => Ok(ComponentKind::Active),
+            Keyword(Passive) => Ok(ComponentKind::Passive),
+            Keyword(Queued) => Ok(ComponentKind::Queued),
             _ => Err(self.cursor.err_expected_one_of(
                 "component kind expected",
-                vec![
-                    TokenKind::Keyword(KeywordKind::Active),
-                    TokenKind::Keyword(KeywordKind::Passive),
-                    TokenKind::Keyword(KeywordKind::Queued),
-                ],
+                vec![Keyword(Active), Keyword(Passive), Keyword(Queued)],
             )),
         }?;
 
@@ -193,19 +193,15 @@ impl<'a> Parser<'a> {
 
     fn component_member(&mut self) -> ParseResult<ComponentMember> {
         match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Type) => match self.peek(0) {
-                TokenKind::Equals => Ok(ComponentMember::DefAliasType(self.alias_type()?)),
+            Keyword(Type) => match self.peek(0) {
+                Equals => Ok(ComponentMember::DefAliasType(self.alias_type()?)),
                 _ => Ok(ComponentMember::DefAbsType(self.abs_type()?)),
             },
-            TokenKind::Keyword(KeywordKind::Array) => {
-                Ok(ComponentMember::DefArray(self.def_array()?))
-            }
-            TokenKind::Keyword(KeywordKind::Constant) => {
-                Ok(ComponentMember::DefConstant(self.def_constant()?))
-            }
-            TokenKind::Keyword(KeywordKind::Enum) => Ok(ComponentMember::DefEnum(self.def_enum()?)),
-            TokenKind::Keyword(KeywordKind::State) => {
-                if self.peek(2) == TokenKind::Keyword(KeywordKind::Instance) {
+            Keyword(Array) => Ok(ComponentMember::DefArray(self.def_array()?)),
+            Keyword(Constant) => Ok(ComponentMember::DefConstant(self.def_constant()?)),
+            Keyword(Enum) => Ok(ComponentMember::DefEnum(self.def_enum()?)),
+            Keyword(State) => {
+                if self.peek(2) == Keyword(Instance) {
                     Ok(ComponentMember::SpecStateMachineInstance(
                         self.spec_state_machine_instance()?,
                     ))
@@ -213,11 +209,9 @@ impl<'a> Parser<'a> {
                     Ok(ComponentMember::DefStateMachine(self.def_state_machine()?))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Struct) => {
-                Ok(ComponentMember::DefStruct(self.def_struct()?))
-            }
-            TokenKind::Keyword(KeywordKind::Async | KeywordKind::Guarded | KeywordKind::Sync) => {
-                if self.peek(1) == TokenKind::Keyword(KeywordKind::Command) {
+            Keyword(Struct) => Ok(ComponentMember::DefStruct(self.def_struct()?)),
+            Keyword(Async | Guarded | Sync) => {
+                if self.peek(1) == Keyword(Command) {
                     Ok(ComponentMember::SpecCommand(self.spec_command()?))
                 } else {
                     Ok(ComponentMember::SpecPortInstance(
@@ -225,16 +219,16 @@ impl<'a> Parser<'a> {
                     ))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Command | KeywordKind::Text | KeywordKind::Time) => {
+            Keyword(Command | Text | Time) => {
                 // Special command port
                 Ok(ComponentMember::SpecPortInstance(
                     self.spec_port_instance()?,
                 ))
             }
-            TokenKind::Keyword(KeywordKind::Product) => {
-                if self.peek(1) == TokenKind::Keyword(KeywordKind::Container) {
+            Keyword(Product) => {
+                if self.peek(1) == Keyword(Container) {
                     Ok(ComponentMember::SpecContainer(self.spec_container()?))
-                } else if self.peek(1) == TokenKind::Keyword(KeywordKind::Record) {
+                } else if self.peek(1) == Keyword(Record) {
                     Ok(ComponentMember::SpecRecord(self.spec_record()?))
                 } else {
                     // Special port kind
@@ -243,8 +237,8 @@ impl<'a> Parser<'a> {
                     ))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Event) => {
-                if self.peek(1) == TokenKind::Keyword(KeywordKind::Port) {
+            Keyword(Event) => {
+                if self.peek(1) == Keyword(Port) {
                     Ok(ComponentMember::SpecPortInstance(
                         self.spec_port_instance()?,
                     ))
@@ -252,20 +246,16 @@ impl<'a> Parser<'a> {
                     Ok(ComponentMember::SpecEvent(self.spec_event()?))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Include) => {
-                Ok(ComponentMember::SpecInclude(self.spec_include()?))
-            }
-            TokenKind::Keyword(KeywordKind::Internal) => Ok(ComponentMember::SpecInternalPort(
+            Keyword(Include) => Ok(ComponentMember::SpecInclude(self.spec_include()?)),
+            Keyword(Internal) => Ok(ComponentMember::SpecInternalPort(
                 self.spec_internal_port()?,
             )),
-            TokenKind::Keyword(KeywordKind::Match) => Ok(ComponentMember::SpecPortMatching(
+            Keyword(Match) => Ok(ComponentMember::SpecPortMatching(
                 self.spec_port_matching()?,
             )),
-            TokenKind::Keyword(KeywordKind::External) => {
-                Ok(ComponentMember::SpecParam(self.spec_param()?))
-            }
-            TokenKind::Keyword(KeywordKind::Param) => {
-                if self.peek(1) == TokenKind::Keyword(KeywordKind::Port) {
+            Keyword(External) => Ok(ComponentMember::SpecParam(self.spec_param()?)),
+            Keyword(Param) => {
+                if self.peek(1) == Keyword(Port) {
                     Ok(ComponentMember::SpecPortInstance(
                         self.spec_port_instance()?,
                     ))
@@ -273,8 +263,8 @@ impl<'a> Parser<'a> {
                     Ok(ComponentMember::SpecParam(self.spec_param()?))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Telemetry) => {
-                if self.peek(1) == TokenKind::Keyword(KeywordKind::Port) {
+            Keyword(Telemetry) => {
+                if self.peek(1) == Keyword(Port) {
                     Ok(ComponentMember::SpecPortInstance(
                         self.spec_port_instance()?,
                     ))
@@ -282,7 +272,7 @@ impl<'a> Parser<'a> {
                     Ok(ComponentMember::SpecTlmChannel(self.spec_tlm_channel()?))
                 }
             }
-            TokenKind::Keyword(KeywordKind::Import) => Ok(ComponentMember::SpecImportInterface(
+            Keyword(Import) => Ok(ComponentMember::SpecImportInterface(
                 self.spec_import_interface()?,
             )),
             _ => Err(self
@@ -292,18 +282,18 @@ impl<'a> Parser<'a> {
     }
 
     fn def_component_instance(&mut self) -> ParseResult<AstNode<DefComponentInstance>> {
-        let first = self.consume_keyword(KeywordKind::Instance)?;
+        let first = self.consume_keyword(Instance)?;
         let name = self.ident()?;
-        self.consume(TokenKind::Colon)?;
+        self.consume(Colon)?;
         let component = self.qual_ident()?;
 
-        self.consume_keyword(KeywordKind::Base)?;
-        self.consume_keyword(KeywordKind::Id)?;
+        self.consume_keyword(Base)?;
+        self.consume_keyword(Id)?;
         let base_id = self.expr()?;
 
         let impl_type = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::Type) => {
+                Keyword(Type) => {
                     self.next();
                     Some(self.lit_string()?)
                 }
@@ -313,7 +303,7 @@ impl<'a> Parser<'a> {
 
         let file = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::At) => {
+                Keyword(At) => {
                     self.next();
                     Some(self.lit_string()?)
                 }
@@ -323,9 +313,9 @@ impl<'a> Parser<'a> {
 
         let queue_size = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::Queue) => {
+                Keyword(Queue) => {
                     self.next();
-                    self.consume_keyword(KeywordKind::Size)?;
+                    self.consume_keyword(Size)?;
                     Some(self.expr()?)
                 }
                 _ => None,
@@ -334,9 +324,9 @@ impl<'a> Parser<'a> {
 
         let stack_size = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::Stack) => {
+                Keyword(Stack) => {
                     self.next();
-                    self.consume_keyword(KeywordKind::Size)?;
+                    self.consume_keyword(Size)?;
                     Some(self.expr()?)
                 }
                 _ => None,
@@ -345,7 +335,7 @@ impl<'a> Parser<'a> {
 
         let priority = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::Priority) => {
+                Keyword(Priority) => {
                     self.next();
                     Some(self.expr()?)
                 }
@@ -355,7 +345,7 @@ impl<'a> Parser<'a> {
 
         let cpu = {
             match self.peek(0) {
-                TokenKind::Keyword(KeywordKind::Cpu) => {
+                Keyword(Cpu) => {
                     self.next();
                     Some(self.expr()?)
                 }
@@ -365,14 +355,11 @@ impl<'a> Parser<'a> {
 
         let init_specs = {
             match self.peek(0) {
-                TokenKind::LeftCurly => {
+                LeftCurly => {
                     self.next();
-                    let seq = self.annotated_element_sequence(
-                        &Parser::spec_init,
-                        TokenKind::Semi,
-                        TokenKind::RightCurly,
-                    )?;
-                    self.consume(TokenKind::RightCurly)?;
+                    let seq =
+                        self.annotated_element_sequence(&Parser::spec_init, Semi, RightCurly)?;
+                    self.consume(RightCurly)?;
                     seq
                 }
                 _ => vec![],
@@ -397,7 +384,7 @@ impl<'a> Parser<'a> {
     }
 
     fn spec_init(&mut self) -> ParseResult<AstNode<SpecInit>> {
-        let first = self.consume_keyword(KeywordKind::Phase)?;
+        let first = self.consume_keyword(Phase)?;
         let phase = self.expr()?;
         let code = self.lit_string()?;
 
@@ -405,37 +392,34 @@ impl<'a> Parser<'a> {
     }
 
     fn def_constant(&mut self) -> ParseResult<AstNode<DefConstant>> {
-        let first = self.consume_keyword(KeywordKind::Constant)?;
+        let first = self.consume_keyword(Constant)?;
         let name = self.ident()?;
 
-        self.consume(TokenKind::Equals)?;
+        self.consume(Equals)?;
         let value = self.expr()?;
 
         Ok(self.node(DefConstant { name, value }, first.span()))
     }
 
     fn def_enum(&mut self) -> ParseResult<AstNode<DefEnum>> {
-        let first = self.consume_keyword(KeywordKind::Enum)?;
+        let first = self.consume_keyword(Enum)?;
         let name = self.ident()?;
 
         let type_name = match self.peek(0) {
-            TokenKind::Colon => {
+            Colon => {
                 self.next();
                 Some(self.type_name()?)
             }
             _ => None,
         };
 
-        self.consume(TokenKind::LeftCurly)?;
-        let constants = self.annotated_element_sequence(
-            &Parser::def_enum_constant,
-            TokenKind::Comma,
-            TokenKind::RightCurly,
-        )?;
-        self.consume(TokenKind::RightCurly)?;
+        self.consume(LeftCurly)?;
+        let constants =
+            self.annotated_element_sequence(&Parser::def_enum_constant, Comma, RightCurly)?;
+        self.consume(RightCurly)?;
 
         let default = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Default) => {
+            Keyword(Default) => {
                 self.next();
                 Some(self.expr()?)
             }
@@ -458,7 +442,7 @@ impl<'a> Parser<'a> {
         let first_span = name.span();
 
         let value = match self.peek(0) {
-            TokenKind::Equals => {
+            Equals => {
                 self.next();
                 Some(self.expr()?)
             }
@@ -468,21 +452,70 @@ impl<'a> Parser<'a> {
         Ok(self.node(DefEnumConstant { name, value }, first_span))
     }
 
+    fn spec_state_machine_instance(&mut self) -> ParseResult<AstNode<SpecStateMachineInstance>> {
+        let first = self.consume_keyword(State)?;
+        self.consume_keyword(Machine)?;
+        self.consume_keyword(Instance)?;
+
+        let name = self.ident()?;
+
+        self.consume(Colon)?;
+        let state_machine = self.qual_ident()?;
+
+        let priority = match self.peek(0) {
+            Keyword(Priority) => {
+                self.next();
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        let queue_full = match self.peek(0) {
+            Keyword(Assert) => {
+                self.next();
+                Some(QueueFull::Assert)
+            }
+            Keyword(Block) => {
+                self.next();
+                Some(QueueFull::Block)
+            }
+            Keyword(Drop) => {
+                self.next();
+                Some(QueueFull::Drop)
+            }
+            Keyword(Hook) => {
+                self.next();
+                Some(QueueFull::Hook)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecStateMachineInstance {
+                name,
+                state_machine,
+                priority,
+                queue_full,
+            },
+            first.span(),
+        ))
+    }
+
     fn def_state_machine(&mut self) -> ParseResult<AstNode<DefStateMachine>> {
-        let first = self.consume_keyword(KeywordKind::State)?;
-        self.consume_keyword(KeywordKind::Machine)?;
+        let first = self.consume_keyword(State)?;
+        self.consume_keyword(Machine)?;
 
         let name = self.ident()?;
         let members = match self.peek(0) {
-            TokenKind::LeftCurly => {
+            LeftCurly => {
                 self.next();
                 let out = self.annotated_element_sequence(
                     &Parser::state_machine_member,
-                    TokenKind::Semi,
-                    TokenKind::RightCurly,
+                    Semi,
+                    RightCurly,
                 )?;
 
-                self.consume(TokenKind::RightCurly)?;
+                self.consume(RightCurly)?;
 
                 Some(out)
             }
@@ -494,33 +527,23 @@ impl<'a> Parser<'a> {
 
     fn state_machine_member(&mut self) -> ParseResult<StateMachineMember> {
         match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Initial) => Ok(
-                StateMachineMember::SpecInitialTransition(self.spec_initial_transition()?),
-            ),
-            TokenKind::Keyword(KeywordKind::State) => {
-                Ok(StateMachineMember::DefState(self.def_state()?))
-            }
-            TokenKind::Keyword(KeywordKind::Signal) => {
-                Ok(StateMachineMember::DefSignal(self.def_signal()?))
-            }
-            TokenKind::Keyword(KeywordKind::Action) => {
-                Ok(StateMachineMember::DefSignal(self.def_action()?))
-            }
-            TokenKind::Keyword(KeywordKind::Guard) => {
-                Ok(StateMachineMember::DefGuard(self.def_guard()?))
-            }
-            TokenKind::Keyword(KeywordKind::Choice) => {
-                Ok(StateMachineMember::DefChoice(self.def_choice()?))
-            }
+            Keyword(Initial) => Ok(StateMachineMember::SpecInitialTransition(
+                self.spec_initial_transition()?,
+            )),
+            Keyword(State) => Ok(StateMachineMember::DefState(self.def_state()?)),
+            Keyword(Signal) => Ok(StateMachineMember::DefSignal(self.def_signal()?)),
+            Keyword(Action) => Ok(StateMachineMember::DefAction(self.def_action()?)),
+            Keyword(Guard) => Ok(StateMachineMember::DefGuard(self.def_guard()?)),
+            Keyword(Choice) => Ok(StateMachineMember::DefChoice(self.def_choice()?)),
             _ => Err(self.cursor.err_expected_one_of(
                 "state machine member expected",
                 vec![
-                    TokenKind::Keyword(KeywordKind::Initial),
-                    TokenKind::Keyword(KeywordKind::State),
-                    TokenKind::Keyword(KeywordKind::Signal),
-                    TokenKind::Keyword(KeywordKind::Action),
-                    TokenKind::Keyword(KeywordKind::Guard),
-                    TokenKind::Keyword(KeywordKind::Choice),
+                    Keyword(Initial),
+                    Keyword(State),
+                    Keyword(Signal),
+                    Keyword(Action),
+                    Keyword(Guard),
+                    Keyword(Choice),
                 ],
             )),
         }
@@ -528,74 +551,137 @@ impl<'a> Parser<'a> {
 
     fn state_member(&mut self) -> ParseResult<StateMember> {
         match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Choice) => {
-                Ok(StateMember::DefChoice(self.def_choice()?))
-            }
-            TokenKind::Keyword(KeywordKind::State) => Ok(StateMember::DefState(self.def_state()?)),
-            TokenKind::Keyword(KeywordKind::Initial) => Ok(StateMember::SpecInitialTransition(
+            Keyword(Choice) => Ok(StateMember::DefChoice(self.def_choice()?)),
+            Keyword(State) => Ok(StateMember::DefState(self.def_state()?)),
+            Keyword(Initial) => Ok(StateMember::SpecInitialTransition(
                 self.spec_initial_transition()?,
             )),
-            TokenKind::Keyword(KeywordKind::Entry) => {
-                Ok(StateMember::SpecStateEntry(self.spec_state_entry()?))
-            }
-            TokenKind::Keyword(KeywordKind::Exit) => {
-                Ok(StateMember::SpecStateExit(self.spec_state_exit()?))
-            }
-            TokenKind::Keyword(KeywordKind::On) => Ok(StateMember::SpecStateTransition(
+            Keyword(Entry) => Ok(StateMember::SpecStateEntry(self.spec_state_entry()?)),
+            Keyword(Exit) => Ok(StateMember::SpecStateExit(self.spec_state_exit()?)),
+            Keyword(On) => Ok(StateMember::SpecStateTransition(
                 self.spec_state_transition()?,
             )),
             _ => Err(self.cursor.err_expected_one_of(
                 "state member expected",
                 vec![
-                    TokenKind::Keyword(KeywordKind::Choice),
-                    TokenKind::Keyword(KeywordKind::State),
-                    TokenKind::Keyword(KeywordKind::Initial),
-                    TokenKind::Keyword(KeywordKind::Entry),
-                    TokenKind::Keyword(KeywordKind::Exit),
-                    TokenKind::Keyword(KeywordKind::On),
+                    Keyword(Choice),
+                    Keyword(State),
+                    Keyword(Initial),
+                    Keyword(Entry),
+                    Keyword(Exit),
+                    Keyword(On),
                 ],
             )),
         }
     }
 
     fn spec_initial_transition(&mut self) -> ParseResult<AstNode<SpecInitialTransition>> {
-        let first = self.consume_keyword(KeywordKind::Initial)?;
+        let first = self.consume_keyword(Initial)?;
         let transition = self.transition_expr()?;
 
         Ok(self.node(SpecInitialTransition { transition }, first.span()))
     }
 
     fn spec_state_entry(&mut self) -> ParseResult<AstNode<SpecStateEntry>> {
-        let first = self.consume_keyword(KeywordKind::Entry)?;
+        let first = self.consume_keyword(Entry)?;
         let actions = self.do_expr()?;
 
         Ok(self.node(SpecStateEntry { actions }, first.span()))
     }
 
-    fn do_expr(&mut self) -> ParseResult<AstNode<DoExpr>> {
-        let first = self.consume_keyword(KeywordKind::Do)?;
-        self.consume(TokenKind::LeftCurly)?;
-        let elts =
-            self.element_sequence(&Parser::ident, TokenKind::Comma, TokenKind::RightCurly)?;
-        self.consume(TokenKind::RightCurly)?;
+    fn do_expr(&mut self) -> ParseResult<DoExpr> {
+        self.consume_keyword(Do)?;
+        self.consume(LeftCurly)?;
+        let elts = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
+        self.consume(RightCurly)?;
 
-        Ok(self.node(DoExpr(elts), first.span()))
+        Ok(DoExpr(elts))
+    }
+
+    fn spec_state_exit(&mut self) -> ParseResult<AstNode<SpecStateExit>> {
+        let first = self.consume_keyword(Exit)?;
+        let actions = self.do_expr()?;
+        Ok(self.node(SpecStateExit { actions }, first.span()))
+    }
+
+    fn spec_state_transition(&mut self) -> ParseResult<AstNode<SpecStateTransition>> {
+        let first = self.consume_keyword(On)?;
+        let signal = self.ident()?;
+        let guard = match self.peek(0) {
+            Keyword(If) => {
+                self.next();
+                Some(self.ident()?)
+            }
+            _ => None,
+        };
+
+        let transition_or_do = self.transition_or_do()?;
+
+        Ok(self.node(
+            SpecStateTransition {
+                signal,
+                guard,
+                transition_or_do,
+            },
+            first.span(),
+        ))
+    }
+
+    fn transition_or_do(&mut self) -> ParseResult<TransitionOrDo> {
+        let first_span = match self.peek_span(0) {
+            Some(span) => span,
+            _ => return Err(self.cursor.err_unexpected_eof()),
+        };
+
+        let do_expr = match self.peek(0) {
+            Keyword(Do) => Some(self.do_expr()?),
+            _ => None,
+        };
+
+        match self.peek(0) {
+            Keyword(Enter) => {
+                self.next();
+                let target = self.qual_ident()?;
+                Ok(TransitionOrDo::Transition(self.node(
+                    TransitionExpr {
+                        actions: do_expr.unwrap_or(DoExpr(vec![])),
+                        target,
+                    },
+                    first_span,
+                )))
+            }
+            _ => match do_expr {
+                Some(de) => Ok(TransitionOrDo::Do(de)),
+                None => Err(self.cursor.err_expected_one_of(
+                    "expected transition or do",
+                    vec![Keyword(Do), Keyword(Enter)],
+                )),
+            },
+        }
+    }
+
+    fn def_guard(&mut self) -> ParseResult<AstNode<DefGuard>> {
+        let first = self.consume_keyword(Guard)?;
+        let name = self.ident()?;
+        let type_name = match self.peek(0) {
+            Colon => Some(self.type_name()?),
+            _ => None,
+        };
+
+        Ok(self.node(DefGuard { name, type_name }, first.span()))
     }
 
     fn def_struct(&mut self) -> ParseResult<AstNode<DefStruct>> {
-        let first = self.consume_keyword(KeywordKind::Struct)?;
+        let first = self.consume_keyword(Struct)?;
         let name = self.ident()?;
 
-        self.consume(TokenKind::LeftCurly)?;
-        let members = self.annotated_element_sequence(
-            &Parser::struct_type_member,
-            TokenKind::Comma,
-            TokenKind::RightCurly,
-        )?;
-        self.consume(TokenKind::RightCurly)?;
+        self.consume(LeftCurly)?;
+        let members =
+            self.annotated_element_sequence(&Parser::struct_type_member, Comma, RightCurly)?;
+        self.consume(RightCurly)?;
 
         let default = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Default) => {
+            Keyword(Default) => {
                 self.next();
                 Some(self.expr()?)
             }
@@ -616,15 +702,15 @@ impl<'a> Parser<'a> {
         let name = self.ident()?;
         let name_span = name.span();
 
-        self.consume(TokenKind::Colon)?;
+        self.consume(Colon)?;
         let size = match self.peek(0) {
-            TokenKind::LeftSquare => Some(self.index()?),
+            LeftSquare => Some(self.index()?),
             _ => None,
         };
 
         let type_name = self.type_name()?;
         let format = match self.peek(0) {
-            TokenKind::Keyword(KeywordKind::Format) => Some(self.lit_string()?),
+            Keyword(Format) => Some(self.lit_string()?),
             _ => None,
         };
 
@@ -639,16 +725,33 @@ impl<'a> Parser<'a> {
         ))
     }
 
+    fn def_state(&mut self) -> ParseResult<AstNode<DefState>> {
+        let first = self.consume_keyword(State)?;
+        let name = self.ident()?;
+
+        let members = match self.peek(0) {
+            LeftCurly => {
+                self.next();
+                let members =
+                    self.annotated_element_sequence(&Parser::state_member, Semi, RightCurly)?;
+                self.consume(RightCurly)?;
+                members
+            }
+            _ => vec![],
+        };
+
+        Ok(self.node(DefState { name, members }, first.span()))
+    }
+
+    fn def_signal(&mut self) -> ParseResult<AstNode<DefSignal>> {
+        todo!()
+    }
+
     fn pre_annotation(&mut self) -> Vec<String> {
         let mut out: Vec<String> = vec![];
 
-        while self.peek(0) == TokenKind::PreAnnotation {
-            out.push(
-                self.consume(TokenKind::PreAnnotation)
-                    .unwrap()
-                    .text()
-                    .to_string(),
-            )
+        while self.peek(0) == PreAnnotation {
+            out.push(self.consume(PreAnnotation).unwrap().text().to_string())
         }
 
         out
@@ -657,13 +760,8 @@ impl<'a> Parser<'a> {
     fn post_annotation(&mut self) -> Vec<String> {
         let mut out: Vec<String> = vec![];
 
-        while self.peek(0) == TokenKind::PostAnnotation {
-            out.push(
-                self.consume(TokenKind::PostAnnotation)
-                    .unwrap()
-                    .text()
-                    .to_string(),
-            )
+        while self.peek(0) == PostAnnotation {
+            out.push(self.consume(PostAnnotation).unwrap().text().to_string())
         }
 
         out
@@ -690,7 +788,7 @@ impl<'a> Parser<'a> {
 
         // Check if the punctuation exists
         let punct_tok = self.peek(0);
-        if punct_tok == *punct || punct_tok == TokenKind::Eol {
+        if punct_tok == *punct || punct_tok == Eol {
             self.next();
             let post_annotation = self.post_annotation();
             ElementParsingResult::Terminated(Annotated {
@@ -698,7 +796,7 @@ impl<'a> Parser<'a> {
                 data,
                 post_annotation,
             })
-        } else if self.peek(0) == TokenKind::PostAnnotation {
+        } else if self.peek(0) == PostAnnotation {
             let post_annotation = self.post_annotation();
             ElementParsingResult::Terminated(Annotated {
                 pre_annotation,
@@ -722,7 +820,7 @@ impl<'a> Parser<'a> {
         end: TokenKind,
     ) -> ParseResult<Vec<Annotated<T>>> {
         // Eat up all the EOLs
-        while self.peek(0) == TokenKind::Eol {
+        while self.peek(0) == Eol {
             self.next();
         }
 
@@ -771,10 +869,10 @@ impl<'a> Parser<'a> {
 
         // Check if the punctuation exists
         let punct_tok = self.peek(0);
-        if punct_tok == *punct || punct_tok == TokenKind::Eol {
+        if punct_tok == *punct || punct_tok == Eol {
             self.next();
             ElementParsingResult::Terminated(data)
-        } else if self.peek(0) == TokenKind::PostAnnotation {
+        } else if self.peek(0) == PostAnnotation {
             ElementParsingResult::Terminated(data)
         } else {
             ElementParsingResult::Unterminated(data)
@@ -789,7 +887,7 @@ impl<'a> Parser<'a> {
         end: TokenKind,
     ) -> ParseResult<Vec<T>> {
         // Eat up all the EOLs
-        while self.peek(0) == TokenKind::Eol {
+        while self.peek(0) == Eol {
             self.next();
         }
 
@@ -820,9 +918,9 @@ impl<'a> Parser<'a> {
     }
 
     fn index(&mut self) -> ParseResult<AstNode<Expr>> {
-        self.consume(TokenKind::LeftSquare)?;
+        self.consume(LeftSquare)?;
         let out = self.expr()?;
-        self.consume(TokenKind::RightSquare)?;
+        self.consume(RightSquare)?;
         Ok(out)
     }
 
@@ -849,7 +947,7 @@ impl<'a> Parser<'a> {
     /// Convenience function to consume a keyword
     #[inline]
     pub fn consume_keyword(&mut self, kind: KeywordKind) -> ParseResult<Token> {
-        self.consume(TokenKind::Keyword(kind))
+        self.consume(Keyword(kind))
     }
 
     /// Check to make sure a token at a certain position (number of tokens) away matches
@@ -860,7 +958,7 @@ impl<'a> Parser<'a> {
         if kind == p {
             Ok(())
         } else {
-            Err(self.err_expected_token("unexpected token", kind, p))
+            Err(self.cursor.err_expected_token("unexpected token", kind, p))
         }
     }
 }
