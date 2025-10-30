@@ -7,6 +7,7 @@ use std::str::Chars;
 
 use crate::token::KeywordKind::*;
 use crate::token::TokenKind::*;
+pub use std::string::String;
 
 struct Parser<'a> {
     cursor: Cursor<'a>,
@@ -664,7 +665,10 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(Guard)?;
         let name = self.ident()?;
         let type_name = match self.peek(0) {
-            Colon => Some(self.type_name()?),
+            Colon => {
+                self.next();
+                Some(self.type_name()?)
+            }
             _ => None,
         };
 
@@ -710,7 +714,10 @@ impl<'a> Parser<'a> {
 
         let type_name = self.type_name()?;
         let format = match self.peek(0) {
-            Keyword(Format) => Some(self.lit_string()?),
+            Keyword(Format) => {
+                self.next();
+                Some(self.lit_string()?)
+            }
             _ => None,
         };
 
@@ -744,7 +751,290 @@ impl<'a> Parser<'a> {
     }
 
     fn def_signal(&mut self) -> ParseResult<AstNode<DefSignal>> {
-        todo!()
+        let first = self.consume_keyword(Signal)?;
+        let name = self.ident()?;
+        self.consume(Colon)?;
+        let type_name = match self.peek(0) {
+            Colon => {
+                self.next();
+                Some(self.type_name()?)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(DefSignal { name, type_name }, first.span()))
+    }
+
+    fn spec_port_general(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+        let first = self.peek_span(0).unwrap();
+
+        let kind = match self.peek(0) {
+            Keyword(Async) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(GeneralPortInstanceKind::Input(InputPortKind::Async))
+            }
+            Keyword(Guarded) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(GeneralPortInstanceKind::Input(InputPortKind::Guarded))
+            }
+            Keyword(Sync) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(GeneralPortInstanceKind::Input(InputPortKind::Sync))
+            }
+            Keyword(Output) => {
+                self.next();
+                Ok(GeneralPortInstanceKind::Output)
+            }
+            _ => Err(self.cursor.err_expected_one_of(
+                "expected general port instance",
+                vec![
+                    Keyword(Async),
+                    Keyword(Guarded),
+                    Keyword(Sync),
+                    Keyword(Output),
+                ],
+            )),
+        }?;
+
+        self.consume_keyword(Port)?;
+        let name = self.ident()?;
+
+        self.consume(Colon)?;
+        let size = match self.peek(0) {
+            LeftSquare => Some(self.index()?),
+            _ => None,
+        };
+
+        let port = match self.peek(0) {
+            Keyword(Serial) => None,
+            _ => Some(self.qual_ident()?),
+        };
+
+        let priority = match self.peek(0) {
+            Keyword(Priority) => {
+                self.next();
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        let queue_full = match self.peek(0) {
+            Keyword(Assert) | Keyword(Block) | Keyword(Drop) | Keyword(Hook) => {
+                Some(self.queue_full()?)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecPortInstance::General {
+                kind,
+                name,
+                size,
+                port,
+                priority,
+                queue_full,
+            },
+            first,
+        ))
+    }
+
+    fn spec_port_special(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+        let first = match self.peek_span(0) {
+            Some(span) => span,
+            None => {
+                return Err(self.cursor.err_expected_one_of(
+                    "special port expected",
+                    vec![
+                        Keyword(Async),
+                        Keyword(Sync),
+                        Keyword(Guarded),
+                        Keyword(Command),
+                        Keyword(Event),
+                        Keyword(Param),
+                        Keyword(Product),
+                        Keyword(Telemetry),
+                        Keyword(Text),
+                        Keyword(Time),
+                    ],
+                ));
+            }
+        };
+
+        let input_kind = match self.peek(0) {
+            Keyword(Async) => {
+                self.next();
+                Some(InputPortKind::Async)
+            }
+            Keyword(Sync) => {
+                self.next();
+                Some(InputPortKind::Sync)
+            }
+            Keyword(Guarded) => {
+                self.next();
+                Some(InputPortKind::Guarded)
+            }
+            _ => None,
+        };
+
+        let kind = match self.peek(0) {
+            Keyword(Command) => match self.peek(1) {
+                Keyword(Recv) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::CommandRecv)
+                }
+                Keyword(Reg) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::CommandReg)
+                }
+                Keyword(Resp) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::CommandResp)
+                }
+                _ => Err(self.cursor.err_expected_one_of(
+                    "command special port expected",
+                    vec![Keyword(Recv), Keyword(Reg), Keyword(Resp)],
+                )),
+            },
+            Keyword(Event) => {
+                self.next();
+                Ok(SpecialPortInstanceKind::Event)
+            }
+            Keyword(Param) => match self.peek(1) {
+                Keyword(Get) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ParamGet)
+                }
+                Keyword(Set) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ParamSet)
+                }
+                _ => Err(self.cursor.err_expected_one_of(
+                    "param special port expected",
+                    vec![Keyword(Get), Keyword(Set)],
+                )),
+            },
+            Keyword(Product) => match self.peek(1) {
+                Keyword(Get) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ProductGet)
+                }
+                Keyword(Recv) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ProductRecv)
+                }
+                Keyword(Request) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ProductRequest)
+                }
+                Keyword(Send) => {
+                    self.next();
+                    self.next();
+                    Ok(SpecialPortInstanceKind::ProductSend)
+                }
+                _ => Err(self.cursor.err_expected_one_of(
+                    "product special port expected",
+                    vec![Keyword(Get), Keyword(Recv), Keyword(Request), Keyword(Send)],
+                )),
+            },
+            Keyword(Telemetry) => {
+                self.next();
+                Ok(SpecialPortInstanceKind::Telemetry)
+            }
+            Keyword(Text) => {
+                self.next();
+                self.consume_keyword(Event)?;
+                Ok(SpecialPortInstanceKind::TextEvent)
+            }
+            Keyword(Time) => {
+                self.next();
+                self.consume_keyword(Get)?;
+                Ok(SpecialPortInstanceKind::TimeGet)
+            }
+            _ => Err(self.cursor.err_expected_one_of(
+                "special port expected",
+                vec![
+                    Keyword(Command),
+                    Keyword(Event),
+                    Keyword(Param),
+                    Keyword(Product),
+                    Keyword(Telemetry),
+                    Keyword(Text),
+                    Keyword(Time),
+                ],
+            )),
+        }?;
+
+        self.consume_keyword(Port)?;
+        let name = self.ident()?;
+
+        let priority = match self.peek(0) {
+            Keyword(Priority) => {
+                self.next();
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        let queue_full = match self.peek(0) {
+            Keyword(Assert) | Keyword(Block) | Keyword(Drop) | Keyword(Hook) => {
+                Some(self.queue_full()?)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecPortInstance::Special {
+                input_kind,
+                kind,
+                name,
+                priority,
+                queue_full,
+            },
+            first,
+        ))
+    }
+
+    fn spec_port_instance(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+        match self.peek(0) {
+            Keyword(Async) | Keyword(Guarded) | Keyword(Sync) => match self.peek(1) {
+                Keyword(Input) => self.spec_port_general(),
+                _ => self.spec_port_special(),
+            },
+            Keyword(Output) => self.spec_port_general(),
+            _ => self.spec_port_special(),
+        }
+    }
+
+    fn queue_full(&mut self) -> ParseResult<QueueFull> {
+        let out = match self.peek(0) {
+            Keyword(Assert) => Ok(QueueFull::Assert),
+            Keyword(Block) => Ok(QueueFull::Block),
+            Keyword(Drop) => Ok(QueueFull::Drop),
+            Keyword(Hook) => Ok(QueueFull::Hook),
+            _ => Err(self.cursor.err_expected_one_of(
+                "queue full expected",
+                vec![
+                    Keyword(Assert),
+                    Keyword(Block),
+                    Keyword(Drop),
+                    Keyword(Hook),
+                ],
+            )),
+        }?;
+
+        self.next();
+        Ok(out)
     }
 
     fn pre_annotation(&mut self) -> Vec<String> {
@@ -925,23 +1215,23 @@ impl<'a> Parser<'a> {
     }
 
     fn qual_ident(&mut self) -> ParseResult<AstNode<QualIdent>> {
-        Err(ParseError::NotImplemented {})
+        todo!()
     }
 
     fn type_name(&mut self) -> ParseResult<AstNode<TypeName>> {
-        Err(ParseError::NotImplemented {})
+        todo!()
     }
 
     fn expr(&mut self) -> ParseResult<AstNode<Expr>> {
-        Err(ParseError::NotImplemented {})
+        todo!()
     }
 
     fn lit_string(&mut self) -> ParseResult<AstNode<String>> {
-        Err(ParseError::NotImplemented {})
+        todo!()
     }
 
     fn transition_expr(&mut self) -> ParseResult<AstNode<TransitionExpr>> {
-        Err(ParseError::NotImplemented {})
+        todo!()
     }
 
     /// Convenience function to consume a keyword

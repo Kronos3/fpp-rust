@@ -250,7 +250,7 @@ pub enum SpecPortInstance {
         kind: SpecialPortInstanceKind,
         name: Ident,
         priority: Option<AstNode<Expr>>,
-        queue_full: Option<AstNode<QueueFull>>,
+        queue_full: Option<QueueFull>,
     }
 }
 
