@@ -1,9 +1,9 @@
-use std::str::Chars;
 use crate::token::{Token, TokenKind};
-use fpp_core::SourceFile;
+use fpp_core::{BytePos, SourceFile};
+use std::str::Chars;
 
 pub struct Lexer<'a> {
-    pos: u32,
+    pos: BytePos,
     file: SourceFile,
 
     len_remaining: usize,
@@ -42,27 +42,15 @@ impl<'a> Lexer<'a> {
             match self.next_token_kind() {
                 TokenKind::EOF => return None,
                 TokenKind::Whitespace => {}
-                kind => return Some(Token::new(kind, self.file, start, self.pos_within_token())),
+                kind => {
+                    return Some(Token::new(kind, self.file, start, self.pos_within_token()));
+                }
             }
         }
     }
 
     pub fn as_str(&self) -> &'a str {
         self.chars.as_str()
-    }
-
-    /// Returns the last eaten symbol (or `'\0'` in release builds).
-    /// (For debug assertions only.)
-    pub(crate) fn prev(&self) -> char {
-        #[cfg(debug_assertions)]
-        {
-            self.prev
-        }
-
-        #[cfg(not(debug_assertions))]
-        {
-            EOF_CHAR
-        }
     }
 
     /// Peeks the next symbol from the input stream without consuming it.
@@ -97,8 +85,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Returns amount of already consumed symbols.
-    pub(crate) fn pos_within_token(&self) -> u32 {
-        (self.len_remaining - self.chars.as_str().len()) as u32
+    pub(crate) fn pos_within_token(&self) -> BytePos {
+        self.len_remaining - self.chars.as_str().len()
     }
 
     /// Resets the number of bytes consumed to 0.
@@ -125,7 +113,7 @@ impl<'a> Lexer<'a> {
 
     /// Eats symbols while predicate returns true or until the end of file is reached.
     pub(crate) fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
-        // It was tried making optimized version of this for eg. line comments, but
+        // It was tried making optimized version of this for e.g. line comments, but
         // LLVM can inline all of this and compile it down to fast iteration over bytes.
         while predicate(self.first()) && !self.is_eof() {
             self.bump();

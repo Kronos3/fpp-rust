@@ -167,7 +167,7 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, file: SourceFile, start: BytePos, length: u32) -> Token {
+    pub fn new(kind: TokenKind, file: SourceFile, start: BytePos, length: BytePos) -> Token {
         Token {
             kind,
             span: Span::new(file, start, length),

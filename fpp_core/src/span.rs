@@ -1,11 +1,36 @@
-use crate::context::with;
+use crate::BytePos;
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic::Level;
 use crate::file::SourceFile;
+use crate::interface::with;
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Clone, Copy)]
 pub struct Span {
-    handle: usize,
+    pub(crate) handle: usize,
+}
+
+impl Debug for Span {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let file = self.file();
+        let start = self.start();
+        let end = self.end();
+        f.write_str("Span\n")?;
+        f.write_fmt(format_args!(
+            "start {}:{}:{}\n",
+            file.path(),
+            start.line(),
+            start.column()
+        ))?;
+        f.write_fmt(format_args!(
+            "end {}:{}:{}\n",
+            file.path(),
+            end.line(),
+            end.column()
+        ))?;
+
+        Ok(())
+    }
 }
 
 macro_rules! diagnostic_method {
@@ -18,39 +43,19 @@ macro_rules! diagnostic_method {
     };
 }
 
-#[derive(Debug)]
-pub struct Position {
-    pos: u32,
-    source_file: SourceFile,
-}
-
 impl Span {
-    pub(crate) fn internal_new(handle: usize) -> Span {
-        Span { handle }
-    }
-
-    pub fn eof(source_file: SourceFile) -> Span {
-        todo!()
-    }
-
-    pub fn new(file: SourceFile, start: u32, length: u32) -> Span {
-        with(|w| w.add_span(file, start, length))
+    pub fn new(file: SourceFile, start: BytePos, length: BytePos) -> Span {
+        with(|w| w.span_add(file, start, length))
     }
 
     /// Gets the start position of the span
     pub fn start(&self) -> Position {
-        let pos = with(|w| w.span_start(self));
-        let source_file = with(|w| w.span_file(self));
-
-        Position { pos, source_file }
+        with(|w| w.span_start(self))
     }
 
     /// Creates an empty span pointing to directly after this span.
     pub fn end(&self) -> Position {
-        let pos = with(|w| w.span_end(self));
-        let source_file = with(|w| w.span_file(self));
-
-        Position { pos, source_file }
+        with(|w| w.span_end(self))
     }
 
     /// The path to the source file in which this span occurs, for display purposes.
@@ -64,25 +69,46 @@ impl Span {
     diagnostic_method!(help, Level::Help);
 }
 
+#[derive(Debug)]
+pub struct Position {
+    pub(crate) pos: BytePos,
+    pub(crate) line: u32,
+    pub(crate) column: u32,
+    pub(crate) source_file: SourceFile,
+}
+
 impl Position {
     pub fn start(source_file: SourceFile) -> Position {
         Position {
             pos: 0,
+            line: 0,
+            column: 0,
             source_file,
         }
     }
 
-    pub fn pos(&self) -> u32 {
+    pub fn pos(&self) -> BytePos {
         self.pos
     }
 
     /// Get the zero indexed line number at this position in the source file
     pub fn line(&self) -> u32 {
-        0
+        self.line
     }
 
     /// Get the zero indexed column number at this position in the source file
     pub fn column(&self) -> u32 {
-        0
+        self.column
+    }
+}
+
+impl Display for Position {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{}:{}:{}",
+            self.source_file,
+            self.line + 1,
+            self.column + 1
+        ))
     }
 }

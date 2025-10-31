@@ -255,7 +255,7 @@ impl<'a> Lexer<'a> {
                     if self.first() == '\"' && self.second() == '\"' {
                         self.bump_bytes(2);
                         return TokenKind::LiteralString {
-                            multi_line_indent: indent,
+                            // TODO multi_line_indent: indent,
                         };
                     }
                 }
@@ -277,7 +277,7 @@ impl<'a> Lexer<'a> {
                 // Search for triple quotes """
                 Some('\"') => {
                     return TokenKind::LiteralString {
-                        multi_line_indent: -1,
+                        // TODO multi_line_indent: -1,
                     };
                 }
 

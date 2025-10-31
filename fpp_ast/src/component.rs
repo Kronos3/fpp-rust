@@ -1,5 +1,6 @@
 use crate::{*};
 
+#[derive(Debug)]
 pub enum ComponentMember {
     DefAbsType(AstNode<DefAbsType>),
     DefAliasType(AstNode<DefAliasType>),
@@ -22,6 +23,7 @@ pub enum ComponentMember {
     SpecImportInterface(AstNode<SpecImport>),
 }
 
+#[derive(Debug)]
 pub enum InputPortKind {
     Async,
     Guarded,
@@ -29,6 +31,7 @@ pub enum InputPortKind {
 }
 
 /** Queue full behavior */
+#[derive(Debug)]
 pub enum QueueFull {
     Assert,
     Block,
@@ -36,6 +39,7 @@ pub enum QueueFull {
     Hook,
 }
 
+#[derive(Debug)]
 pub struct SpecCommand {
     pub kind: InputPortKind,
     pub name: Ident,
@@ -45,12 +49,14 @@ pub struct SpecCommand {
     pub queue_full: Option<QueueFull>,
 }
 
+#[derive(Debug)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<AstNode<Expr>>,
     pub default_priority: Option<AstNode<Expr>>,
 }
 
+#[derive(Debug)]
 pub enum EventSeverity {
     ActivityHigh,
     ActivityLow,
@@ -61,11 +67,13 @@ pub enum EventSeverity {
     WarningLow,
 }
 
+#[derive(Debug)]
 pub struct EventThrottle {
     pub count: AstNode<Expr>,
     pub every: Option<AstNode<Expr>>
 }
 
+#[derive(Debug)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
@@ -76,6 +84,7 @@ pub struct SpecEvent {
 }
 
 /** Internal port specifier */
+#[derive(Debug)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -83,6 +92,7 @@ pub struct SpecInternalPort {
     pub queue_full: Option<QueueFull>,
 }
 
+#[derive(Debug)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: AstNode<TypeName>,
@@ -93,11 +103,13 @@ pub struct SpecParam {
     pub is_external: bool
 }
 
+#[derive(Debug)]
 pub enum GeneralPortInstanceKind {
     Input(InputPortKind),
     Output
 }
 
+#[derive(Debug)]
 pub enum SpecialPortInstanceKind {
     CommandRecv,
     CommandReg,
@@ -114,11 +126,13 @@ pub enum SpecialPortInstanceKind {
     TimeGet,
 }
 
+#[derive(Debug)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
+#[derive(Debug)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: AstNode<TypeName>,
@@ -126,6 +140,7 @@ pub struct SpecRecord {
     pub id: Option<AstNode<Expr>>,
 }
 
+#[derive(Debug)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: AstNode<QualIdent>,
@@ -133,22 +148,26 @@ pub struct SpecStateMachineInstance {
     pub queue_full: Option<QueueFull>
 }
 
+#[derive(Debug)]
 pub enum TlmChannelUpdate {
     Always,
     OnChange,
 }
 
+#[derive(Debug)]
 pub enum TlmChannelLimitKind {
     Red,
     Orange,
     Yellow,
 }
 
+#[derive(Debug)]
 pub struct TlmChannelLimit {
     pub kind: AstNode<TlmChannelLimitKind>,
     pub value: AstNode<Expr>,
 }
 
+#[derive(Debug)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: AstNode<TypeName>,

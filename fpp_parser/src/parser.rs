@@ -1,12 +1,10 @@
 use crate::cursor::Cursor;
 use crate::error::{ParseError, ParseResult};
+use crate::token::KeywordKind::*;
+use crate::token::TokenKind::*;
 use crate::token::{KeywordKind, Token, TokenKind};
 use fpp_ast::*;
 use fpp_core::{Positioned, SourceFile};
-use std::str::Chars;
-
-use crate::token::KeywordKind::*;
-use crate::token::TokenKind::*;
 
 struct Parser<'a> {
     cursor: Cursor<'a>,
@@ -19,13 +17,17 @@ enum ElementParsingResult<T> {
     None,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(source_file: SourceFile, chars: Chars<'a>) -> Parser<'a> {
-        Parser {
-            cursor: Cursor::new(source_file, chars),
-        }
-    }
+pub fn parse(source_file: SourceFile) -> ParseResult<AstNode<DefComponent>> {
+    let content = source_file.read();
+    let chars = content.as_str().chars();
+    let mut parser = Parser {
+        cursor: Cursor::new(source_file, chars),
+    };
 
+    parser.component()
+}
+
+impl<'a> Parser<'a> {
     pub(crate) fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
         self.cursor.peek_span(n)
     }
@@ -1606,11 +1608,109 @@ impl<'a> Parser<'a> {
     }
 
     fn qual_ident(&mut self) -> ParseResult<AstNode<QualIdent>> {
-        todo!()
+        let first = self.ident()?;
+        let first_span = first.span();
+        let mut out = vec![];
+        while self.peek(0) == Dot {
+            self.next();
+            out.push(self.ident()?)
+        }
+
+        Ok(out.into_iter().fold(
+            self.node(QualIdent::Unqualified(first), first_span),
+            |q, ident| {
+                let q_span = q.span();
+                self.node(
+                    QualIdent::Qualified {
+                        qualifier: Box::new(q),
+                        name: ident,
+                    },
+                    q_span,
+                )
+            },
+        ))
     }
 
     fn type_name(&mut self) -> ParseResult<AstNode<TypeName>> {
-        todo!()
+        let first_span = self.current_span()?;
+        let tn = match self.peek(0) {
+            Keyword(Bool) => {
+                self.next();
+                Ok(TypeName::Bool())
+            }
+            Keyword(I8) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::I8))
+            }
+            Keyword(U8) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::U8))
+            }
+            Keyword(I16) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::I16))
+            }
+            Keyword(U16) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::U16))
+            }
+            Keyword(I32) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::I32))
+            }
+            Keyword(U32) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::U32))
+            }
+            Keyword(I64) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::I64))
+            }
+            Keyword(U64) => {
+                self.next();
+                Ok(TypeName::Integer(IntegerType::U64))
+            }
+            Keyword(F32) => {
+                self.next();
+                Ok(TypeName::Floating(FloatType::F32))
+            }
+            Keyword(F64) => {
+                self.next();
+                Ok(TypeName::Floating(FloatType::F64))
+            }
+            Keyword(String_) => {
+                self.next();
+                let size = match self.peek(0) {
+                    Keyword(Size) => {
+                        self.next();
+                        Some(self.expr()?)
+                    }
+                    _ => None,
+                };
+                Ok(TypeName::String(size))
+            }
+            Identifier => Ok(TypeName::QualIdent(self.qual_ident()?)),
+            _ => Err(self.cursor.err_expected_one_of(
+                "type name expected",
+                vec![
+                    Keyword(Bool),
+                    Keyword(I8),
+                    Keyword(U8),
+                    Keyword(I16),
+                    Keyword(U16),
+                    Keyword(I32),
+                    Keyword(U32),
+                    Keyword(I64),
+                    Keyword(U64),
+                    Keyword(F32),
+                    Keyword(F64),
+                    Keyword(String_),
+                    Identifier,
+                ],
+            )),
+        }?;
+
+        Ok(self.node(tn, first_span))
     }
 
     fn expr(&mut self) -> ParseResult<AstNode<Expr>> {

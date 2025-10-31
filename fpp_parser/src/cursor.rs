@@ -25,7 +25,7 @@ impl<'a> Cursor<'a> {
             Some(self.token_queue.get(n).unwrap())
         } else {
             // Queue up as many tokens as we need
-            for _ in 0..n {
+            for _ in 0..n + 1 {
                 match self.lexer.next_token() {
                     None => return None,
                     Some(tok) => self.token_queue.push_back(tok),

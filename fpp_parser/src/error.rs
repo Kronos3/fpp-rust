@@ -2,7 +2,7 @@ use fpp_core::{SourceFile, Position};
 use crate::token::{TokenKind};
 
 #[derive(Debug)]
-pub(crate) enum ParseError {
+pub enum ParseError {
     ExpectedOneOf {
         expected: Vec<TokenKind>,
         source_file: SourceFile,

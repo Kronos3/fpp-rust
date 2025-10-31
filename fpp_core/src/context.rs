@@ -1,67 +1,136 @@
-use std::cell::Cell;
+use crate::error::Error;
 use crate::file::SourceFile;
-use crate::NodeId;
 use crate::span::Span;
+use crate::{BytePos, NodeId, Position};
+use std::collections::HashMap;
+use std::fs;
 
-struct SpanData {
-    file: SourceFile,
-    start: u32,
-    length: u32,
+pub(crate) struct SpanData {
+    pub file: SourceFile,
+    pub start: BytePos,
+    pub length: BytePos,
 }
 
-struct CompilerContext {
-    spans: Vec<SpanData>,
+pub(crate) struct SourceFileData {
+    pub handle: usize,
+    pub path: String,
+    pub content: String,
+    pub lines: Vec<BytePos>,
 }
 
-impl CompilerContext {
-    pub fn add_span(
-        self: &mut CompilerContext,
-        file: SourceFile,
-        start: u32,
-        length: u32,
-    ) -> Span {
-        let handle = self.spans.len();
-        self.spans.push(SpanData{
-            file, start, length
-        });
+impl SourceFileData {
+    pub fn position(&self, offset: BytePos) -> Position {
+        let line = self.lines.binary_search(&offset).unwrap_or_else(|idx| idx);
+        let def = 0;
+        let line_offset = *self.lines.get(line).unwrap_or(&def);
 
-        Span::internal_new(handle)
+        Position {
+            pos: offset,
+            line: line as u32,
+            column: (offset - line_offset) as u32,
+            source_file: SourceFile {
+                handle: self.handle,
+            },
+        }
     }
 }
 
-pub(crate) trait CompilerInterface {
-    /** Ast Node related functions */
-    fn add_node(&self, span: &Span) -> NodeId;
-    fn node_span(&self, node: &NodeId) -> Span;
+pub struct CompilerContext {
+    spans: Vec<SpanData>,
+    files: Vec<SourceFileData>,
 
-    /** Span related functions */
-
-    fn add_span(
-        &self,
-        file: SourceFile,
-        start: u32,
-        length: u32
-    ) -> Span;
-
-    fn span_start(&self, s: &Span) -> u32;
-    fn span_end(&self, s: &Span) -> u32;
-    fn span_line(&self, s: &Span) -> u32;
-    fn span_column(&self, s: &Span) -> u32;
-    fn span_file(&self, s: &Span) -> SourceFile;
+    current_node_id: NodeId,
+    nodes: HashMap<NodeId, usize>,
 }
 
-// A thread local variable that stores a pointer to [`CompilerInterface`].
-scoped_tls::scoped_thread_local!(static TLV: Cell<*const ()>);
+impl CompilerContext {
+    pub fn new() -> CompilerContext {
+        CompilerContext {
+            spans: vec![],
+            files: vec![],
+            current_node_id: NodeId { handle: 1 },
+            nodes: HashMap::new(),
+        }
+    }
 
-/// Execute the given function with access the [`CompilerInterface`].
-///
-/// I.e., This function will load the current interface and calls a function with it.
-/// Do not nest these, as that will ICE.
-pub(crate) fn with<R>(f: impl FnOnce(&dyn CompilerInterface) -> R) -> R {
-    assert!(TLV.is_set());
-    TLV.with(|tlv| {
-        let ptr = tlv.get();
-        assert!(!ptr.is_null());
-        f(unsafe { *(ptr as *const &dyn CompilerInterface) })
-    })
+    fn compute_lines(src: &str) -> Vec<BytePos> {
+        let mut out = vec![];
+        for (i, c) in src.chars().enumerate() {
+            if c == '\n' {
+                out.push(BytePos::from(i))
+            }
+        }
+
+        out
+    }
+
+    pub(crate) fn file_open(&mut self, path: &str) -> Result<SourceFile, Error> {
+        let handle = self.files.len();
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(err) => return Err(Error(format!("failed to read file: {}", err))),
+        };
+        let lines = Self::compute_lines(content.as_str());
+
+        self.files.push(SourceFileData {
+            handle,
+            path: path.to_string(),
+            content,
+            lines,
+        });
+
+        Ok(SourceFile { handle })
+    }
+
+    pub(crate) fn file_from(&mut self, src: &str) -> SourceFile {
+        let handle = self.files.len();
+
+        self.files.push(SourceFileData {
+            handle,
+            path: "<input>".to_string(),
+            content: src.to_string(),
+            lines: CompilerContext::compute_lines(src),
+        });
+
+        SourceFile { handle }
+    }
+
+    pub(crate) fn node_add(&mut self, span: &Span) -> NodeId {
+        let node_id = self.current_node_id;
+        self.current_node_id = self.current_node_id.next();
+        self.nodes.insert(node_id, span.handle);
+        node_id
+    }
+
+    pub(crate) fn span_add(&mut self, file: SourceFile, start: BytePos, length: BytePos) -> Span {
+        let handle = self.spans.len();
+        self.spans.push(SpanData {
+            file,
+            start,
+            length,
+        });
+
+        Span { handle }
+    }
+
+    pub(crate) fn node_get_span(&self, node: &NodeId) -> Span {
+        Span {
+            handle: *self
+                .nodes
+                .get(node)
+                .expect(&format!("invalid node: {}", node.handle)),
+        }
+    }
+
+    pub(crate) fn span_get(&self, span: &Span) -> &SpanData {
+        self.spans
+            .get(span.handle)
+            .expect(&format!("invalid span: {}", span.handle))
+    }
+
+    pub(crate) fn file_get(&self, file: &SourceFile) -> &SourceFileData {
+        self.files
+            .get(file.handle)
+            .expect(&format!("invalid file: {}", file.handle))
+    }
 }

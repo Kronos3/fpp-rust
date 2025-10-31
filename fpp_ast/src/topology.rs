@@ -1,11 +1,13 @@
 use crate::{*};
 
 /** Topology definition */
+#[derive(Debug)]
 pub struct DefTopology {
     pub name: Ident,
     pub members: Vec<Annotated<TopologyMember>>,
 }
 
+#[derive(Debug)]
 pub enum TopologyMember {
     SpecCompInstance(SpecCompInstance),
     SpecConnectionGraph(SpecConnectionGraph),
@@ -14,21 +16,25 @@ pub enum TopologyMember {
     SpecTopImport(SpecImport),
 }
 
+#[derive(Debug)]
 pub enum CompInstanceVisibility {
     Private,
     Public,
 }
 
+#[derive(Debug)]
 pub struct SpecCompInstance {
     pub visibility: CompInstanceVisibility,
     pub instance: QualIdent,
 }
 
+#[derive(Debug)]
 pub struct PortInstanceIdentifier {
     pub component_instance: QualIdent,
     pub port_name: Ident,
 }
 
+#[derive(Debug)]
 pub struct Connection {
     pub is_unmatched: bool,
     pub from_port: PortInstanceIdentifier,
@@ -37,6 +43,7 @@ pub struct Connection {
     pub to_index: Option<Expr>,
 }
 
+#[derive(Debug)]
 pub enum ConnectionPatternKind {
     Command,
     Event,
@@ -47,6 +54,7 @@ pub enum ConnectionPatternKind {
     Time,
 }
 
+#[derive(Debug)]
 pub enum SpecConnectionGraph {
     Direct {
         name: Ident,
@@ -60,22 +68,26 @@ pub enum SpecConnectionGraph {
     },
 }
 
+#[derive(Debug)]
 pub struct TlmChannelIdentifier {
     pub component_instance: QualIdent,
     pub channel_name: Ident,
 }
 
+#[derive(Debug)]
 pub struct SpecTlmPacketSet {
     pub name: Ident,
     pub members: Vec<Annotated<TlmPacketSetMember>>,
     pub omitted: Vec<Annotated<TlmChannelIdentifier>>,
 }
 
+#[derive(Debug)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
     SpecTlmPacket(SpecTlmPacket)
 }
 
+#[derive(Debug)]
 pub struct SpecTlmPacket {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -83,6 +95,7 @@ pub struct SpecTlmPacket {
     pub members: Vec<TlmPacketMember>,
 }
 
+#[derive(Debug)]
 pub enum TlmPacketMember {
     SpecInclude(SpecInclude),
     TlmChannelIdentifier(TlmChannelIdentifier)
