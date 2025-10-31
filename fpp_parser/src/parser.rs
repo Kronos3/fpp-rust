@@ -7,7 +7,6 @@ use std::str::Chars;
 
 use crate::token::KeywordKind::*;
 use crate::token::TokenKind::*;
-pub use std::string::String;
 
 struct Parser<'a> {
     cursor: Cursor<'a>,
@@ -276,9 +275,32 @@ impl<'a> Parser<'a> {
             Keyword(Import) => Ok(ComponentMember::SpecImportInterface(
                 self.spec_import_interface()?,
             )),
-            _ => Err(self
-                .cursor
-                .err_expected_one_of("component member expected", vec![])),
+            _ => Err(self.cursor.err_expected_one_of(
+                "component member expected",
+                vec![
+                    Keyword(Type),
+                    Keyword(Array),
+                    Keyword(Constant),
+                    Keyword(Enum),
+                    Keyword(State),
+                    Keyword(Struct),
+                    Keyword(Async),
+                    Keyword(Sync),
+                    Keyword(Guarded),
+                    Keyword(Command),
+                    Keyword(Text),
+                    Keyword(Time),
+                    Keyword(Product),
+                    Keyword(Event),
+                    Keyword(Include),
+                    Keyword(Internal),
+                    Keyword(Match),
+                    Keyword(External),
+                    Keyword(Param),
+                    Keyword(Telemetry),
+                    Keyword(Import),
+                ],
+            )),
         }
     }
 
@@ -334,25 +356,8 @@ impl<'a> Parser<'a> {
             }
         };
 
-        let priority = {
-            match self.peek(0) {
-                Keyword(Priority) => {
-                    self.next();
-                    Some(self.expr()?)
-                }
-                _ => None,
-            }
-        };
-
-        let cpu = {
-            match self.peek(0) {
-                Keyword(Cpu) => {
-                    self.next();
-                    Some(self.expr()?)
-                }
-                _ => None,
-            }
-        };
+        let priority = self.opt_expr(Priority)?;
+        let cpu = self.opt_expr(Cpu)?;
 
         let init_specs = {
             match self.peek(0) {
@@ -463,13 +468,7 @@ impl<'a> Parser<'a> {
         self.consume(Colon)?;
         let state_machine = self.qual_ident()?;
 
-        let priority = match self.peek(0) {
-            Keyword(Priority) => {
-                self.next();
-                Some(self.expr()?)
-            }
-            _ => None,
-        };
+        let priority = self.opt_expr(Priority)?;
 
         let queue_full = match self.peek(0) {
             Keyword(Assert) => {
@@ -593,10 +592,10 @@ impl<'a> Parser<'a> {
     fn do_expr(&mut self) -> ParseResult<DoExpr> {
         self.consume_keyword(Do)?;
         self.consume(LeftCurly)?;
-        let elts = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
+        let elements = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(DoExpr(elts))
+        Ok(DoExpr(elements))
     }
 
     fn spec_state_exit(&mut self) -> ParseResult<AstNode<SpecStateExit>> {
@@ -629,10 +628,7 @@ impl<'a> Parser<'a> {
     }
 
     fn transition_or_do(&mut self) -> ParseResult<TransitionOrDo> {
-        let first_span = match self.peek_span(0) {
-            Some(span) => span,
-            _ => return Err(self.cursor.err_unexpected_eof()),
-        };
+        let first_span = self.current_span()?;
 
         let do_expr = match self.peek(0) {
             Keyword(Do) => Some(self.do_expr()?),
@@ -661,6 +657,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn transition_expr(&mut self) -> ParseResult<AstNode<TransitionExpr>> {
+        let first_span = self.current_span()?;
+
+        let do_expr = match self.peek(0) {
+            Keyword(Do) => self.do_expr()?,
+            _ => DoExpr(vec![]),
+        };
+
+        match self.peek(0) {
+            Keyword(Enter) => {
+                self.next();
+                let target = self.qual_ident()?;
+                Ok(self.node(
+                    TransitionExpr {
+                        actions: do_expr,
+                        target,
+                    },
+                    first_span,
+                ))
+            }
+            _ => Err(self.cursor.err_expected_one_of(
+                "expected transition expression",
+                vec![Keyword(Enter), Keyword(Do)],
+            )),
+        }
+    }
+
     fn def_guard(&mut self) -> ParseResult<AstNode<DefGuard>> {
         let first = self.consume_keyword(Guard)?;
         let name = self.ident()?;
@@ -673,6 +696,326 @@ impl<'a> Parser<'a> {
         };
 
         Ok(self.node(DefGuard { name, type_name }, first.span()))
+    }
+
+    fn spec_container(&mut self) -> ParseResult<AstNode<SpecContainer>> {
+        let first = self.consume_keyword(Product)?;
+        self.consume_keyword(Container)?;
+        let name = self.ident()?;
+        let id = self.opt_expr(Id)?;
+        let default_priority = match self.peek(0) {
+            Keyword(Default) => {
+                self.next();
+                self.consume_keyword(Priority)?;
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecContainer {
+                name,
+                id,
+                default_priority,
+            },
+            first.span(),
+        ))
+    }
+
+    fn spec_record(&mut self) -> ParseResult<AstNode<SpecRecord>> {
+        let first = self.consume_keyword(Product)?;
+        self.consume_keyword(Record)?;
+        let name = self.ident()?;
+        self.consume(Colon)?;
+        let record_type = self.type_name()?;
+        let is_array = match self.peek(0) {
+            Keyword(Array) => {
+                self.next();
+                true
+            }
+            _ => false,
+        };
+
+        let id = self.opt_expr(Id)?;
+        Ok(self.node(
+            SpecRecord {
+                name,
+                record_type,
+                is_array,
+                id,
+            },
+            first.span(),
+        ))
+    }
+
+    fn spec_event(&mut self) -> ParseResult<AstNode<SpecEvent>> {
+        let first = self.consume_keyword(Event)?;
+        let name = self.ident()?;
+        let params = self.formal_param_list()?;
+        self.consume_keyword(Severity)?;
+        let severity = match self.peek(0) {
+            Keyword(Activity) => {
+                self.next();
+                match self.peek(0) {
+                    Keyword(High) => Ok(EventSeverity::ActivityHigh),
+                    Keyword(Low) => Ok(EventSeverity::ActivityLow),
+                    _ => Err(self.cursor.err_expected_one_of(
+                        "severity level expected",
+                        vec![Keyword(High), Keyword(Low)],
+                    )),
+                }
+            }
+            Keyword(Warning) => {
+                self.next();
+                match self.peek(0) {
+                    Keyword(High) => Ok(EventSeverity::WarningHigh),
+                    Keyword(Low) => Ok(EventSeverity::WarningLow),
+                    _ => Err(self.cursor.err_expected_one_of(
+                        "severity level expected",
+                        vec![Keyword(High), Keyword(Low)],
+                    )),
+                }
+            }
+            Keyword(Command) => {
+                self.next();
+                Ok(EventSeverity::Command)
+            }
+            Keyword(Diagnostic) => {
+                self.next();
+                Ok(EventSeverity::Diagnostic)
+            }
+            Keyword(Fatal) => {
+                self.next();
+                Ok(EventSeverity::Fatal)
+            }
+            _ => Err(self.cursor.err_expected_one_of(
+                "severity level expected",
+                vec![
+                    Keyword(Activity),
+                    Keyword(Warning),
+                    Keyword(Command),
+                    Keyword(Diagnostic),
+                    Keyword(Fatal),
+                ],
+            )),
+        }?;
+
+        let id = self.opt_expr(Id)?;
+        let format = match self.peek(0) {
+            Keyword(Format) => {
+                self.next();
+                Ok(self.lit_string()?)
+            }
+            _ => Err(self
+                .cursor
+                .err_expected_one_of("expected event format", vec![Keyword(Format)])),
+        }?;
+
+        let throttle = match self.peek(0) {
+            Keyword(Throttle) => Some(self.event_throttle()?),
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecEvent {
+                name,
+                params,
+                severity,
+                id,
+                format,
+                throttle,
+            },
+            first.span(),
+        ))
+    }
+
+    fn event_throttle(&mut self) -> ParseResult<AstNode<EventThrottle>> {
+        let first = self.consume_keyword(Throttle)?;
+        let count = self.expr()?;
+        let every = self.opt_expr(Every)?;
+
+        Ok(self.node(EventThrottle { count, every }, first.span()))
+    }
+
+    fn spec_include(&mut self) -> ParseResult<AstNode<SpecInclude>> {
+        let first = self.consume_keyword(Include)?;
+        let file = self.lit_string()?;
+        Ok(self.node(SpecInclude { file }, first.span()))
+    }
+
+    fn spec_import_interface(&mut self) -> ParseResult<AstNode<SpecImport>> {
+        let first = self.consume_keyword(Import)?;
+        let sym = self.qual_ident()?;
+        Ok(self.node(SpecImport { sym }, first.span()))
+    }
+
+    fn spec_internal_port(&mut self) -> ParseResult<AstNode<SpecInternalPort>> {
+        let first = self.consume_keyword(Internal)?;
+        self.consume_keyword(Port)?;
+        let name = self.ident()?;
+        let params = self.formal_param_list()?;
+        let priority = self.opt_expr(Priority)?;
+        let queue_full = self.opt_queue_full()?;
+        Ok(self.node(
+            SpecInternalPort {
+                name,
+                params,
+                priority,
+                queue_full,
+            },
+            first.span(),
+        ))
+    }
+
+    fn spec_port_matching(&mut self) -> ParseResult<AstNode<SpecPortMatching>> {
+        let first = self.consume_keyword(Match)?;
+        let port1 = self.ident()?;
+        self.consume_keyword(With)?;
+        let port2 = self.ident()?;
+        Ok(self.node(SpecPortMatching { port1, port2 }, first.span()))
+    }
+
+    fn spec_param(&mut self) -> ParseResult<AstNode<SpecParam>> {
+        let first_span = self.current_span()?;
+        let is_external = match self.peek(0) {
+            Keyword(External) => {
+                self.next();
+                true
+            }
+            _ => false,
+        };
+
+        self.consume_keyword(Param)?;
+        let name = self.ident()?;
+        self.consume(Colon)?;
+        let type_name = self.type_name()?;
+        let default = self.opt_expr(Default)?;
+        let id = self.opt_expr(Id)?;
+
+        let set_opcode = match self.peek(0) {
+            Keyword(Set) => {
+                self.next();
+                self.consume_keyword(Opcode)?;
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        let save_opcode = match self.peek(0) {
+            Keyword(Save) => {
+                self.next();
+                self.consume_keyword(Opcode)?;
+                Some(self.expr()?)
+            }
+            _ => None,
+        };
+
+        Ok(self.node(
+            SpecParam {
+                name,
+                type_name,
+                default,
+                id,
+                set_opcode,
+                save_opcode,
+                is_external,
+            },
+            first_span,
+        ))
+    }
+
+    fn spec_tlm_channel(&mut self) -> ParseResult<AstNode<SpecTlmChannel>> {
+        let first = self.consume_keyword(Telemetry)?;
+        let name = self.ident()?;
+        self.consume(Colon)?;
+        let type_name = self.type_name()?;
+        let id = self.opt_expr(Id)?;
+        let update = match self.peek(0) {
+            Keyword(Update) => {
+                self.next();
+                match self.peek(0) {
+                    Keyword(Always) => {
+                        self.next();
+                        Ok(Some(TlmChannelUpdate::Always))
+                    }
+                    Keyword(On) => {
+                        self.next();
+                        self.consume_keyword(Change)?;
+                        Ok(Some(TlmChannelUpdate::OnChange))
+                    }
+                    _ => Err(self.cursor.err_expected_one_of(
+                        "update kind expected",
+                        vec![Keyword(Always), Keyword(On)],
+                    )),
+                }
+            }
+            _ => Ok(None),
+        }?;
+
+        let format = match self.peek(0) {
+            Keyword(Format) => {
+                self.next();
+                Some(self.lit_string()?)
+            }
+            _ => None,
+        };
+
+        let low = match self.peek(0) {
+            Keyword(Low) => {
+                self.next();
+                self.limit_sequence()?
+            }
+            _ => vec![],
+        };
+        let high = match self.peek(0) {
+            Keyword(High) => {
+                self.next();
+                self.limit_sequence()?
+            }
+            _ => vec![],
+        };
+
+        Ok(self.node(
+            SpecTlmChannel {
+                name,
+                type_name,
+                id,
+                update,
+                format,
+                low,
+                high,
+            },
+            first.span(),
+        ))
+    }
+
+    fn limit_sequence(&mut self) -> ParseResult<Vec<TlmChannelLimit>> {
+        self.consume(LeftCurly)?;
+        let out = self.element_sequence(&Parser::limit, Comma, RightCurly)?;
+        self.consume(RightCurly)?;
+        Ok(out)
+    }
+
+    fn limit(&mut self) -> ParseResult<TlmChannelLimit> {
+        let kind = self.limit_kind()?;
+        let value = self.expr()?;
+        Ok(TlmChannelLimit { kind, value })
+    }
+
+    fn limit_kind(&mut self) -> ParseResult<AstNode<TlmChannelLimitKind>> {
+        let first_span = self.current_span()?;
+
+        let kind = match self.peek(0) {
+            Keyword(Orange) => Ok(TlmChannelLimitKind::Orange),
+            Keyword(Red) => Ok(TlmChannelLimitKind::Red),
+            Keyword(Yellow) => Ok(TlmChannelLimitKind::Yellow),
+            _ => Err(self.cursor.err_expected_one_of(
+                "telemetry channel limit kind expected",
+                vec![Keyword(Orange), Keyword(Red), Keyword(Yellow)],
+            )),
+        }?;
+
+        Ok(self.node(kind, first_span))
     }
 
     fn def_struct(&mut self) -> ParseResult<AstNode<DefStruct>> {
@@ -986,12 +1329,7 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        let queue_full = match self.peek(0) {
-            Keyword(Assert) | Keyword(Block) | Keyword(Drop) | Keyword(Hook) => {
-                Some(self.queue_full()?)
-            }
-            _ => None,
-        };
+        let queue_full = self.opt_queue_full()?;
 
         Ok(self.node(
             SpecPortInstance::Special {
@@ -1013,6 +1351,59 @@ impl<'a> Parser<'a> {
             },
             Keyword(Output) => self.spec_port_general(),
             _ => self.spec_port_special(),
+        }
+    }
+
+    fn spec_command(&mut self) -> ParseResult<AstNode<SpecCommand>> {
+        let first_span = self.current_span()?;
+
+        let kind = match self.peek(0) {
+            Keyword(Async) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(InputPortKind::Async)
+            }
+            Keyword(Guarded) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(InputPortKind::Async)
+            }
+            Keyword(Sync) => {
+                self.next();
+                self.consume_keyword(Input)?;
+                Ok(InputPortKind::Async)
+            }
+            _ => Err(self.cursor.err_expected_one_of(
+                "command kind expected",
+                vec![Keyword(Async), Keyword(Guarded), Keyword(Sync)],
+            )),
+        }?;
+
+        let name = self.ident()?;
+        let params = self.formal_param_list()?;
+        let opcode = self.opt_expr(Opcode)?;
+        let priority = self.opt_expr(Priority)?;
+        let queue_full = self.opt_queue_full()?;
+
+        Ok(self.node(
+            SpecCommand {
+                kind,
+                name,
+                params,
+                opcode,
+                priority,
+                queue_full,
+            },
+            first_span,
+        ))
+    }
+
+    fn opt_queue_full(&mut self) -> ParseResult<Option<QueueFull>> {
+        match self.peek(0) {
+            Keyword(Assert) | Keyword(Block) | Keyword(Drop) | Keyword(Hook) => {
+                Ok(Some(self.queue_full()?))
+            }
+            _ => Ok(None),
         }
     }
 
@@ -1227,11 +1618,64 @@ impl<'a> Parser<'a> {
     }
 
     fn lit_string(&mut self) -> ParseResult<AstNode<String>> {
-        todo!()
+        let tok = self.consume(LiteralString)?;
+        Ok(self.node(tok.text().to_string(), tok.span()))
     }
 
-    fn transition_expr(&mut self) -> ParseResult<AstNode<TransitionExpr>> {
-        todo!()
+    fn formal_param_list(&mut self) -> ParseResult<FormalParamList> {
+        match self.peek(0) {
+            LeftParen => {
+                self.next();
+                let members =
+                    self.annotated_element_sequence(&Parser::formal_param, Comma, RightParen)?;
+
+                self.consume(RightParen)?;
+                Ok(members)
+            }
+            _ => Ok(vec![]),
+        }
+    }
+
+    fn formal_param(&mut self) -> ParseResult<AstNode<FormalParam>> {
+        let first_span = self.current_span()?;
+
+        let kind = match self.peek(0) {
+            Keyword(Ref) => {
+                self.next();
+                FormalParamKind::Ref
+            }
+            _ => FormalParamKind::Value,
+        };
+
+        let name = self.ident()?;
+        self.consume(Colon)?;
+
+        let type_name = self.type_name()?;
+
+        Ok(self.node(
+            FormalParam {
+                kind,
+                name,
+                type_name,
+            },
+            first_span,
+        ))
+    }
+
+    fn opt_expr(&mut self, prefix_keyword: KeywordKind) -> ParseResult<Option<AstNode<Expr>>> {
+        if self.peek(0) == Keyword(prefix_keyword) {
+            self.next();
+            Ok(Some(self.expr()?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn current_span(&mut self) -> ParseResult<fpp_core::Span> {
+        match self.peek_span(0) {
+            Some(span) => Ok(span),
+            None => Err(self.cursor.err_unexpected_eof()),
+        }
     }
 
     /// Convenience function to consume a keyword

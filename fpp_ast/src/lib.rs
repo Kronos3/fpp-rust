@@ -106,7 +106,7 @@ pub struct FormalParam {
     pub type_name: AstNode<TypeName>,
 }
 
-pub type FormalParamList = Vec<Annotated<FormalParam>>;
+pub type FormalParamList = Vec<Annotated<AstNode<FormalParam>>>;
 
 
 /** Binary operation */

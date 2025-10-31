@@ -53,7 +53,7 @@ impl<'a> Lexer<'a> {
             '$' => {
                 if is_identifier_first(self.first()) {
                     self.eat_while(is_identifier_rest);
-                    TokenKind::Identifier
+                    TokenKind::Identifier // TODO(escaped ident)
                 } else {
                     TokenKind::Unknown('$')
                 }
@@ -110,9 +110,7 @@ impl<'a> Lexer<'a> {
                     // Empty string literal
                     ('\"', _) => {
                         self.bump();
-                        TokenKind::LiteralString {
-                            multi_line_indent: 0,
-                        }
+                        TokenKind::LiteralString
                     }
 
                     // String literal

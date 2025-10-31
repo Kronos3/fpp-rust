@@ -40,15 +40,15 @@ pub struct SpecCommand {
     pub kind: InputPortKind,
     pub name: Ident,
     pub params: FormalParamList,
-    pub opcode: Option<Expr>,
-    pub priority: Option<Expr>,
+    pub opcode: Option<AstNode<Expr>>,
+    pub priority: Option<AstNode<Expr>>,
     pub queue_full: Option<QueueFull>,
 }
 
 pub struct SpecContainer {
     pub name: Ident,
-    pub id: Option<Expr>,
-    pub default_priority: Option<Expr>,
+    pub id: Option<AstNode<Expr>>,
+    pub default_priority: Option<AstNode<Expr>>,
 }
 
 pub enum EventSeverity {
@@ -61,21 +61,26 @@ pub enum EventSeverity {
     WarningLow,
 }
 
+pub struct EventThrottle {
+    pub count: AstNode<Expr>,
+    pub every: Option<AstNode<Expr>>
+}
+
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
     pub severity: EventSeverity,
-    pub id: Option<Expr>,
+    pub id: Option<AstNode<Expr>>,
     pub format: AstNode<String>,
-    pub throttle: Option<Expr>,
+    pub throttle: Option<AstNode<EventThrottle>>,
 }
 
 /** Internal port specifier */
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
-    pub priority: Option<Expr>,
-    pub queue_full: QueueFull,
+    pub priority: Option<AstNode<Expr>>,
+    pub queue_full: Option<QueueFull>,
 }
 
 pub struct SpecParam {
@@ -85,6 +90,7 @@ pub struct SpecParam {
     pub id: Option<AstNode<Expr>>,
     pub set_opcode: Option<AstNode<Expr>>,
     pub save_opcode: Option<AstNode<Expr>>,
+    pub is_external: bool
 }
 
 pub enum GeneralPortInstanceKind {
@@ -115,9 +121,9 @@ pub struct SpecPortMatching {
 
 pub struct SpecRecord {
     pub name: Ident,
-    pub record_type: TypeName,
+    pub record_type: AstNode<TypeName>,
     pub is_array: bool,
-    pub id: Option<Expr>,
+    pub id: Option<AstNode<Expr>>,
 }
 
 pub struct SpecStateMachineInstance {
@@ -139,14 +145,14 @@ pub enum TlmChannelLimitKind {
 }
 
 pub struct TlmChannelLimit {
-    pub kind: TlmChannelLimitKind,
-    pub value: Expr,
+    pub kind: AstNode<TlmChannelLimitKind>,
+    pub value: AstNode<Expr>,
 }
 
 pub struct SpecTlmChannel {
     pub name: Ident,
-    pub type_name: TypeName,
-    pub id: Option<Expr>,
+    pub type_name: AstNode<TypeName>,
+    pub id: Option<AstNode<Expr>>,
     pub update: Option<TlmChannelUpdate>,
     pub format: Option<AstNode<String>>,
     pub low: Vec<TlmChannelLimit>,

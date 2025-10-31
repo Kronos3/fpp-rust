@@ -29,6 +29,7 @@ pub enum KeywordKind {
     Entry,
     Enum,
     Event,
+    Every,
     Exit,
     External,
     F32,
@@ -94,7 +95,7 @@ pub enum KeywordKind {
     Size,
     Stack,
     State,
-    String,
+    String_,
     Struct,
     Sync,
     Telemetry,
@@ -131,9 +132,7 @@ pub enum TokenKind {
     // Literals,
     LiteralFloat,
     LiteralInt,
-    LiteralString {
-        multi_line_indent: i32,
-    },
+    LiteralString,
 
     // Keywords,
     Keyword(KeywordKind),
