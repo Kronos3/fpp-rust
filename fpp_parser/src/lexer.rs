@@ -213,7 +213,7 @@ impl<'a> Lexer<'a> {
                                     "size" => (None, Keyword(Size)),
                                     "stack" => (None, Keyword(Stack)),
                                     "state" => (None, Keyword(State)),
-                                    "string_" => (None, Keyword(String_)),
+                                    "string" => (None, Keyword(String_)),
                                     "struct" => (None, Keyword(Struct)),
                                     "sync" => (None, Keyword(Sync)),
                                     "telemetry" => (None, Keyword(Telemetry)),

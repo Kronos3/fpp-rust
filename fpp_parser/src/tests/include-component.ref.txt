@@ -1,0 +1,31 @@
+[
+    DefComponent {
+        kind: Active,
+        name: Ident {
+            data: "C",
+            node_id: Span {
+                start: [ local path prefix ]/include-component.fpp:1:18,
+                end: [ local path prefix ]/include-component.fpp:1:19,
+            },
+        },
+        members: [
+            SpecInclude {
+                file: LitString {
+                    data: "constant.fppi",
+                    node_id: Span {
+                        start: [ local path prefix ]/include-component.fpp:3:12,
+                        end: [ local path prefix ]/include-component.fpp:4:1,
+                    },
+                },
+                node_id: Span {
+                    start: [ local path prefix ]/include-component.fpp:3:4,
+                    end: [ local path prefix ]/include-component.fpp:4:1,
+                },
+            },
+        ],
+        node_id: Span {
+            start: [ local path prefix ]/include-component.fpp:1:1,
+            end: [ local path prefix ]/include-component.fpp:6:1,
+        },
+    },
+]

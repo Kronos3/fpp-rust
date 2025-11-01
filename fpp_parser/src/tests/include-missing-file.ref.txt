@@ -1,0 +1,15 @@
+[
+    SpecInclude {
+        file: LitString {
+            data: "this-file-should-not-exist.fppi",
+            node_id: Span {
+                start: [ local path prefix ]/include-missing-file.fpp:1:9,
+                end: [ local path prefix ]/include-missing-file.fpp:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-missing-file.fpp:1:1,
+            end: [ local path prefix ]/include-missing-file.fpp:2:1,
+        },
+    },
+]

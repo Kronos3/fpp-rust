@@ -1,0 +1,30 @@
+[
+    DefModule {
+        name: Ident {
+            data: "M",
+            node_id: Span {
+                start: [ local path prefix ]/include-module.fpp:1:8,
+                end: [ local path prefix ]/include-module.fpp:1:9,
+            },
+        },
+        members: [
+            SpecInclude {
+                file: LitString {
+                    data: "constant.fppi",
+                    node_id: Span {
+                        start: [ local path prefix ]/include-module.fpp:3:12,
+                        end: [ local path prefix ]/include-module.fpp:4:1,
+                    },
+                },
+                node_id: Span {
+                    start: [ local path prefix ]/include-module.fpp:3:4,
+                    end: [ local path prefix ]/include-module.fpp:4:1,
+                },
+            },
+        ],
+        node_id: Span {
+            start: [ local path prefix ]/include-module.fpp:1:1,
+            end: [ local path prefix ]/include-module.fpp:6:1,
+        },
+    },
+]

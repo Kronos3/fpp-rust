@@ -1,0 +1,8 @@
+ExpectedToken {
+    expected: RightCurly,
+    got: Keyword(
+        U32,
+    ),
+    pos: [ local path prefix ]/state-machine.fpp:24:1,
+    msg: "unexpected token",
+}

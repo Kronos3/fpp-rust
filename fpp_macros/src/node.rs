@@ -86,6 +86,7 @@ pub(crate) fn ast_node_enum(input: &ItemEnum) -> TokenStream {
     // Build match arms for variants that have exactly one unnamed field.
     let mut span_arms = vec![];
     let mut id_arms = vec![];
+    let mut debug_arms = vec![];
 
     for v in &input.variants {
         let var_ident = &v.ident;
@@ -93,6 +94,7 @@ pub(crate) fn ast_node_enum(input: &ItemEnum) -> TokenStream {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
                 span_arms.push(quote! { #enum_ident::#var_ident(inner) => inner.span(), });
                 id_arms.push(quote! { #enum_ident::#var_ident(inner) => inner.id(), });
+                debug_arms.push(quote! { #enum_ident::#var_ident(inner) => inner.fmt(f), });
             }
             _ => {
                 // Return a compile_error if user applied macro on unsupported struct
@@ -124,6 +126,14 @@ pub(crate) fn ast_node_enum(input: &ItemEnum) -> TokenStream {
             fn id(&self) -> fpp_core::Node {
                 match self {
                     #( #id_arms )*
+                }
+            }
+        }
+
+        impl std::fmt::Debug for #enum_ident #ty_generics #where_clause {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    #( #debug_arms )*
                 }
             }
         }

@@ -10,7 +10,6 @@ pub struct DefStateMachine {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum StateMachineMember {
     DefAction(DefAction),
     DefChoice(DefChoice),
@@ -77,7 +76,6 @@ pub struct DefState {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum StateMember {
     DefChoice(DefChoice),
     DefState(DefState),

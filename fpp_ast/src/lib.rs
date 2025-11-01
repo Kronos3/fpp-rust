@@ -69,7 +69,6 @@ pub struct Qualified {
 }
 
 #[ast_node]
-#[derive(Debug)]
 pub enum QualIdent {
     Unqualified(Ident),
     Qualified(Qualified),
@@ -259,7 +258,6 @@ pub struct DefModule {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -329,7 +327,6 @@ pub struct SpecPortInstance {
 /** Interface member */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum InterfaceMember {
     SpecPortInstance(SpecPortInstance),
     SpecImport(SpecImport),

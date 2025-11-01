@@ -1,11 +1,14 @@
 use crate::token::TokenKind;
-use fpp_core::{Position, SourceFile};
+use fpp_core::{Position};
 
 #[derive(Debug)]
 pub enum ParseError {
+    FileOpen {
+        error: fpp_core::Error,
+    },
+
     ExpectedOneOf {
         expected: Vec<TokenKind>,
-        source_file: SourceFile,
         pos: Position,
         msg: &'static str,
     },
@@ -13,13 +16,11 @@ pub enum ParseError {
     ExpectedToken {
         expected: TokenKind,
         got: TokenKind,
-        source_file: SourceFile,
         pos: Position,
         msg: &'static str,
     },
 
     UnexpectedEof {
-        source_file: SourceFile,
         pos: Position,
     },
 }

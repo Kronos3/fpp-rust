@@ -1,0 +1,186 @@
+[
+    DefArray {
+        name: Ident {
+            data: "array",
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:1:7,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:1:13,
+            },
+        },
+        size: Expr {
+            kind: LiteralInt(
+                "3",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:1:17,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:1:18,
+            },
+        },
+        elt_type: TypeName {
+            kind: Integer(
+                U32,
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:1:20,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:2:1,
+            },
+        },
+        default: None,
+        format: None,
+        node_id: Span {
+            start: [ local path prefix ]/syntax-kwd-names.fpp:1:1,
+            end: [ local path prefix ]/syntax-kwd-names.fpp:2:1,
+        },
+    },
+    DefEnum {
+        name: Ident {
+            data: "enum",
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:2:7,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:2:12,
+            },
+        },
+        type_name: None,
+        constants: [
+            DefEnumConstant {
+                name: Ident {
+                    data: "command",
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:15,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:23,
+                    },
+                },
+                value: None,
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:2:15,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:2:23,
+                },
+            },
+            DefEnumConstant {
+                name: Ident {
+                    data: "event",
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:25,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:31,
+                    },
+                },
+                value: None,
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:2:25,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:2:31,
+                },
+            },
+            DefEnumConstant {
+                name: Ident {
+                    data: "telemetry",
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:2:33,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:2:43,
+                    },
+                },
+                value: None,
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:2:33,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:2:43,
+                },
+            },
+        ],
+        default: None,
+        node_id: Span {
+            start: [ local path prefix ]/syntax-kwd-names.fpp:2:2,
+            end: [ local path prefix ]/syntax-kwd-names.fpp:3:1,
+        },
+    },
+    DefPort {
+        name: Ident {
+            data: "port",
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:3:7,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:3:12,
+            },
+        },
+        params: [
+            FormalParam {
+                kind: Value,
+                name: Ident {
+                    data: "time",
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:3:13,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:3:18,
+                    },
+                },
+                type_name: TypeName {
+                    kind: Integer(
+                        U32,
+                    ),
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:3:20,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:3:23,
+                    },
+                },
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:3:13,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:3:23,
+                },
+            },
+        ],
+        return_type: None,
+        node_id: Span {
+            start: [ local path prefix ]/syntax-kwd-names.fpp:3:2,
+            end: [ local path prefix ]/syntax-kwd-names.fpp:4:1,
+        },
+    },
+    DefStruct {
+        name: Ident {
+            data: "struct",
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:4:9,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:4:16,
+            },
+        },
+        members: [
+            StructTypeMember {
+                name: Ident {
+                    data: "x",
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:4:19,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:4:20,
+                    },
+                },
+                size: None,
+                type_name: TypeName {
+                    kind: Integer(
+                        U32,
+                    ),
+                    node_id: Span {
+                        start: [ local path prefix ]/syntax-kwd-names.fpp:4:22,
+                        end: [ local path prefix ]/syntax-kwd-names.fpp:4:25,
+                    },
+                },
+                format: None,
+                node_id: Span {
+                    start: [ local path prefix ]/syntax-kwd-names.fpp:4:19,
+                    end: [ local path prefix ]/syntax-kwd-names.fpp:4:25,
+                },
+            },
+        ],
+        default: None,
+        node_id: Span {
+            start: [ local path prefix ]/syntax-kwd-names.fpp:4:2,
+            end: [ local path prefix ]/syntax-kwd-names.fpp:5:1,
+        },
+    },
+    DefAbsType {
+        name: Ident {
+            data: "type",
+            node_id: Span {
+                start: [ local path prefix ]/syntax-kwd-names.fpp:5:7,
+                end: [ local path prefix ]/syntax-kwd-names.fpp:6:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/syntax-kwd-names.fpp:5:2,
+            end: [ local path prefix ]/syntax-kwd-names.fpp:6:1,
+        },
+    },
+]

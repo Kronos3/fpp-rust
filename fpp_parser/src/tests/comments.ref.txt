@@ -1,0 +1,112 @@
+[
+    DefConstant {
+        name: Ident {
+            data: "a",
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:2:11,
+                end: [ local path prefix ]/comments.fpp:2:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "1",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:2:15,
+                end: [ local path prefix ]/comments.fpp:2:16,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/comments.fpp:2:2,
+            end: [ local path prefix ]/comments.fpp:2:16,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "b",
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:5:11,
+                end: [ local path prefix ]/comments.fpp:5:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "2",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:5:15,
+                end: [ local path prefix ]/comments.fpp:5:16,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/comments.fpp:5:2,
+            end: [ local path prefix ]/comments.fpp:5:16,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "c",
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:8:11,
+                end: [ local path prefix ]/comments.fpp:8:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "0",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:9:4,
+                end: [ local path prefix ]/comments.fpp:10:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/comments.fpp:8:2,
+            end: [ local path prefix ]/comments.fpp:10:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "d",
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:11:11,
+                end: [ local path prefix ]/comments.fpp:11:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "0",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:13:4,
+                end: [ local path prefix ]/comments.fpp:14:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/comments.fpp:11:2,
+            end: [ local path prefix ]/comments.fpp:14:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "e",
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:17:11,
+                end: [ local path prefix ]/comments.fpp:17:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "0",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/comments.fpp:17:15,
+                end: [ local path prefix ]/comments.fpp:18:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/comments.fpp:17:2,
+            end: [ local path prefix ]/comments.fpp:18:1,
+        },
+    },
+]

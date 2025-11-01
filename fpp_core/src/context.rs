@@ -76,7 +76,7 @@ impl CompilerContext {
         let handle = self.files.len();
         let content = match fs::read_to_string(path) {
             Ok(c) => c,
-            Err(err) => return Err(Error(format!("failed to read file: {}", err))),
+            Err(err) => return Err(Error(format!("failed to read file {}: {}", path, err))),
         };
         let lines = Self::compute_lines(content.as_str());
 

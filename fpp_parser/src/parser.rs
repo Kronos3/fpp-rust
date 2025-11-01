@@ -70,8 +70,8 @@ impl<'a> Parser<'a> {
 
     fn alias_type(&mut self) -> ParseResult<DefAliasType> {
         let first = self.consume_keyword(Type)?;
-        self.consume(Equals)?;
         let name = self.ident()?;
+        self.consume(Equals)?;
         let type_name = self.type_name()?;
 
         Ok(DefAliasType {
@@ -228,6 +228,9 @@ impl<'a> Parser<'a> {
                     ))
                 }
             }
+            Keyword(Output) => Ok(ComponentMember::SpecPortInstance(
+                self.spec_port_instance()?,
+            )),
             Keyword(Command | Text | Time) => {
                 // Special command port
                 Ok(ComponentMember::SpecPortInstance(
@@ -341,12 +344,12 @@ impl<'a> Parser<'a> {
             Keyword(Constant) => Ok(ModuleMember::DefConstant(self.def_constant()?)),
             Keyword(Enum) => Ok(ModuleMember::DefEnum(self.def_enum()?)),
             Keyword(Struct) => Ok(ModuleMember::DefStruct(self.def_struct()?)),
-            Keyword(Component) => match self.peek(1) {
-                Keyword(Instance) => Ok(ModuleMember::DefComponentInstance(
-                    self.def_component_instance()?,
-                )),
-                _ => Ok(ModuleMember::DefComponent(self.def_component()?)),
-            },
+            Keyword(Instance) => Ok(ModuleMember::DefComponentInstance(
+                self.def_component_instance()?,
+            )),
+            Keyword(Passive) | Keyword(Active) | Keyword(Queued) => {
+                Ok(ModuleMember::DefComponent(self.def_component()?))
+            }
             Keyword(Interface) => Ok(ModuleMember::DefInterface(self.def_interface()?)),
             Keyword(Module) => Ok(ModuleMember::DefModule(self.def_module()?)),
             Keyword(Port) => Ok(ModuleMember::DefPort(self.def_port()?)),
@@ -363,6 +366,9 @@ impl<'a> Parser<'a> {
                     Keyword(Enum),
                     Keyword(Struct),
                     Keyword(Component),
+                    Keyword(Active),
+                    Keyword(Passive),
+                    Keyword(Queued),
                     Keyword(Interface),
                     Keyword(Module),
                     Keyword(Port),
@@ -458,7 +464,10 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(Topology)?;
         let name = self.ident()?;
         let implements = match self.peek(0) {
-            Keyword(Implements) => self.element_sequence(&Parser::qual_ident, Comma, LeftCurly)?,
+            Keyword(Implements) => {
+                self.next();
+                self.element_sequence(&Parser::qual_ident, Comma, LeftCurly)?
+            },
             _ => vec![],
         };
 
@@ -1289,8 +1298,14 @@ impl<'a> Parser<'a> {
             Keyword(Activity) => {
                 self.next();
                 match self.peek(0) {
-                    Keyword(High) => Ok(EventSeverity::ActivityHigh),
-                    Keyword(Low) => Ok(EventSeverity::ActivityLow),
+                    Keyword(High) => {
+                        self.next();
+                        Ok(EventSeverity::ActivityHigh)
+                    }
+                    Keyword(Low) => {
+                        self.next();
+                        Ok(EventSeverity::ActivityLow)
+                    }
                     _ => Err(self.cursor.err_expected_one_of(
                         "severity level expected",
                         vec![Keyword(High), Keyword(Low)],
@@ -1300,8 +1315,14 @@ impl<'a> Parser<'a> {
             Keyword(Warning) => {
                 self.next();
                 match self.peek(0) {
-                    Keyword(High) => Ok(EventSeverity::WarningHigh),
-                    Keyword(Low) => Ok(EventSeverity::WarningLow),
+                    Keyword(High) => {
+                        self.next();
+                        Ok(EventSeverity::WarningHigh)
+                    }
+                    Keyword(Low) => {
+                        self.next();
+                        Ok(EventSeverity::WarningLow)
+                    }
                     _ => Err(self.cursor.err_expected_one_of(
                         "severity level expected",
                         vec![Keyword(High), Keyword(Low)],
@@ -1333,16 +1354,8 @@ impl<'a> Parser<'a> {
         }?;
 
         let id = self.opt_expr(Id)?;
-        let format = match self.peek(0) {
-            Keyword(Format) => {
-                self.next();
-                Ok(self.lit_string()?)
-            }
-            _ => Err(self
-                .cursor
-                .err_expected_one_of("expected event format", vec![Keyword(Format)])),
-        }?;
-
+        self.consume_keyword(Format)?;
+        let format = self.lit_string()?;
         let throttle = match self.peek(0) {
             Keyword(Throttle) => Some(self.event_throttle()?),
             _ => None,
@@ -1547,9 +1560,18 @@ impl<'a> Parser<'a> {
 
     fn limit_kind(&mut self) -> ParseResult<TlmChannelLimitKind> {
         let kind = match self.peek(0) {
-            Keyword(Orange) => Ok(TlmChannelLimitKind::Orange),
-            Keyword(Red) => Ok(TlmChannelLimitKind::Red),
-            Keyword(Yellow) => Ok(TlmChannelLimitKind::Yellow),
+            Keyword(Orange) => {
+                self.next();
+                Ok(TlmChannelLimitKind::Orange)
+            }
+            Keyword(Red) => {
+                self.next();
+                Ok(TlmChannelLimitKind::Red)
+            }
+            Keyword(Yellow) => {
+                self.next();
+                Ok(TlmChannelLimitKind::Yellow)
+            }
             _ => Err(self.cursor.err_expected_one_of(
                 "telemetry channel limit kind expected",
                 vec![Keyword(Orange), Keyword(Red), Keyword(Yellow)],
@@ -1918,18 +1940,18 @@ impl<'a> Parser<'a> {
         let kind = match self.peek(0) {
             Keyword(Async) => {
                 self.next();
-                self.consume_keyword(Input)?;
+                self.consume_keyword(Command)?;
                 Ok(InputPortKind::Async)
             }
             Keyword(Guarded) => {
                 self.next();
-                self.consume_keyword(Input)?;
-                Ok(InputPortKind::Async)
+                self.consume_keyword(Command)?;
+                Ok(InputPortKind::Guarded)
             }
             Keyword(Sync) => {
                 self.next();
-                self.consume_keyword(Input)?;
-                Ok(InputPortKind::Async)
+                self.consume_keyword(Command)?;
+                Ok(InputPortKind::Sync)
             }
             _ => Err(self.cursor.err_expected_one_of(
                 "command kind expected",
@@ -2013,7 +2035,8 @@ impl<'a> Parser<'a> {
         let pre_annotation = self.pre_annotation();
 
         // Check if we reached the end
-        if self.peek(0) == *end {
+        let next_token = self.peek(0);
+        if next_token == *end || next_token == EOF {
             // Stop parsing elements
             return ElementParsingResult::None;
         }
@@ -2025,7 +2048,7 @@ impl<'a> Parser<'a> {
 
         // Check if the punctuation exists
         let punct_tok = self.peek(0);
-        if punct_tok == *punct || punct_tok == Eol {
+        if punct_tok == *punct || punct_tok == Eol || punct_tok == EOF {
             self.next();
             let post_annotation = self.post_annotation();
             fpp_core::Node::annotate(&data.id(), pre_annotation, post_annotation);
@@ -2085,7 +2108,8 @@ impl<'a> Parser<'a> {
         end: &TokenKind,
     ) -> ElementParsingResult<T> {
         // Check if we reached the end
-        if self.peek(0) == *end {
+        let next_token = self.peek(0);
+        if next_token == *end || next_token == EOF {
             // Stop parsing elements
             return ElementParsingResult::None;
         }
@@ -2097,7 +2121,7 @@ impl<'a> Parser<'a> {
 
         // Check if the punctuation exists
         let punct_tok = self.peek(0);
-        if punct_tok == *punct || punct_tok == Eol {
+        if punct_tok == *punct || punct_tok == Eol || punct_tok == EOF {
             self.next();
             ElementParsingResult::Terminated(data)
         } else if self.peek(0) == PostAnnotation {
@@ -2258,56 +2282,60 @@ impl<'a> Parser<'a> {
     }
 
     fn expr(&mut self) -> ParseResult<Expr> {
-        let left = self.expr_add_sub_operand()?;
+        let mut left = self.expr_add_sub_operand()?;
         let first_span = left.span();
 
-        let op = match self.peek(0) {
-            Plus => Some(Binop::Add),
-            Minus => Some(Binop::Sub),
-            _ => None,
-        };
+        loop {
+            let op = match self.peek(0) {
+                Plus => Some(Binop::Add),
+                Minus => Some(Binop::Sub),
+                _ => None,
+            };
 
-        match op {
-            Some(op) => {
-                self.next();
-                let right = self.expr_add_sub_operand()?;
-                Ok(Expr {
-                    node_id: self.node(first_span),
-                    kind: ExprKind::Binop {
-                        left: Box::new(left),
-                        op,
-                        right: Box::new(right),
-                    },
-                })
+            match op {
+                Some(op) => {
+                    self.next();
+                    let right = self.expr_add_sub_operand()?;
+                    left = Expr {
+                        node_id: self.node(first_span),
+                        kind: ExprKind::Binop {
+                            left: Box::new(left),
+                            op,
+                            right: Box::new(right),
+                        },
+                    }
+                }
+                None => return Ok(left),
             }
-            None => Ok(left),
         }
     }
 
     fn expr_add_sub_operand(&mut self) -> ParseResult<Expr> {
-        let left = self.expr_mul_div_operand()?;
+        let mut left = self.expr_mul_div_operand()?;
         let first_span = left.span();
 
-        let op = match self.peek(0) {
-            Star => Some(Binop::Mul),
-            Slash => Some(Binop::Div),
-            _ => None,
-        };
+        loop {
+            let op = match self.peek(0) {
+                Star => Some(Binop::Mul),
+                Slash => Some(Binop::Div),
+                _ => None,
+            };
 
-        match op {
-            Some(op) => {
-                self.next();
-                let right = self.expr_mul_div_operand()?;
-                Ok(Expr {
-                    node_id: self.node(first_span),
-                    kind: ExprKind::Binop {
-                        left: Box::new(left),
-                        op,
-                        right: Box::new(right),
-                    },
-                })
+            match op {
+                Some(op) => {
+                    self.next();
+                    let right = self.expr_mul_div_operand()?;
+                    left = Expr {
+                        node_id: self.node(first_span),
+                        kind: ExprKind::Binop {
+                            left: Box::new(left),
+                            op,
+                            right: Box::new(right),
+                        },
+                    }
+                }
+                None => return Ok(left),
             }
-            None => Ok(left),
         }
     }
 

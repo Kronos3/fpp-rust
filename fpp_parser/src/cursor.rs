@@ -67,7 +67,6 @@ impl<'a> Cursor<'a> {
         ParseError::ExpectedToken {
             expected,
             got,
-            source_file: self.lexer.file(),
             pos: match self.last_consumed_span {
                 None => fpp_core::Position::start(self.lexer.file()),
                 Some(span) => span.end(),
@@ -78,7 +77,6 @@ impl<'a> Cursor<'a> {
 
     pub fn err_unexpected_eof(&self) -> ParseError {
         ParseError::UnexpectedEof {
-            source_file: self.lexer.file(),
             pos: match self.last_consumed_span {
                 None => fpp_core::Position::start(self.lexer.file()),
                 Some(span) => span.end(),
@@ -98,7 +96,6 @@ impl<'a> Cursor<'a> {
     ) -> ParseError {
         ParseError::ExpectedOneOf {
             expected: expected_one_of,
-            source_file: self.lexer.file(),
             pos: match self.last_consumed_span {
                 None => fpp_core::Position::start(self.lexer.file()),
                 Some(span) => span.end(),

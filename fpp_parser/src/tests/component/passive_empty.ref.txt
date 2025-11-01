@@ -1,0 +1,17 @@
+[
+    DefComponent {
+        kind: Passive,
+        name: Ident {
+            data: "C",
+            node_id: Span {
+                start: [ local path prefix ]/component/passive_empty.fpp:1:19,
+                end: [ local path prefix ]/component/passive_empty.fpp:1:20,
+            },
+        },
+        members: [],
+        node_id: Span {
+            start: [ local path prefix ]/component/passive_empty.fpp:1:1,
+            end: [ local path prefix ]/component/passive_empty.fpp:4:1,
+        },
+    },
+]

@@ -1,0 +1,54 @@
+ExpectedOneOf {
+    expected: [
+        Keyword(
+            Type,
+        ),
+        Keyword(
+            Array,
+        ),
+        Keyword(
+            Constant,
+        ),
+        Keyword(
+            Enum,
+        ),
+        Keyword(
+            Struct,
+        ),
+        Keyword(
+            Component,
+        ),
+        Keyword(
+            Active,
+        ),
+        Keyword(
+            Passive,
+        ),
+        Keyword(
+            Queued,
+        ),
+        Keyword(
+            Interface,
+        ),
+        Keyword(
+            Module,
+        ),
+        Keyword(
+            Port,
+        ),
+        Keyword(
+            State,
+        ),
+        Keyword(
+            Topology,
+        ),
+        Keyword(
+            Include,
+        ),
+        Keyword(
+            Locate,
+        ),
+    ],
+    pos: [ local path prefix ]/embedded-tab.fpp:1:1,
+    msg: "module member expected",
+}

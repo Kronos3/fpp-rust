@@ -1,0 +1,90 @@
+[
+    DefConstant {
+        name: Ident {
+            data: "s1",
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:1:10,
+                end: [ local path prefix ]/escaped-strings.fpp:1:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralString(
+                "\\\"",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:1:15,
+                end: [ local path prefix ]/escaped-strings.fpp:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/escaped-strings.fpp:1:1,
+            end: [ local path prefix ]/escaped-strings.fpp:2:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "s2",
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:2:11,
+                end: [ local path prefix ]/escaped-strings.fpp:2:13,
+            },
+        },
+        value: Expr {
+            kind: LiteralString(
+                "\\\\",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:2:16,
+                end: [ local path prefix ]/escaped-strings.fpp:3:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/escaped-strings.fpp:2:2,
+            end: [ local path prefix ]/escaped-strings.fpp:3:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "s2",
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:3:11,
+                end: [ local path prefix ]/escaped-strings.fpp:3:13,
+            },
+        },
+        value: Expr {
+            kind: LiteralString(
+                "\\\\\\\"",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:3:16,
+                end: [ local path prefix ]/escaped-strings.fpp:4:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/escaped-strings.fpp:3:2,
+            end: [ local path prefix ]/escaped-strings.fpp:4:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "s2",
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:4:11,
+                end: [ local path prefix ]/escaped-strings.fpp:4:13,
+            },
+        },
+        value: Expr {
+            kind: LiteralString(
+                "\\\"\\\\",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/escaped-strings.fpp:4:16,
+                end: [ local path prefix ]/escaped-strings.fpp:5:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/escaped-strings.fpp:4:2,
+            end: [ local path prefix ]/escaped-strings.fpp:5:1,
+        },
+    },
+]

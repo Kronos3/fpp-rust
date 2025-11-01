@@ -12,7 +12,6 @@ pub struct DefTopology {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum TopologyMember {
     SpecInstance(SpecInstance),
     SpecConnectionGraph(SpecConnectionGraph),
@@ -102,7 +101,6 @@ pub struct SpecTlmPacketSet {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
     SpecTlmPacket(SpecTlmPacket),

@@ -1,0 +1,31 @@
+[
+    DefTopology {
+        name: Ident {
+            data: "T",
+            node_id: Span {
+                start: [ local path prefix ]/include-topology.fpp:1:10,
+                end: [ local path prefix ]/include-topology.fpp:1:11,
+            },
+        },
+        members: [
+            SpecInclude {
+                file: LitString {
+                    data: "instance.fppi",
+                    node_id: Span {
+                        start: [ local path prefix ]/include-topology.fpp:3:12,
+                        end: [ local path prefix ]/include-topology.fpp:4:1,
+                    },
+                },
+                node_id: Span {
+                    start: [ local path prefix ]/include-topology.fpp:3:4,
+                    end: [ local path prefix ]/include-topology.fpp:4:1,
+                },
+            },
+        ],
+        implements: [],
+        node_id: Span {
+            start: [ local path prefix ]/include-topology.fpp:1:1,
+            end: [ local path prefix ]/include-topology.fpp:6:1,
+        },
+    },
+]

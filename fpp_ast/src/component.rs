@@ -4,7 +4,6 @@ use fpp_macros::ast_node;
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),

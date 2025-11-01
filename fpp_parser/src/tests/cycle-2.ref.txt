@@ -1,0 +1,15 @@
+[
+    SpecInclude {
+        file: LitString {
+            data: "cycle-3.fpp",
+            node_id: Span {
+                start: [ local path prefix ]/cycle-2.fpp:1:9,
+                end: [ local path prefix ]/cycle-2.fpp:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/cycle-2.fpp:1:1,
+            end: [ local path prefix ]/cycle-2.fpp:2:1,
+        },
+    },
+]
