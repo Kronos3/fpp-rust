@@ -1659,7 +1659,6 @@ impl<'a> Parser<'a> {
     fn def_signal(&mut self) -> ParseResult<DefSignal> {
         let first = self.consume_keyword(Signal)?;
         let name = self.ident()?;
-        self.consume(Colon)?;
         let type_name = match self.peek(0) {
             Colon => {
                 self.next();
