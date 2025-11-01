@@ -14,23 +14,24 @@ fn parse_str<T>(
     (res, ctx)
 }
 
-fn parse_assert_eq<T>(content: &str, entry: fn(&mut Parser) -> ParseResult<T>, ast_debug: &str)
+fn parse_ast_serialize<T>(content: &str, entry: fn(&mut Parser) -> ParseResult<T>) -> String
 where
     T: Debug,
 {
     let (ast_res, mut ctx) = parse_str(content, entry);
     let ast = ast_res.expect("parsing failed");
-    let formatted = fpp_core::run(&mut ctx, || format!("{:?}", ast)).unwrap();
-    assert_eq!(formatted, ast_debug)
+    fpp_core::run(&mut ctx, || format!("{:?}", ast)).unwrap()
 }
 
 #[test]
 fn component_passive_empty() {
-    parse_assert_eq(
-        r#"passive component C {
+    assert_eq!(
+        parse_ast_serialize(
+            r#"passive component C {
 
     }"#,
-        |parser: &mut Parser| parser.def_component(),
-        "AstNode { id: Span { start: <input>:1:1, end: <input>:3:7 }, data: DefComponent { kind: Passive, name: AstNode { id: Span { start: <input>:1:19, end: <input>:1:20 }, data: \"C\" }, members: [] } }",
+            |parser: &mut Parser| parser.def_component()
+        ),
+        "DefComponent { kind: Passive, name: Ident { data: \"C\", node_id: Span { start: <input>:1:19, end: <input>:1:20 } }, members: [], node_id: Span { start: <input>:1:1, end: <input>:3:7 } }"
     )
 }
