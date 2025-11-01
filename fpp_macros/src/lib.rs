@@ -20,7 +20,9 @@ use syn::{parse_macro_input, Item};
 /// # Examples
 ///
 /// For structures:
-/// ```
+/// ```ignore
+/// use fpp_macros::ast_node;
+///
 /// #[ast_node]
 /// pub struct TlmChannelIdentifier {
 ///    pub component_instance: QualIdent,
@@ -29,9 +31,10 @@ use syn::{parse_macro_input, Item};
 /// ```
 ///
 /// For enums:
-/// ```
+/// ```ignore
+/// use fpp_macros::ast_node;
+///
 /// #[ast_node]
-/// #[derive(Debug)]
 /// pub enum InterfaceMember {
 ///     SpecPortInstance(SpecPortInstance),
 ///     SpecImport(SpecImport),
@@ -62,14 +65,14 @@ pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// use fpp_macros::ast_node;
+/// use fpp_macros::ast_annotated;
+///
 /// #[ast_node]
-/// #[annotated]
-/// #[derive(Debug)]
-/// pub struct FormalParam {
-///     pub kind: FormalParamKind,
-///     pub name: Ident,
-///     pub type_name: TypeName,
+/// #[ast_annotated]
+/// pub struct ANode {
+///     pub name: Option<String>,
 /// }
 /// ```
 #[proc_macro_attribute]

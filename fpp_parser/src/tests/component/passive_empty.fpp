@@ -1,3 +1,0 @@
-passive component C {
-
-}

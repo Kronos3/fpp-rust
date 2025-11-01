@@ -1,9 +1,9 @@
 fn compiler_main() -> Result<(), fpp_core::Error> {
     let src = fpp_core::SourceFile::from("");
 
-    match fpp_parser::parse(src) {
+    match fpp_parser::parse(src, |p| p.module_members()) {
         Ok(ast) => {
-            println!("{:?}", ast);
+            println!("{:#?}", ast);
             Ok(())
         }
         Err(err) => Err(fpp_core::Error::from(format!("{:?}", err))),
