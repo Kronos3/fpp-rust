@@ -1985,7 +1985,7 @@ impl<'a> Parser<'a> {
         let mut out: Vec<String> = vec![];
 
         while self.peek(0) == PreAnnotation {
-            out.push(self.consume(PreAnnotation).unwrap().text().to_string())
+            out.push(self.next().unwrap().text().to_string())
         }
 
         out
@@ -1995,7 +1995,7 @@ impl<'a> Parser<'a> {
         let mut out: Vec<String> = vec![];
 
         while self.peek(0) == PostAnnotation {
-            out.push(self.consume(PostAnnotation).unwrap().text().to_string())
+            out.push(self.next().unwrap().text().to_string())
         }
 
         out
