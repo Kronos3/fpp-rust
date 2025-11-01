@@ -1,4 +1,4 @@
-use fpp_core::{BytePos, Positioned, Span, SourceFile};
+use fpp_core::{BytePos, Positioned, SourceFile, Span};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {
@@ -163,15 +163,21 @@ pub enum TokenKind {
 pub struct Token {
     kind: TokenKind,
     span: Span,
-    text: String,
+    text: Option<String>,
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, file: SourceFile, start: BytePos, length: BytePos) -> Token {
+    pub fn new(
+        kind: TokenKind,
+        text: Option<String>,
+        file: SourceFile,
+        start: BytePos,
+        length: BytePos,
+    ) -> Token {
         Token {
             kind,
             span: Span::new(file, start, length),
-            text: "".to_string(),
+            text,
         }
     }
 
@@ -180,7 +186,10 @@ impl Token {
     }
 
     pub fn text(&self) -> &str {
-        &self.text
+        match self.text.as_ref() {
+            None => "",
+            Some(txt) => txt,
+        }
     }
 }
 

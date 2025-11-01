@@ -21,9 +21,7 @@ pub enum ParseError {
     UnexpectedEof {
         source_file: SourceFile,
         pos: Position,
-    },
-
-    NotImplemented
+    }
 }
 
 pub type ParseResult<T> = Result<T, ParseError>;

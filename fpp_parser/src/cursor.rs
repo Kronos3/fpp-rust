@@ -3,7 +3,6 @@ use crate::lexer::Lexer;
 use crate::token::{Token, TokenKind};
 use fpp_core::{Positioned, SourceFile};
 use std::collections::VecDeque;
-use std::str::Chars;
 
 pub struct Cursor<'a> {
     lexer: Lexer<'a>,
@@ -12,9 +11,9 @@ pub struct Cursor<'a> {
 }
 
 impl<'a> Cursor<'a> {
-    pub(crate) fn new(source_file: SourceFile, chars: Chars<'a>) -> Cursor<'a> {
+    pub(crate) fn new(source_file: SourceFile, content: &'a str) -> Cursor<'a> {
         Cursor {
-            lexer: Lexer::new(source_file, chars),
+            lexer: Lexer::new(source_file, content),
             token_queue: Default::default(),
             last_consumed_span: None,
         }

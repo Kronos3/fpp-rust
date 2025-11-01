@@ -1,5 +1,7 @@
+use std::fmt::{Display, Formatter};
 use crate::span::Span;
 
+#[derive(Debug)]
 pub enum Level {
     Error,
     Warning,
@@ -11,6 +13,13 @@ pub struct Diagnostic {
     span: Span,
     level: Level,
     message: String,
+}
+
+impl Display for Diagnostic {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("[{:?}] {:?}\n", self.level, self.span))?;
+        f.write_str(self.message.as_str())
+    }
 }
 
 impl Diagnostic {

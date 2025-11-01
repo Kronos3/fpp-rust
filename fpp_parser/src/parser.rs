@@ -19,33 +19,32 @@ enum ElementParsingResult<T> {
 
 pub fn parse(source_file: SourceFile) -> ParseResult<AstNode<DefComponent>> {
     let content = source_file.read();
-    let chars = content.as_str().chars();
     let mut parser = Parser {
-        cursor: Cursor::new(source_file, chars),
+        cursor: Cursor::new(source_file, content.as_str()),
     };
 
     parser.component()
 }
 
 impl<'a> Parser<'a> {
-    pub(crate) fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
+    fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
         self.cursor.peek_span(n)
     }
 
-    pub(crate) fn peek(&mut self, n: usize) -> TokenKind {
+    fn peek(&mut self, n: usize) -> TokenKind {
         self.cursor.peek(n)
     }
 
-    pub(crate) fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Token> {
         self.cursor.next()
     }
 
-    pub(crate) fn consume(&mut self, kind: TokenKind) -> ParseResult<Token> {
+    fn consume(&mut self, kind: TokenKind) -> ParseResult<Token> {
         self.cursor.consume(kind)
     }
 
     #[inline]
-    pub(crate) fn node<T>(&self, data: T, first_token: fpp_core::Span) -> AstNode<T> {
+    fn node<T>(&self, data: T, first_token: fpp_core::Span) -> AstNode<T> {
         let last_token_span = self
             .cursor
             .last_token_span()
@@ -61,7 +60,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn ident(&mut self) -> ParseResult<Ident> {
+    fn ident(&mut self) -> ParseResult<Ident> {
         let ident = self.consume(Identifier)?;
         Ok(self.node(ident.text().to_string(), ident.span()))
     }
@@ -1780,19 +1779,7 @@ impl<'a> Parser<'a> {
 
     /// Convenience function to consume a keyword
     #[inline]
-    pub fn consume_keyword(&mut self, kind: KeywordKind) -> ParseResult<Token> {
+    fn consume_keyword(&mut self, kind: KeywordKind) -> ParseResult<Token> {
         self.consume(Keyword(kind))
-    }
-
-    /// Check to make sure a token at a certain position (number of tokens) away matches
-    /// an expected token kind
-    pub fn check(&mut self, n: usize, kind: TokenKind) -> ParseResult<()> {
-        let p = self.peek(n);
-
-        if kind == p {
-            Ok(())
-        } else {
-            Err(self.cursor.err_expected_token("unexpected token", kind, p))
-        }
     }
 }
