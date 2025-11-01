@@ -16,7 +16,7 @@ name = "fpp_ast"
 version = "0.1.0"
 dependencies = [
  "fpp_core",
- "fpp_derive",
+ "fpp_macros",
 ]
 
 [[package]]
@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fpp_derive"
+name = "fpp_macros"
 version = "0.1.0"
 dependencies = [
  "quote",

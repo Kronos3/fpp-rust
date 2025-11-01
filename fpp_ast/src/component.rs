@@ -1,9 +1,9 @@
 use crate::{*};
 
-use fpp_derive::ast_node;
+use fpp_macros::ast_node;
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
@@ -44,7 +44,7 @@ pub enum QueueFull {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecCommand {
     pub kind: InputPortKind,
@@ -56,7 +56,7 @@ pub struct SpecCommand {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecContainer {
     pub name: Ident,
@@ -83,7 +83,7 @@ pub struct EventThrottle {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecEvent {
     pub name: Ident,
@@ -96,7 +96,7 @@ pub struct SpecEvent {
 
 /** Internal port specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecInternalPort {
     pub name: Ident,
@@ -106,7 +106,7 @@ pub struct SpecInternalPort {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecParam {
     pub name: Ident,
@@ -142,7 +142,7 @@ pub enum SpecialPortInstanceKind {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecPortMatching {
     pub port1: Ident,
@@ -150,7 +150,7 @@ pub struct SpecPortMatching {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecRecord {
     pub name: Ident,
@@ -160,7 +160,7 @@ pub struct SpecRecord {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
@@ -190,7 +190,7 @@ pub struct TlmChannelLimit {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecTlmChannel {
     pub name: Ident,

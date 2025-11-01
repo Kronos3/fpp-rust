@@ -8,8 +8,8 @@ pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-use fpp_derive::ast_node;
-use fpp_derive::annotated;
+use fpp_macros::ast_node;
+use fpp_macros::ast_annotated;
 
 pub trait AstNode: fpp_core::Spanned {
     fn id(&self) -> fpp_core::Node;
@@ -123,7 +123,7 @@ pub enum FormalParamKind {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct FormalParam {
     pub kind: FormalParamKind,
@@ -149,7 +149,7 @@ pub enum Unop {
 
 /** Abstract type definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefAbsType {
     pub name: Ident,
@@ -157,7 +157,7 @@ pub struct DefAbsType {
 
 /** Aliased type definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefAliasType {
     pub name: Ident,
@@ -166,7 +166,7 @@ pub struct DefAliasType {
 
 /** Array definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefArray {
     pub name: Ident,
@@ -185,7 +185,7 @@ pub enum ComponentKind {
 
 /** Component definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefComponent {
     pub kind: ComponentKind,
@@ -195,7 +195,7 @@ pub struct DefComponent {
 
 /** Component instance definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefComponentInstance {
     pub name: Ident,
@@ -212,7 +212,7 @@ pub struct DefComponentInstance {
 
 /** Init specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecInit {
     pub phase: Expr,
@@ -221,7 +221,7 @@ pub struct SpecInit {
 
 /** Constant definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefConstant {
     pub name: Ident,
@@ -230,7 +230,7 @@ pub struct DefConstant {
 
 /** Enum definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefEnum {
     pub name: Ident,
@@ -241,7 +241,7 @@ pub struct DefEnum {
 
 /** Enum constant definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefEnumConstant {
     pub name: Ident,
@@ -250,7 +250,7 @@ pub struct DefEnumConstant {
 
 /** Module definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefModule {
     pub name: Ident,
@@ -258,7 +258,7 @@ pub struct DefModule {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),
@@ -292,7 +292,7 @@ pub enum SpecLocKind {
 
 /** Location specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecLoc {
     pub kind: SpecLocKind,
@@ -320,7 +320,7 @@ pub enum SpecPortInstanceKind {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecPortInstance {
     pub kind: SpecPortInstanceKind,
@@ -328,7 +328,7 @@ pub struct SpecPortInstance {
 
 /** Interface member */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub enum InterfaceMember {
     SpecPortInstance(SpecPortInstance),
@@ -337,7 +337,7 @@ pub enum InterfaceMember {
 
 /** Interface definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefInterface {
     pub name: Ident,
@@ -345,7 +345,7 @@ pub struct DefInterface {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct StructTypeMember {
     pub name: Ident,
@@ -356,7 +356,7 @@ pub struct StructTypeMember {
 
 /** Struct definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefStruct {
     pub name: Ident,
@@ -365,7 +365,7 @@ pub struct DefStruct {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefPort {
     pub name: Ident,
@@ -375,7 +375,7 @@ pub struct DefPort {
 
 /** Include specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecInclude {
     pub file: LitString,
@@ -383,7 +383,7 @@ pub struct SpecInclude {
 
 /** Import specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecImport {
     pub sym: QualIdent,

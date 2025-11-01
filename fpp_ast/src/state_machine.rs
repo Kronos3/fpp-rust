@@ -1,7 +1,7 @@
 use crate::*;
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefStateMachine {
     pub name: Ident,
@@ -9,7 +9,7 @@ pub struct DefStateMachine {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub enum StateMachineMember {
     DefAction(DefAction),
@@ -23,7 +23,7 @@ pub enum StateMachineMember {
 
 /** Action definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefAction {
     pub name: Ident,
@@ -32,7 +32,7 @@ pub struct DefAction {
 
 /** Choice definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefChoice {
     pub name: Ident,
@@ -43,7 +43,7 @@ pub struct DefChoice {
 
 /** Guard definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefGuard {
     pub name: Ident,
@@ -60,7 +60,7 @@ pub struct TransitionExpr {
 
 /** Signal definition */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefSignal {
     pub name: Ident,
@@ -68,7 +68,7 @@ pub struct DefSignal {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct DefState {
     pub name: Ident,
@@ -76,7 +76,7 @@ pub struct DefState {
 }
 
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub enum StateMember {
     DefChoice(DefChoice),
@@ -89,7 +89,7 @@ pub enum StateMember {
 
 /** Initial state specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecInitialTransition {
     pub transition: TransitionExpr,
@@ -97,7 +97,7 @@ pub struct SpecInitialTransition {
 
 /** State entry specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecStateEntry {
     pub actions: DoExpr,
@@ -105,7 +105,7 @@ pub struct SpecStateEntry {
 
 /** State exit specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecStateExit {
     pub actions: DoExpr,
@@ -113,7 +113,7 @@ pub struct SpecStateExit {
 
 /** Transition specifier */
 #[ast_node]
-#[annotated]
+#[ast_annotated]
 #[derive(Debug)]
 pub struct SpecStateTransition {
     pub signal: Ident,

@@ -73,7 +73,7 @@ pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn annotated(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn ast_annotated(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let input = parse_macro_input!(item as Item);
 
