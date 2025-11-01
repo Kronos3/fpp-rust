@@ -20,9 +20,8 @@ pub(crate) struct SourceFileData {
 
 impl SourceFileData {
     pub fn position(&self, offset: BytePos) -> Position {
-        let line = self.lines.binary_search(&offset).unwrap_or_else(|idx| idx);
-        let def = 0;
-        let line_offset = *self.lines.get(line).unwrap_or(&def);
+        let line = self.lines.binary_search(&offset).unwrap_or_else(|line_insert| line_insert - 1);
+        let line_offset = *self.lines.get(line).unwrap();
 
         Position {
             pos: offset,
@@ -54,7 +53,7 @@ impl CompilerContext {
     }
 
     fn compute_lines(src: &str) -> Vec<BytePos> {
-        let mut out = vec![];
+        let mut out = vec![0];
         for (i, c) in src.chars().enumerate() {
             if c == '\n' {
                 out.push(BytePos::from(i))

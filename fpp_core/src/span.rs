@@ -3,7 +3,7 @@ use crate::diagnostic::Diagnostic;
 use crate::diagnostic::Level;
 use crate::file::SourceFile;
 use crate::interface::with;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 
 #[derive(Clone, Copy)]
 pub struct Span {
@@ -12,24 +12,13 @@ pub struct Span {
 
 impl Debug for Span {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let file = self.file();
         let start = self.start();
         let end = self.end();
-        f.write_str("Span\n")?;
-        f.write_fmt(format_args!(
-            "start {}:{}:{}\n",
-            file.path(),
-            start.line(),
-            start.column()
-        ))?;
-        f.write_fmt(format_args!(
-            "end {}:{}:{}\n",
-            file.path(),
-            end.line(),
-            end.column()
-        ))?;
 
-        Ok(())
+        f.debug_struct("Span")
+            .field("start", &start)
+            .field("end", &end)
+            .finish()
     }
 }
 
@@ -69,7 +58,6 @@ impl Span {
     diagnostic_method!(help, Level::Help);
 }
 
-#[derive(Debug)]
 pub struct Position {
     pub(crate) pos: BytePos,
     pub(crate) line: u32,
@@ -102,7 +90,7 @@ impl Position {
     }
 }
 
-impl Display for Position {
+impl Debug for Position {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "{}:{}:{}",

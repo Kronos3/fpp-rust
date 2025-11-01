@@ -5,42 +5,36 @@ use crate::{*};
 pub struct DefTopology {
     pub name: Ident,
     pub members: Vec<Annotated<TopologyMember>>,
+    pub implements: Vec<AstNode<QualIdent>>
 }
 
 #[derive(Debug)]
 pub enum TopologyMember {
-    SpecCompInstance(SpecCompInstance),
-    SpecConnectionGraph(SpecConnectionGraph),
-    SpecInclude(SpecInclude),
-    SpecTlmPacketSet(SpecTlmPacketSet),
-    SpecTopImport(SpecImport),
+    SpecInstance(AstNode<SpecInstance>),
+    SpecConnectionGraph(AstNode<SpecConnectionGraph>),
+    SpecInclude(AstNode<SpecInclude>),
+    SpecTopPort(AstNode<SpecTopPort>),
+    SpecTlmPacketSet(AstNode<SpecTlmPacketSet>),
 }
 
 #[derive(Debug)]
-pub enum CompInstanceVisibility {
-    Private,
-    Public,
-}
-
-#[derive(Debug)]
-pub struct SpecCompInstance {
-    pub visibility: CompInstanceVisibility,
-    pub instance: QualIdent,
+pub struct SpecInstance {
+    pub instance: AstNode<QualIdent>,
 }
 
 #[derive(Debug)]
 pub struct PortInstanceIdentifier {
-    pub component_instance: QualIdent,
+    pub interface_instance: AstNode<QualIdent>,
     pub port_name: Ident,
 }
 
 #[derive(Debug)]
 pub struct Connection {
     pub is_unmatched: bool,
-    pub from_port: PortInstanceIdentifier,
-    pub from_index: Option<Expr>,
-    pub to_port: PortInstanceIdentifier,
-    pub to_index: Option<Expr>,
+    pub from_port: AstNode<PortInstanceIdentifier>,
+    pub from_index: Option<AstNode<Expr>>,
+    pub to_port: AstNode<PortInstanceIdentifier>,
+    pub to_index: Option<AstNode<Expr>>,
 }
 
 #[derive(Debug)]
@@ -58,45 +52,51 @@ pub enum ConnectionPatternKind {
 pub enum SpecConnectionGraph {
     Direct {
         name: Ident,
-        connections: Vec<Connection>,
+        connections: Vec<AstNode<Connection>>,
     },
 
     Pattern {
         kind: ConnectionPatternKind,
-        source: QualIdent,
-        targets: Vec<QualIdent>,
+        source: AstNode<QualIdent>,
+        targets: Vec<AstNode<QualIdent>>,
     },
 }
 
 #[derive(Debug)]
 pub struct TlmChannelIdentifier {
-    pub component_instance: QualIdent,
+    pub component_instance: AstNode<QualIdent>,
     pub channel_name: Ident,
+}
+
+#[derive(Debug)]
+pub struct SpecTopPort {
+    pub name: Ident,
+    pub underlying_port: AstNode<PortInstanceIdentifier>
 }
 
 #[derive(Debug)]
 pub struct SpecTlmPacketSet {
     pub name: Ident,
     pub members: Vec<Annotated<TlmPacketSetMember>>,
-    pub omitted: Vec<Annotated<TlmChannelIdentifier>>,
+    pub omitted: Vec<AstNode<TlmChannelIdentifier>>,
 }
 
 #[derive(Debug)]
 pub enum TlmPacketSetMember {
-    SpecInclude(SpecInclude),
-    SpecTlmPacket(SpecTlmPacket)
+    SpecInclude(AstNode<SpecInclude>),
+    SpecTlmPacket(AstNode<SpecTlmPacket>)
 }
 
 #[derive(Debug)]
 pub struct SpecTlmPacket {
     pub name: Ident,
-    pub id: Option<Expr>,
-    pub group: Expr,
+    pub id: Option<AstNode<Expr>>,
+    pub group: AstNode<Expr>,
     pub members: Vec<TlmPacketMember>,
 }
 
 #[derive(Debug)]
 pub enum TlmPacketMember {
-    SpecInclude(SpecInclude),
-    TlmChannelIdentifier(TlmChannelIdentifier)
+    SpecInclude(AstNode<SpecInclude>),
+    TlmChannelIdentifier(AstNode<TlmChannelIdentifier>)
 }

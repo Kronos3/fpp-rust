@@ -10,4 +10,5 @@ pub use error::{ParseResult, ParseError};
 #[cfg(test)]
 mod tests {
     mod lexer;
+    mod parser;
 }
