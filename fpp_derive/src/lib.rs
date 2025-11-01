@@ -1,17 +1,25 @@
+mod annotated;
+mod node;
+
+use crate::node::{ast_node_enum, ast_node_struct};
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
-use syn::{parse_macro_input, ItemStruct, Fields, Field, Type, Visibility};
+use syn::{Item, parse_macro_input};
+use crate::annotated::{annotated_enum, annotated_struct};
 
 ///
-/// Converts a struct into an AstNode by adding a public node_id field
-/// and implementing the proper traits.
+/// Defines an AstNode from struct or enum
 ///
-/// This macro applies the following checks:
+/// For structs, an additional field is added and traits are implemented.
+///
+/// The following checks are performed on structs:
 /// 1. No field in the struct definition is named 'node_id'
 /// 2. All fields are 'pub'
 ///
+/// Enums require all variants to be AstNodes
+///
 /// # Examples
 ///
+/// For structures:
 /// ```
 /// #[ast_node]
 /// pub struct TlmChannelIdentifier {
@@ -19,78 +27,64 @@ use syn::{parse_macro_input, ItemStruct, Fields, Field, Type, Visibility};
 ///    pub channel_name: Ident,
 /// }
 /// ```
+///
+/// For enums:
+/// ```
+/// #[ast_node]
+/// #[derive(Debug)]
+/// pub enum InterfaceMember {
+///     SpecPortInstance(SpecPortInstance),
+///     SpecImport(SpecImport),
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
-    let input = parse_macro_input!(item as ItemStruct);
+    let input = parse_macro_input!(item as Item);
 
-    // Ensure it's a named-field struct (not tuple or unit)
-    let mut new_struct = input.clone();
-    match &mut new_struct.fields {
-        Fields::Named(fields_named) => {
-            for field in &fields_named.named {
-                match &field.ident {
-                    Some(ident) => {
-                        if ident.to_string() == "node_id" {
-                            let err = syn::Error::new_spanned(
-                                field,
-                                "ast_node reserves the 'node_id' field name",
-                            )
-                                .to_compile_error();
-                            return err.into()
-                        }
-                    }
-                    _ => {}
-                }
-
-                match field.vis {
-                    Visibility::Public(_) => {}
-                    _ => {
-                        let err = syn::Error::new_spanned(
-                            field,
-                            "all members of ast_node must be 'pub'",
-                        )
-                            .to_compile_error();
-                        return err.into()
-                    }
-                }
-            }
-
-            let node_id_field_ident = format_ident!("node_id");
-            let node_id_field_type: Type = syn::parse_quote!(fpp_core::NodeId);
-            let node_id_field = Field {
-                attrs: Vec::new(),
-                vis: syn::Visibility::Public(syn::parse_quote!(pub)),
-                mutability: syn::FieldMutability::None,
-                ident: Some(node_id_field_ident.clone()),
-                colon_token: Some(<syn::Token![:]>::default()),
-                ty: node_id_field_type,
-            };
-            fields_named.named.push(node_id_field);
-        }
-        Fields::Unit | Fields::Unnamed(_) => {
-            // Return a compile_error if user applied macro on unsupported struct
-            let err = syn::Error::new_spanned(
-                input,
-                "#[ast_node] only supports structs with named fields (braced structs).",
-            )
+    (match input {
+        Item::Struct(item_struct) => ast_node_struct(&item_struct),
+        Item::Enum(item_enum) => ast_node_enum(&item_enum),
+        other => {
+            let err = syn::Error::new_spanned(other, "#[ast_node] only supports structs or enums")
                 .to_compile_error();
             return err.into();
         }
-    }
+    })
+    .into()
+}
 
-    let struct_ident = &new_struct.ident;
-    let generics = &new_struct.generics;
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-    let output = quote! {
-        #new_struct
+///
+/// Implements Annotated trait for inserting and getting annotations associated with
+/// an AST node.
+///
+/// Note: Annotated structs must first apply the ast_node macro
+///
+/// # Examples
+///
+/// ```
+/// #[ast_node]
+/// #[annotated]
+/// #[derive(Debug)]
+/// pub struct FormalParam {
+///     pub kind: FormalParamKind,
+///     pub name: Ident,
+///     pub type_name: TypeName,
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn annotated(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let input = parse_macro_input!(item as Item);
 
-        impl #impl_generics fpp_core::Spanned for #struct_ident #ty_generics #where_clause {
-            fn span(&self) -> fpp_core::Span {
-                fpp_core::Spanned::span(&self.node_id)
-            }
+    (match input {
+        Item::Struct(item_struct) => annotated_struct(&item_struct),
+        Item::Enum(item_enum) => annotated_enum(&item_enum),
+        other => {
+            let err = syn::Error::new_spanned(other, "#[ast_node] only supports structs or enums")
+                .to_compile_error();
+            return err.into();
         }
-    };
-
-    output.into()
+    })
+        .into()
 }

@@ -1,7 +1,7 @@
 use crate::error::Error;
 use crate::file::SourceFile;
 use crate::span::Span;
-use crate::{BytePos, NodeId, Position};
+use crate::{BytePos, Node, Position};
 use std::collections::HashMap;
 use std::fs;
 
@@ -20,7 +20,10 @@ pub(crate) struct SourceFileData {
 
 impl SourceFileData {
     pub fn position(&self, offset: BytePos) -> Position {
-        let line = self.lines.binary_search(&offset).unwrap_or_else(|line_insert| line_insert - 1);
+        let line = self
+            .lines
+            .binary_search(&offset)
+            .unwrap_or_else(|line_insert| line_insert - 1);
         let line_offset = *self.lines.get(line).unwrap();
 
         Position {
@@ -34,12 +37,18 @@ impl SourceFileData {
     }
 }
 
+pub(crate) struct NodeData {
+    pub span_id: usize,
+    pub pre_annotation: Vec<String>,
+    pub post_annotation: Vec<String>,
+}
+
 pub struct CompilerContext {
     spans: Vec<SpanData>,
     files: Vec<SourceFileData>,
 
-    current_node_id: NodeId,
-    nodes: HashMap<NodeId, usize>,
+    current_node_id: Node,
+    nodes: HashMap<Node, NodeData>,
 }
 
 impl CompilerContext {
@@ -47,7 +56,7 @@ impl CompilerContext {
         CompilerContext {
             spans: vec![],
             files: vec![],
-            current_node_id: NodeId { handle: 1 },
+            current_node_id: Node { handle: 1 },
             nodes: HashMap::new(),
         }
     }
@@ -94,10 +103,17 @@ impl CompilerContext {
         SourceFile { handle }
     }
 
-    pub(crate) fn node_add(&mut self, span: &Span) -> NodeId {
+    pub(crate) fn node_add(&mut self, span: &Span) -> Node {
         let node_id = self.current_node_id;
         self.current_node_id = self.current_node_id.next();
-        self.nodes.insert(node_id, span.handle);
+        self.nodes.insert(
+            node_id,
+            NodeData {
+                span_id: span.handle,
+                pre_annotation: vec![],
+                post_annotation: vec![],
+            },
+        );
         node_id
     }
 
@@ -112,12 +128,25 @@ impl CompilerContext {
         Span { handle }
     }
 
-    pub(crate) fn node_get_span(&self, node: &NodeId) -> Span {
+    pub(crate) fn node_get(&self, node: &Node) -> &NodeData {
+        self.nodes
+            .get(node)
+            .expect(&format!("invalid node: {}", node.handle))
+    }
+
+    pub(crate) fn node_get_mut(&mut self, node: &Node) -> &mut NodeData {
+        self.nodes
+            .get_mut(node)
+            .expect(&format!("invalid node: {}", node.handle))
+    }
+
+    pub(crate) fn node_get_span(&self, node: &Node) -> Span {
         Span {
-            handle: *self
+            handle: self
                 .nodes
                 .get(node)
-                .expect(&format!("invalid node: {}", node.handle)),
+                .expect(&format!("invalid node: {}", node.handle))
+                .span_id,
         }
     }
 

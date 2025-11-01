@@ -47,13 +47,13 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
-    fn node(&self, first_token: fpp_core::Span) -> fpp_core::NodeId {
+    fn node(&self, first_token: fpp_core::Span) -> fpp_core::Node {
         let last_token_span = self
             .cursor
             .last_token_span()
             .expect("last token should exist");
 
-        fpp_core::NodeId::new(fpp_core::Span::new(
+        fpp_core::Node::new(fpp_core::Span::new(
             first_token.file(),
             first_token.start().pos(),
             last_token_span.end().pos() - first_token.start().pos(),
@@ -327,7 +327,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn module_members(&mut self) -> ParseResult<Vec<Annotated<ModuleMember>>> {
+    pub fn module_members(&mut self) -> ParseResult<Vec<ModuleMember>> {
         self.annotated_element_sequence(&Parser::module_member, Semi, RightCurly)
     }
 
@@ -474,7 +474,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn topology_members(&mut self) -> ParseResult<Vec<Annotated<TopologyMember>>> {
+    pub fn topology_members(&mut self) -> ParseResult<Vec<TopologyMember>> {
         self.annotated_element_sequence(&Parser::topology_member, Semi, RightCurly)
     }
 
@@ -685,7 +685,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn tlm_packet_set_members(&mut self) -> ParseResult<Vec<Annotated<TlmPacketSetMember>>> {
+    pub fn tlm_packet_set_members(&mut self) -> ParseResult<Vec<TlmPacketSetMember>> {
         self.annotated_element_sequence(&Parser::tlm_packet_set_member, Comma, RightCurly)
     }
 
@@ -773,11 +773,11 @@ impl<'a> Parser<'a> {
             .into_iter()
             .fold(QualIdent::Unqualified(first), |q, ident| {
                 let q_span = q.span();
-                QualIdent::Qualified {
+                QualIdent::Qualified(Qualified {
                     node_id: self.node(q_span),
                     qualifier: Box::new(q),
                     name: ident,
-                }
+                })
             });
 
         Ok((instance, member, first_span))
@@ -2004,12 +2004,12 @@ impl<'a> Parser<'a> {
         out
     }
 
-    fn annotated_element<T>(
+    fn annotated_element<T: fpp_core::Annotated + AstNode>(
         &mut self,
         element_parser: &dyn Fn(&mut Parser<'a>) -> ParseResult<T>,
         punct: &TokenKind,
         end: &TokenKind,
-    ) -> ElementParsingResult<Annotated<T>> {
+    ) -> ElementParsingResult<T> {
         let pre_annotation = self.pre_annotation();
 
         // Check if we reached the end
@@ -2028,29 +2028,32 @@ impl<'a> Parser<'a> {
         if punct_tok == *punct || punct_tok == Eol {
             self.next();
             let post_annotation = self.post_annotation();
-            ElementParsingResult::Terminated((pre_annotation, data, post_annotation))
+            fpp_core::Node::annotate(&data.id(), pre_annotation, post_annotation);
+            ElementParsingResult::Terminated(data)
         } else if self.peek(0) == PostAnnotation {
             let post_annotation = self.post_annotation();
-            ElementParsingResult::Terminated((pre_annotation, data, post_annotation))
+            fpp_core::Node::annotate(&data.id(), pre_annotation, post_annotation);
+            ElementParsingResult::Terminated(data)
         } else {
-            ElementParsingResult::Unterminated((pre_annotation, data, vec![]))
+            fpp_core::Node::annotate(&data.id(), pre_annotation, vec![]);
+            ElementParsingResult::Unterminated(data)
         }
     }
 
     #[inline]
-    fn annotated_element_sequence<T>(
+    fn annotated_element_sequence<T: fpp_core::Annotated + AstNode>(
         &mut self,
         element_parser: &dyn Fn(&mut Parser<'a>) -> ParseResult<T>,
         punct: TokenKind,
         end: TokenKind,
-    ) -> ParseResult<Vec<Annotated<T>>> {
+    ) -> ParseResult<Vec<T>> {
         // Eat up all the EOLs
         while self.peek(0) == Eol {
             self.next();
         }
 
         // Keep reading terminated elements until we can't
-        let mut out: Vec<Annotated<T>> = vec![];
+        let mut out: Vec<T> = vec![];
 
         loop {
             match self.annotated_element(element_parser, &punct, &end) {
@@ -2161,11 +2164,11 @@ impl<'a> Parser<'a> {
             .into_iter()
             .fold(QualIdent::Unqualified(first), |q, ident| {
                 let q_span = q.span();
-                QualIdent::Qualified {
+                QualIdent::Qualified(Qualified {
                     node_id: self.node(q_span),
                     qualifier: Box::new(q),
                     name: ident,
-                }
+                })
             }))
     }
 

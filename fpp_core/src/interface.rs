@@ -1,6 +1,6 @@
 use crate::context::CompilerContext;
 use crate::error::Error;
-use crate::{BytePos, NodeId, Position, SourceFile, Span};
+use crate::{BytePos, Node, Position, SourceFile, Span};
 use std::cell::{Cell, RefCell};
 
 pub struct Container<'ctx> {
@@ -16,12 +16,27 @@ impl<'ctx> Container<'ctx> {
 }
 
 impl<'ctx> CompilerInterface for Container<'ctx> {
-    fn node_add(&self, span: &Span) -> NodeId {
+    fn node_add(&self, span: &Span) -> Node {
         self.ctx.borrow_mut().node_add(span)
     }
 
-    fn node_span(&self, node: &NodeId) -> Span {
+    fn node_span(&self, node: &Node) -> Span {
         self.ctx.borrow().node_get_span(node)
+    }
+
+    fn node_pre_annotation(&self, node: &Node) -> Vec<String> {
+        self.ctx.borrow().node_get(node).pre_annotation.clone()
+    }
+
+    fn node_post_annotation(&self, node: &Node) -> Vec<String> {
+        self.ctx.borrow().node_get(node).post_annotation.clone()
+    }
+
+    fn node_add_annotation(&self, node: &Node, pre: Vec<String>, post: Vec<String>) {
+        let mut ctx = self.ctx.borrow_mut();
+        let node = ctx.node_get_mut(node);
+        node.pre_annotation = pre;
+        node.post_annotation = post;
     }
 
     fn file_open(&self, path: &str) -> Result<SourceFile, Error> {
@@ -69,8 +84,11 @@ impl<'ctx> CompilerInterface for Container<'ctx> {
 
 pub(crate) trait CompilerInterface {
     /** Ast Node related functions */
-    fn node_add(&self, span: &Span) -> NodeId;
-    fn node_span(&self, node: &NodeId) -> Span;
+    fn node_add(&self, span: &Span) -> Node;
+    fn node_span(&self, node: &Node) -> Span;
+    fn node_pre_annotation(&self, node: &Node) -> Vec<String>;
+    fn node_post_annotation(&self, node: &Node) -> Vec<String>;
+    fn node_add_annotation(&self, node: &Node, pre: Vec<String>, post: Vec<String>);
 
     /** Source file related functions */
     fn file_open(&self, path: &str) -> Result<SourceFile, Error>;

@@ -2,13 +2,16 @@ use crate::{*};
 
 /** Topology definition */
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct DefTopology {
     pub name: Ident,
-    pub members: Vec<Annotated<TopologyMember>>,
+    pub members: Vec<TopologyMember>,
     pub implements: Vec<QualIdent>
 }
 
+#[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub enum TopologyMember {
     SpecInstance(SpecInstance),
@@ -19,6 +22,7 @@ pub enum TopologyMember {
 }
 
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct SpecInstance {
     pub instance: QualIdent,
@@ -66,6 +70,7 @@ pub enum SpecConnectionGraphKind {
 }
 
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct SpecConnectionGraph {
     pub kind: SpecConnectionGraphKind
@@ -79,6 +84,7 @@ pub struct TlmChannelIdentifier {
 }
 
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct SpecTopPort {
     pub name: Ident,
@@ -86,13 +92,16 @@ pub struct SpecTopPort {
 }
 
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct SpecTlmPacketSet {
     pub name: Ident,
-    pub members: Vec<Annotated<TlmPacketSetMember>>,
+    pub members: Vec<TlmPacketSetMember>,
     pub omitted: Vec<TlmChannelIdentifier>,
 }
 
+#[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
@@ -100,6 +109,7 @@ pub enum TlmPacketSetMember {
 }
 
 #[ast_node]
+#[annotated]
 #[derive(Debug)]
 pub struct SpecTlmPacket {
     pub name: Ident,
