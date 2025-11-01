@@ -18,5 +18,5 @@ fn main() {
             eprintln!("{}", err);
         }
     })
-    .expect("Failed to run compiler");
+        .expect("Failed to run compiler");
 }

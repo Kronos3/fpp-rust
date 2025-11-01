@@ -15,7 +15,7 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
                                 field,
                                 "ast_node reserves the 'node_id' field name",
                             )
-                            .to_compile_error();
+                                .to_compile_error();
                             return err.into();
                         }
                     }
@@ -51,7 +51,7 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
                 input,
                 "#[ast_node] only supports structs with named fields (braced structs).",
             )
-            .to_compile_error();
+                .to_compile_error();
             return err.into();
         }
     }
@@ -103,7 +103,7 @@ pub(crate) fn ast_node_enum(input: &ItemEnum) -> TokenStream {
                         var_ident
                     ),
                 )
-                .to_compile_error();
+                    .to_compile_error();
                 return err.into();
             }
         }

@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use std::any::Any;
-use syn::{Fields, ItemStruct, Type, ItemEnum};
+use syn::{Fields, ItemEnum, ItemStruct, Type};
 
 pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
     // Ensure it's a named-field struct (not tuple or unit)

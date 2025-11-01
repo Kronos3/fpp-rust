@@ -1,5 +1,5 @@
-use fpp_core::{SourceFile, Position};
-use crate::token::{TokenKind};
+use crate::token::TokenKind;
+use fpp_core::{Position, SourceFile};
 
 #[derive(Debug)]
 pub enum ParseError {
@@ -7,7 +7,7 @@ pub enum ParseError {
         expected: Vec<TokenKind>,
         source_file: SourceFile,
         pos: Position,
-        msg: &'static str
+        msg: &'static str,
     },
 
     ExpectedToken {
@@ -15,13 +15,13 @@ pub enum ParseError {
         got: TokenKind,
         source_file: SourceFile,
         pos: Position,
-        msg: &'static str
+        msg: &'static str,
     },
 
     UnexpectedEof {
         source_file: SourceFile,
         pos: Position,
-    }
+    },
 }
 
 pub type ParseResult<T> = Result<T, ParseError>;

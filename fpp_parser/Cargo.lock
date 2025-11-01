@@ -10,8 +10,8 @@ version = "0.1.0"
 name = "fpp_parser"
 version = "0.1.0"
 dependencies = [
- "fpp_core",
- "memchr",
+    "fpp_core",
+    "memchr",
 ]
 
 [[package]]

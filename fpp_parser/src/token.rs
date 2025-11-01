@@ -1,4 +1,4 @@
-use fpp_core::{BytePos, Spanned, SourceFile, Span};
+use fpp_core::{BytePos, SourceFile, Span, Spanned};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {

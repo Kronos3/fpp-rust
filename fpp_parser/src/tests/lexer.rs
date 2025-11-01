@@ -31,7 +31,7 @@ fn lex(content: &str) -> Vec<Token> {
 
         out
     })
-    .expect("compiler error")
+        .expect("compiler error")
 }
 
 fn assert_token_eq(token: &Token, kind: TokenKind, text: &str) {

@@ -1,5 +1,5 @@
-use crate::Span;
 use crate::interface::with;
+use crate::Span;
 use std::fmt::{Debug, Formatter};
 
 pub trait Spanned {

@@ -1,4 +1,4 @@
-use crate::{*};
+use crate::*;
 
 use fpp_macros::ast_node;
 
@@ -31,7 +31,7 @@ pub enum ComponentMember {
 pub enum InputPortKind {
     Async,
     Guarded,
-    Sync
+    Sync,
 }
 
 /** Queue full behavior */
@@ -79,7 +79,7 @@ pub enum EventSeverity {
 #[derive(Debug)]
 pub struct EventThrottle {
     pub count: Expr,
-    pub every: Option<Expr>
+    pub every: Option<Expr>,
 }
 
 #[ast_node]
@@ -115,13 +115,13 @@ pub struct SpecParam {
     pub id: Option<Expr>,
     pub set_opcode: Option<Expr>,
     pub save_opcode: Option<Expr>,
-    pub is_external: bool
+    pub is_external: bool,
 }
 
 #[derive(Debug)]
 pub enum GeneralPortInstanceKind {
     Input(InputPortKind),
-    Output
+    Output,
 }
 
 #[derive(Debug)]
@@ -166,7 +166,7 @@ pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
     pub priority: Option<Expr>,
-    pub queue_full: Option<QueueFull>
+    pub queue_full: Option<QueueFull>,
 }
 
 #[derive(Debug)]
@@ -199,5 +199,5 @@ pub struct SpecTlmChannel {
     pub update: Option<TlmChannelUpdate>,
     pub format: Option<LitString>,
     pub low: Vec<TlmChannelLimit>,
-    pub high: Vec<TlmChannelLimit>
+    pub high: Vec<TlmChannelLimit>,
 }

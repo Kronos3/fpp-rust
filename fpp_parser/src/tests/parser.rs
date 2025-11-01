@@ -1,5 +1,5 @@
 use crate::parser::Parser;
-use crate::{ParseResult, parse};
+use crate::{parse, ParseResult};
 use fpp_core::SourceFile;
 use std::fmt::Debug;
 

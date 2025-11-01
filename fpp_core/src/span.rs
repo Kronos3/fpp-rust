@@ -1,8 +1,8 @@
-use crate::BytePos;
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic::Level;
 use crate::file::SourceFile;
 use crate::interface::with;
+use crate::BytePos;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone, Copy)]

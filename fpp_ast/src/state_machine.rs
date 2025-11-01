@@ -84,7 +84,7 @@ pub enum StateMember {
     SpecInitialTransition(SpecInitialTransition),
     SpecStateEntry(SpecStateEntry),
     SpecStateExit(SpecStateExit),
-    SpecStateTransition(SpecStateTransition)
+    SpecStateTransition(SpecStateTransition),
 }
 
 /** Initial state specifier */
@@ -124,7 +124,7 @@ pub struct SpecStateTransition {
 #[ast_node]
 #[derive(Debug)]
 pub struct DoExpr {
-    pub actions: Vec<Ident>
+    pub actions: Vec<Ident>,
 }
 
 /** Transition or do within transition specifier */

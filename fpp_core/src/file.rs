@@ -1,6 +1,6 @@
 use crate::interface::with;
-use std::fmt::{Debug, Display, Formatter};
 use crate::Error;
+use std::fmt::{Debug, Display, Formatter};
 
 pub type BytePos = usize;
 

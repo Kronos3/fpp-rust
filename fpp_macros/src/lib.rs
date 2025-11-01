@@ -1,10 +1,10 @@
 mod annotated;
 mod node;
 
+use crate::annotated::{annotated_enum, annotated_struct};
 use crate::node::{ast_node_enum, ast_node_struct};
 use proc_macro::TokenStream;
-use syn::{Item, parse_macro_input};
-use crate::annotated::{annotated_enum, annotated_struct};
+use syn::{parse_macro_input, Item};
 
 ///
 /// Defines an AstNode from struct or enum
@@ -51,7 +51,7 @@ pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
             return err.into();
         }
     })
-    .into()
+        .into()
 }
 
 ///

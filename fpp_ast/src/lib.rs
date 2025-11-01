@@ -8,8 +8,8 @@ pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-use fpp_macros::ast_node;
 use fpp_macros::ast_annotated;
+use fpp_macros::ast_node;
 
 pub trait AstNode: fpp_core::Spanned {
     fn id(&self) -> fpp_core::Node;

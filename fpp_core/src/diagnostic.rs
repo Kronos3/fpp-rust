@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter};
 use crate::span::Span;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub enum Level {

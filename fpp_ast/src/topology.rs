@@ -1,4 +1,4 @@
-use crate::{*};
+use crate::*;
 
 /** Topology definition */
 #[ast_node]
@@ -7,7 +7,7 @@ use crate::{*};
 pub struct DefTopology {
     pub name: Ident,
     pub members: Vec<TopologyMember>,
-    pub implements: Vec<QualIdent>
+    pub implements: Vec<QualIdent>,
 }
 
 #[ast_node]
@@ -66,14 +66,14 @@ pub enum SpecConnectionGraphKind {
         kind: ConnectionPatternKind,
         source: QualIdent,
         targets: Vec<QualIdent>,
-    }
+    },
 }
 
 #[ast_node]
 #[ast_annotated]
 #[derive(Debug)]
 pub struct SpecConnectionGraph {
-    pub kind: SpecConnectionGraphKind
+    pub kind: SpecConnectionGraphKind,
 }
 
 #[ast_node]
@@ -88,7 +88,7 @@ pub struct TlmChannelIdentifier {
 #[derive(Debug)]
 pub struct SpecTopPort {
     pub name: Ident,
-    pub underlying_port: PortInstanceIdentifier
+    pub underlying_port: PortInstanceIdentifier,
 }
 
 #[ast_node]
@@ -105,7 +105,7 @@ pub struct SpecTlmPacketSet {
 #[derive(Debug)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
-    SpecTlmPacket(SpecTlmPacket)
+    SpecTlmPacket(SpecTlmPacket),
 }
 
 #[ast_node]
@@ -121,5 +121,5 @@ pub struct SpecTlmPacket {
 #[derive(Debug)]
 pub enum TlmPacketMember {
     SpecInclude(SpecInclude),
-    TlmChannelIdentifier(TlmChannelIdentifier)
+    TlmChannelIdentifier(TlmChannelIdentifier),
 }
