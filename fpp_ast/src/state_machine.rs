@@ -1,5 +1,6 @@
 use crate::*;
 
+#[ast_node]
 #[derive(Debug)]
 pub struct DefStateMachine {
     pub name: Ident,
@@ -8,52 +9,58 @@ pub struct DefStateMachine {
 
 #[derive(Debug)]
 pub enum StateMachineMember {
-    DefAction(AstNode<DefAction>),
-    DefChoice(AstNode<DefChoice>),
-    DefGuard(AstNode<DefGuard>),
-    DefSignal(AstNode<DefSignal>),
-    DefState(AstNode<DefState>),
-    SpecInitialTransition(AstNode<SpecInitialTransition>),
+    DefAction(DefAction),
+    DefChoice(DefChoice),
+    DefGuard(DefGuard),
+    DefSignal(DefSignal),
+    DefState(DefState),
+    SpecInitialTransition(SpecInitialTransition),
 
 }
 
 /** Action definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefAction {
     pub name: Ident,
-    pub type_name: Option<AstNode<TypeName>>,
+    pub type_name: Option<TypeName>,
 }
 
 /** Choice definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefChoice {
     pub name: Ident,
     pub guard: Ident,
-    pub if_transition: AstNode<TransitionExpr>,
-    pub else_transition: AstNode<TransitionExpr>,
+    pub if_transition: TransitionExpr,
+    pub else_transition: TransitionExpr,
 }
 
 /** Guard definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefGuard {
     pub name: Ident,
-    pub type_name: Option<AstNode<TypeName>>,
+    pub type_name: Option<TypeName>,
 }
 
 /** Transition expression */
+#[ast_node]
 #[derive(Debug)]
 pub struct TransitionExpr {
-    pub actions: DoExpr,
-    pub target: AstNode<QualIdent>,
+    pub actions: Option<DoExpr>,
+    pub target: QualIdent,
 }
 
 /** Signal definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefSignal {
     pub name: Ident,
-    pub type_name: Option<AstNode<TypeName>>,
+    pub type_name: Option<TypeName>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct DefState {
     pub name: Ident,
@@ -62,33 +69,37 @@ pub struct DefState {
 
 #[derive(Debug)]
 pub enum StateMember {
-    DefChoice(AstNode<DefChoice>),
-    DefState(AstNode<DefState>),
-    SpecInitialTransition(AstNode<SpecInitialTransition>),
-    SpecStateEntry(AstNode<SpecStateEntry>),
-    SpecStateExit(AstNode<SpecStateExit>),
-    SpecStateTransition(AstNode<SpecStateTransition>)
+    DefChoice(DefChoice),
+    DefState(DefState),
+    SpecInitialTransition(SpecInitialTransition),
+    SpecStateEntry(SpecStateEntry),
+    SpecStateExit(SpecStateExit),
+    SpecStateTransition(SpecStateTransition)
 }
 
 /** Initial state specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecInitialTransition {
-    pub transition: AstNode<TransitionExpr>,
+    pub transition: TransitionExpr,
 }
 
 /** State entry specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecStateEntry {
     pub actions: DoExpr,
 }
 
 /** State exit specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecStateExit {
     pub actions: DoExpr,
 }
 
 /** Transition specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecStateTransition {
     pub signal: Ident,
@@ -96,12 +107,15 @@ pub struct SpecStateTransition {
     pub transition_or_do: TransitionOrDo,
 }
 
+#[ast_node]
 #[derive(Debug)]
-pub struct DoExpr(pub Vec<Ident>);
+pub struct DoExpr {
+    pub actions: Vec<Ident>
+}
 
 /** Transition or do within transition specifier */
 #[derive(Debug)]
 pub enum TransitionOrDo {
-    Transition(AstNode<TransitionExpr>),
+    Transition(TransitionExpr),
     Do(DoExpr),
 }

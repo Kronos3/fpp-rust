@@ -3,6 +3,7 @@ members = [
     "fpp",
     "fpp_ast",
     "fpp_core",
+    "fpp_derive",
     "fpp_parser"
 ]
 

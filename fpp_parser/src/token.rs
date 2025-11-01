@@ -1,4 +1,4 @@
-use fpp_core::{BytePos, Positioned, SourceFile, Span};
+use fpp_core::{BytePos, Spanned, SourceFile, Span};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {
@@ -193,7 +193,7 @@ impl Token {
     }
 }
 
-impl Positioned for Token {
+impl Spanned for Token {
     fn span(&self) -> Span {
         self.span
     }

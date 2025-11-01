@@ -4,7 +4,7 @@ use crate::token::KeywordKind::*;
 use crate::token::TokenKind::*;
 use crate::token::{KeywordKind, Token, TokenKind};
 use fpp_ast::*;
-use fpp_core::{Positioned, SourceFile};
+use fpp_core::{SourceFile, Spanned};
 
 pub struct Parser<'a> {
     cursor: Cursor<'a>,
@@ -47,44 +47,51 @@ impl<'a> Parser<'a> {
     }
 
     #[inline]
-    fn node<T>(&self, data: T, first_token: fpp_core::Span) -> AstNode<T> {
+    fn node(&self, first_token: fpp_core::Span) -> fpp_core::NodeId {
         let last_token_span = self
             .cursor
             .last_token_span()
             .expect("last token should exist");
 
-        AstNode {
-            id: fpp_core::NodeId::new(fpp_core::Span::new(
-                first_token.file(),
-                first_token.start().pos(),
-                last_token_span.end().pos() - first_token.start().pos(),
-            )),
-            data,
-        }
+        fpp_core::NodeId::new(fpp_core::Span::new(
+            first_token.file(),
+            first_token.start().pos(),
+            last_token_span.end().pos() - first_token.start().pos(),
+        ))
     }
 
     fn ident(&mut self) -> ParseResult<Ident> {
         let ident = self.consume(Identifier)?;
-        Ok(self.node(ident.text().to_string(), ident.span()))
+        Ok(Ident {
+            node_id: self.node(ident.span()),
+            data: ident.text().to_string(),
+        })
     }
 
-    fn alias_type(&mut self) -> ParseResult<AstNode<DefAliasType>> {
+    fn alias_type(&mut self) -> ParseResult<DefAliasType> {
         let first = self.consume_keyword(Type)?;
         self.consume(Equals)?;
         let name = self.ident()?;
         let type_name = self.type_name()?;
 
-        Ok(self.node(DefAliasType { name, type_name }, first.span()))
+        Ok(DefAliasType {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+        })
     }
 
-    fn abs_type(&mut self) -> ParseResult<AstNode<DefAbsType>> {
+    fn abs_type(&mut self) -> ParseResult<DefAbsType> {
         let first = self.consume_keyword(Type)?;
         let name = self.ident()?;
 
-        Ok(self.node(DefAbsType { name }, first.span()))
+        Ok(DefAbsType {
+            node_id: self.node(first.span()),
+            name,
+        })
     }
 
-    fn def_action(&mut self) -> ParseResult<AstNode<DefAction>> {
+    fn def_action(&mut self) -> ParseResult<DefAction> {
         let first = self.consume_keyword(Action)?;
         let name = self.ident()?;
         let type_name = match self.peek(0) {
@@ -95,10 +102,14 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(DefAction { name, type_name }, first.span()))
+        Ok(DefAction {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+        })
     }
 
-    fn def_array(&mut self) -> ParseResult<AstNode<DefArray>> {
+    fn def_array(&mut self) -> ParseResult<DefArray> {
         let first = self.consume_keyword(Array)?;
         let name = self.ident()?;
 
@@ -123,19 +134,17 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            DefArray {
-                name,
-                size,
-                elt_type,
-                default,
-                format,
-            },
-            first.span(),
-        ))
+        Ok(DefArray {
+            node_id: self.node(first.span()),
+            name,
+            size,
+            elt_type,
+            default,
+            format,
+        })
     }
 
-    fn def_choice(&mut self) -> ParseResult<AstNode<DefChoice>> {
+    fn def_choice(&mut self) -> ParseResult<DefChoice> {
         let first = self.consume_keyword(Choice)?;
         let name = self.ident()?;
 
@@ -150,18 +159,16 @@ impl<'a> Parser<'a> {
 
         self.consume(RightCurly)?;
 
-        Ok(self.node(
-            DefChoice {
-                name,
-                guard,
-                if_transition,
-                else_transition,
-            },
-            first.span(),
-        ))
+        Ok(DefChoice {
+            node_id: self.node(first.span()),
+            name,
+            guard,
+            if_transition,
+            else_transition,
+        })
     }
 
-    pub fn def_component(&mut self) -> ParseResult<AstNode<DefComponent>> {
+    pub fn def_component(&mut self) -> ParseResult<DefComponent> {
         let (kind, first) = self.component_kind()?;
         self.consume_keyword(Component)?;
         let name = self.ident()?;
@@ -171,14 +178,12 @@ impl<'a> Parser<'a> {
             self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(
-            DefComponent {
-                kind,
-                name,
-                members,
-            },
-            first.span(),
-        ))
+        Ok(DefComponent {
+            node_id: self.node(first.span()),
+            kind,
+            name,
+            members,
+        })
     }
 
     fn component_kind(&mut self) -> ParseResult<(ComponentKind, Token)> {
@@ -308,14 +313,18 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn def_module(&mut self) -> ParseResult<AstNode<DefModule>> {
+    fn def_module(&mut self) -> ParseResult<DefModule> {
         let first = self.consume_keyword(Module)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
         let members = self.module_members()?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(DefModule { name, members }, first.span()))
+        Ok(DefModule {
+            node_id: self.node(first.span()),
+            name,
+            members,
+        })
     }
 
     pub fn module_members(&mut self) -> ParseResult<Vec<Annotated<ModuleMember>>> {
@@ -366,7 +375,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn def_port(&mut self) -> ParseResult<AstNode<DefPort>> {
+    fn def_port(&mut self) -> ParseResult<DefPort> {
         let first = self.consume_keyword(Port)?;
         let name = self.ident()?;
         let params = self.formal_param_list()?;
@@ -378,17 +387,15 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            DefPort {
-                name,
-                params,
-                return_type,
-            },
-            first.span(),
-        ))
+        Ok(DefPort {
+            node_id: self.node(first.span()),
+            name,
+            params,
+            return_type,
+        })
     }
 
-    fn spec_loc(&mut self) -> ParseResult<AstNode<SpecLoc>> {
+    fn spec_loc(&mut self) -> ParseResult<SpecLoc> {
         let first = self.consume_keyword(Locate)?;
         let kind = match self.peek(0) {
             Keyword(Component) => {
@@ -439,10 +446,15 @@ impl<'a> Parser<'a> {
         let symbol = self.qual_ident()?;
         self.consume_keyword(At)?;
         let file = self.lit_string()?;
-        Ok(self.node(SpecLoc { kind, symbol, file }, first.span()))
+        Ok(SpecLoc {
+            node_id: self.node(first.span()),
+            kind,
+            symbol,
+            file,
+        })
     }
 
-    fn def_topology(&mut self) -> ParseResult<AstNode<DefTopology>> {
+    fn def_topology(&mut self) -> ParseResult<DefTopology> {
         let first = self.consume_keyword(Topology)?;
         let name = self.ident()?;
         let implements = match self.peek(0) {
@@ -454,14 +466,12 @@ impl<'a> Parser<'a> {
         let members = self.topology_members()?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(
-            DefTopology {
-                name,
-                members,
-                implements,
-            },
-            first.span(),
-        ))
+        Ok(DefTopology {
+            node_id: self.node(first.span()),
+            name,
+            members,
+            implements,
+        })
     }
 
     pub fn topology_members(&mut self) -> ParseResult<Vec<Annotated<TopologyMember>>> {
@@ -508,24 +518,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn spec_connection_graph_pattern(&mut self) -> ParseResult<AstNode<SpecConnectionGraph>> {
-        let first_span = match self.peek_span(0) {
-            Some(span) => span,
-            None => {
-                return Err(self.cursor.err_expected_one_of(
-                    "connection pattern graph specifier expected",
-                    vec![
-                        Keyword(Telemetry),
-                        Keyword(Command),
-                        Keyword(Event),
-                        Keyword(Health),
-                        Keyword(Param),
-                        Keyword(Text),
-                        Keyword(Time),
-                    ],
-                ));
-            }
-        };
+    fn spec_connection_graph_pattern(&mut self) -> ParseResult<SpecConnectionGraph> {
+        let first_span = self.current_span()?;
 
         let kind = match self.peek(0) {
             Keyword(Command) => {
@@ -587,39 +581,31 @@ impl<'a> Parser<'a> {
             _ => vec![],
         };
 
-        Ok(self.node(
-            SpecConnectionGraph::Pattern {
+        Ok(SpecConnectionGraph {
+            node_id: self.node(first_span),
+            kind: SpecConnectionGraphKind::Pattern {
                 kind,
                 source,
                 targets,
             },
-            first_span,
-        ))
+        })
     }
 
-    fn spec_connection_graph_direct(&mut self) -> ParseResult<AstNode<SpecConnectionGraph>> {
+    fn spec_connection_graph_direct(&mut self) -> ParseResult<SpecConnectionGraph> {
         let first = self.consume_keyword(Connections)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
         let connections = self.element_sequence(&Parser::connection, Comma, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(
-            SpecConnectionGraph::Direct { name, connections },
-            first.span(),
-        ))
+        Ok(SpecConnectionGraph {
+            node_id: self.node(first.span()),
+            kind: SpecConnectionGraphKind::Direct { name, connections },
+        })
     }
 
-    fn connection(&mut self) -> ParseResult<AstNode<Connection>> {
-        let first_span = match self.peek_span(0) {
-            Some(span) => span,
-            None => {
-                return Err(self.cursor.err_expected_one_of(
-                    "connection expected",
-                    vec![Identifier, Keyword(Unmatched)],
-                ));
-            }
-        };
+    fn connection(&mut self) -> ParseResult<Connection> {
+        let first_span = self.current_span()?;
 
         let is_unmatched = match self.peek(0) {
             Keyword(Unmatched) => {
@@ -643,19 +629,17 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            Connection {
-                is_unmatched,
-                from_port,
-                from_index,
-                to_port,
-                to_index,
-            },
-            first_span,
-        ))
+        Ok(Connection {
+            node_id: self.node(first_span),
+            is_unmatched,
+            from_port,
+            from_index,
+            to_port,
+            to_index,
+        })
     }
 
-    fn spec_instance(&mut self) -> ParseResult<AstNode<SpecInstance>> {
+    fn spec_instance(&mut self) -> ParseResult<SpecInstance> {
         let first = match self.peek(0) {
             Keyword(Import) | Keyword(Instance) => self.next().unwrap(),
             _ => {
@@ -667,10 +651,13 @@ impl<'a> Parser<'a> {
         };
 
         let instance = self.qual_ident()?;
-        Ok(self.node(SpecInstance { instance }, first.span()))
+        Ok(SpecInstance {
+            node_id: self.node(first.span()),
+            instance,
+        })
     }
 
-    fn spec_tlm_packet_set(&mut self) -> ParseResult<AstNode<SpecTlmPacketSet>> {
+    fn spec_tlm_packet_set(&mut self) -> ParseResult<SpecTlmPacketSet> {
         let first = self.consume_keyword(Telemetry)?;
         self.consume_keyword(Packets)?;
         let name = self.ident()?;
@@ -690,14 +677,12 @@ impl<'a> Parser<'a> {
             _ => vec![],
         };
 
-        Ok(self.node(
-            SpecTlmPacketSet {
-                name,
-                members,
-                omitted,
-            },
-            first.span(),
-        ))
+        Ok(SpecTlmPacketSet {
+            node_id: self.node(first.span()),
+            name,
+            members,
+            omitted,
+        })
     }
 
     pub fn tlm_packet_set_members(&mut self) -> ParseResult<Vec<Annotated<TlmPacketSetMember>>> {
@@ -715,7 +700,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn spec_tlm_packet(&mut self) -> ParseResult<AstNode<SpecTlmPacket>> {
+    fn spec_tlm_packet(&mut self) -> ParseResult<SpecTlmPacket> {
         let first = self.consume_keyword(Packet)?;
         let name = self.ident()?;
         let id = self.opt_expr(Id)?;
@@ -725,15 +710,13 @@ impl<'a> Parser<'a> {
         let members = self.tlm_packet_members()?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(
-            SpecTlmPacket {
-                name,
-                id,
-                group,
-                members,
-            },
-            first.span(),
-        ))
+        Ok(SpecTlmPacket {
+            node_id: self.node(first.span()),
+            name,
+            id,
+            group,
+            members,
+        })
     }
 
     pub fn tlm_packet_members(&mut self) -> ParseResult<Vec<TlmPacketMember>> {
@@ -753,33 +736,27 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn tlm_channel_identifier(&mut self) -> ParseResult<AstNode<TlmChannelIdentifier>> {
+    fn tlm_channel_identifier(&mut self) -> ParseResult<TlmChannelIdentifier> {
         let (component_instance, channel_name, first_span) = self.interface_instance_member()?;
 
-        Ok(self.node(
-            TlmChannelIdentifier {
-                component_instance,
-                channel_name,
-            },
-            first_span,
-        ))
+        Ok(TlmChannelIdentifier {
+            node_id: self.node(first_span),
+            component_instance,
+            channel_name,
+        })
     }
 
-    fn port_instance_identifier(&mut self) -> ParseResult<AstNode<PortInstanceIdentifier>> {
+    fn port_instance_identifier(&mut self) -> ParseResult<PortInstanceIdentifier> {
         let (interface_instance, port_name, first_span) = self.interface_instance_member()?;
 
-        Ok(self.node(
-            PortInstanceIdentifier {
-                interface_instance,
-                port_name,
-            },
-            first_span,
-        ))
+        Ok(PortInstanceIdentifier {
+            node_id: self.node(first_span),
+            interface_instance,
+            port_name,
+        })
     }
 
-    fn interface_instance_member(
-        &mut self,
-    ) -> ParseResult<(AstNode<QualIdent>, Ident, fpp_core::Span)> {
+    fn interface_instance_member(&mut self) -> ParseResult<(QualIdent, Ident, fpp_core::Span)> {
         let first = self.ident()?;
         let first_span = first.span();
 
@@ -792,39 +769,34 @@ impl<'a> Parser<'a> {
         }
 
         let member = identifiers.pop().unwrap();
-        let instance = identifiers.into_iter().fold(
-            self.node(QualIdent::Unqualified(first), first_span),
-            |q, ident| {
+        let instance = identifiers
+            .into_iter()
+            .fold(QualIdent::Unqualified(first), |q, ident| {
                 let q_span = q.span();
-                self.node(
-                    QualIdent::Qualified {
-                        qualifier: Box::new(q),
-                        name: ident,
-                    },
-                    q_span,
-                )
-            },
-        );
+                QualIdent::Qualified {
+                    node_id: self.node(q_span),
+                    qualifier: Box::new(q),
+                    name: ident,
+                }
+            });
 
         Ok((instance, member, first_span))
     }
 
-    fn spec_top_port(&mut self) -> ParseResult<AstNode<SpecTopPort>> {
+    fn spec_top_port(&mut self) -> ParseResult<SpecTopPort> {
         let first = self.consume_keyword(Port)?;
         let name = self.ident()?;
         self.consume(Equals)?;
         let underlying_port = self.port_instance_identifier()?;
 
-        Ok(self.node(
-            SpecTopPort {
-                name,
-                underlying_port,
-            },
-            first.span(),
-        ))
+        Ok(SpecTopPort {
+            node_id: self.node(first.span()),
+            name,
+            underlying_port,
+        })
     }
 
-    fn def_component_instance(&mut self) -> ParseResult<AstNode<DefComponentInstance>> {
+    fn def_component_instance(&mut self) -> ParseResult<DefComponentInstance> {
         let first = self.consume_keyword(Instance)?;
         let name = self.ident()?;
         self.consume(Colon)?;
@@ -892,32 +864,34 @@ impl<'a> Parser<'a> {
             }
         };
 
-        Ok(self.node(
-            DefComponentInstance {
-                name,
-                component,
-                base_id,
-                impl_type,
-                file,
-                queue_size,
-                stack_size,
-                priority,
-                cpu,
-                init_specs,
-            },
-            first.span(),
-        ))
+        Ok(DefComponentInstance {
+            node_id: self.node(first.span()),
+            name,
+            component,
+            base_id,
+            impl_type,
+            file,
+            queue_size,
+            stack_size,
+            priority,
+            cpu,
+            init_specs,
+        })
     }
 
-    fn spec_init(&mut self) -> ParseResult<AstNode<SpecInit>> {
+    fn spec_init(&mut self) -> ParseResult<SpecInit> {
         let first = self.consume_keyword(Phase)?;
         let phase = self.expr()?;
         let code = self.lit_string()?;
 
-        Ok(self.node(SpecInit { phase, code }, first.span()))
+        Ok(SpecInit {
+            node_id: self.node(first.span()),
+            phase,
+            code,
+        })
     }
 
-    fn def_interface(&mut self) -> ParseResult<AstNode<DefInterface>> {
+    fn def_interface(&mut self) -> ParseResult<DefInterface> {
         let first = self.consume_keyword(Interface)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
@@ -925,7 +899,11 @@ impl<'a> Parser<'a> {
             self.annotated_element_sequence(&Parser::interface_member, Semi, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(DefInterface { name, members }, first.span()))
+        Ok(DefInterface {
+            node_id: self.node(first.span()),
+            name,
+            members,
+        })
     }
 
     pub fn interface_member(&mut self) -> ParseResult<InterfaceMember> {
@@ -937,17 +915,21 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn def_constant(&mut self) -> ParseResult<AstNode<DefConstant>> {
+    fn def_constant(&mut self) -> ParseResult<DefConstant> {
         let first = self.consume_keyword(Constant)?;
         let name = self.ident()?;
 
         self.consume(Equals)?;
         let value = self.expr()?;
 
-        Ok(self.node(DefConstant { name, value }, first.span()))
+        Ok(DefConstant {
+            node_id: self.node(first.span()),
+            name,
+            value,
+        })
     }
 
-    fn def_enum(&mut self) -> ParseResult<AstNode<DefEnum>> {
+    fn def_enum(&mut self) -> ParseResult<DefEnum> {
         let first = self.consume_keyword(Enum)?;
         let name = self.ident()?;
 
@@ -972,18 +954,16 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            DefEnum {
-                name,
-                type_name,
-                constants,
-                default,
-            },
-            first.span(),
-        ))
+        Ok(DefEnum {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+            constants,
+            default,
+        })
     }
 
-    fn def_enum_constant(&mut self) -> ParseResult<AstNode<DefEnumConstant>> {
+    fn def_enum_constant(&mut self) -> ParseResult<DefEnumConstant> {
         let name = self.ident()?;
         let first_span = name.span();
 
@@ -995,10 +975,14 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(DefEnumConstant { name, value }, first_span))
+        Ok(DefEnumConstant {
+            node_id: self.node(first_span),
+            name,
+            value,
+        })
     }
 
-    fn spec_state_machine_instance(&mut self) -> ParseResult<AstNode<SpecStateMachineInstance>> {
+    fn spec_state_machine_instance(&mut self) -> ParseResult<SpecStateMachineInstance> {
         let first = self.consume_keyword(State)?;
         self.consume_keyword(Machine)?;
         self.consume_keyword(Instance)?;
@@ -1030,18 +1014,16 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            SpecStateMachineInstance {
-                name,
-                state_machine,
-                priority,
-                queue_full,
-            },
-            first.span(),
-        ))
+        Ok(SpecStateMachineInstance {
+            node_id: self.node(first.span()),
+            name,
+            state_machine,
+            priority,
+            queue_full,
+        })
     }
 
-    fn def_state_machine(&mut self) -> ParseResult<AstNode<DefStateMachine>> {
+    fn def_state_machine(&mut self) -> ParseResult<DefStateMachine> {
         let first = self.consume_keyword(State)?;
         self.consume_keyword(Machine)?;
 
@@ -1062,7 +1044,11 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(DefStateMachine { name, members }, first.span()))
+        Ok(DefStateMachine {
+            node_id: self.node(first.span()),
+            name,
+            members,
+        })
     }
 
     fn state_machine_member(&mut self) -> ParseResult<StateMachineMember> {
@@ -1115,36 +1101,48 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn spec_initial_transition(&mut self) -> ParseResult<AstNode<SpecInitialTransition>> {
+    fn spec_initial_transition(&mut self) -> ParseResult<SpecInitialTransition> {
         let first = self.consume_keyword(Initial)?;
         let transition = self.transition_expr()?;
 
-        Ok(self.node(SpecInitialTransition { transition }, first.span()))
+        Ok(SpecInitialTransition {
+            node_id: self.node(first.span()),
+            transition,
+        })
     }
 
-    fn spec_state_entry(&mut self) -> ParseResult<AstNode<SpecStateEntry>> {
+    fn spec_state_entry(&mut self) -> ParseResult<SpecStateEntry> {
         let first = self.consume_keyword(Entry)?;
         let actions = self.do_expr()?;
 
-        Ok(self.node(SpecStateEntry { actions }, first.span()))
+        Ok(SpecStateEntry {
+            node_id: self.node(first.span()),
+            actions,
+        })
     }
 
     fn do_expr(&mut self) -> ParseResult<DoExpr> {
-        self.consume_keyword(Do)?;
+        let first = self.consume_keyword(Do)?;
         self.consume(LeftCurly)?;
-        let elements = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
+        let actions = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(DoExpr(elements))
+        Ok(DoExpr {
+            node_id: self.node(first.span()),
+            actions,
+        })
     }
 
-    fn spec_state_exit(&mut self) -> ParseResult<AstNode<SpecStateExit>> {
+    fn spec_state_exit(&mut self) -> ParseResult<SpecStateExit> {
         let first = self.consume_keyword(Exit)?;
         let actions = self.do_expr()?;
-        Ok(self.node(SpecStateExit { actions }, first.span()))
+        Ok(SpecStateExit {
+            node_id: self.node(first.span()),
+            actions,
+        })
     }
 
-    fn spec_state_transition(&mut self) -> ParseResult<AstNode<SpecStateTransition>> {
+    fn spec_state_transition(&mut self) -> ParseResult<SpecStateTransition> {
         let first = self.consume_keyword(On)?;
         let signal = self.ident()?;
         let guard = match self.peek(0) {
@@ -1157,14 +1155,12 @@ impl<'a> Parser<'a> {
 
         let transition_or_do = self.transition_or_do()?;
 
-        Ok(self.node(
-            SpecStateTransition {
-                signal,
-                guard,
-                transition_or_do,
-            },
-            first.span(),
-        ))
+        Ok(SpecStateTransition {
+            node_id: self.node(first.span()),
+            signal,
+            guard,
+            transition_or_do,
+        })
     }
 
     fn transition_or_do(&mut self) -> ParseResult<TransitionOrDo> {
@@ -1179,13 +1175,11 @@ impl<'a> Parser<'a> {
             Keyword(Enter) => {
                 self.next();
                 let target = self.qual_ident()?;
-                Ok(TransitionOrDo::Transition(self.node(
-                    TransitionExpr {
-                        actions: do_expr.unwrap_or(DoExpr(vec![])),
-                        target,
-                    },
-                    first_span,
-                )))
+                Ok(TransitionOrDo::Transition(TransitionExpr {
+                    node_id: self.node(first_span),
+                    actions: do_expr,
+                    target,
+                }))
             }
             _ => match do_expr {
                 Some(de) => Ok(TransitionOrDo::Do(de)),
@@ -1197,25 +1191,23 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn transition_expr(&mut self) -> ParseResult<AstNode<TransitionExpr>> {
+    fn transition_expr(&mut self) -> ParseResult<TransitionExpr> {
         let first_span = self.current_span()?;
 
         let do_expr = match self.peek(0) {
-            Keyword(Do) => self.do_expr()?,
-            _ => DoExpr(vec![]),
+            Keyword(Do) => Some(self.do_expr()?),
+            _ => None,
         };
 
         match self.peek(0) {
             Keyword(Enter) => {
                 self.next();
                 let target = self.qual_ident()?;
-                Ok(self.node(
-                    TransitionExpr {
-                        actions: do_expr,
-                        target,
-                    },
-                    first_span,
-                ))
+                Ok(TransitionExpr {
+                    node_id: self.node(first_span),
+                    actions: do_expr,
+                    target,
+                })
             }
             _ => Err(self.cursor.err_expected_one_of(
                 "expected transition expression",
@@ -1224,7 +1216,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn def_guard(&mut self) -> ParseResult<AstNode<DefGuard>> {
+    fn def_guard(&mut self) -> ParseResult<DefGuard> {
         let first = self.consume_keyword(Guard)?;
         let name = self.ident()?;
         let type_name = match self.peek(0) {
@@ -1235,10 +1227,14 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(DefGuard { name, type_name }, first.span()))
+        Ok(DefGuard {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+        })
     }
 
-    fn spec_container(&mut self) -> ParseResult<AstNode<SpecContainer>> {
+    fn spec_container(&mut self) -> ParseResult<SpecContainer> {
         let first = self.consume_keyword(Product)?;
         self.consume_keyword(Container)?;
         let name = self.ident()?;
@@ -1252,17 +1248,15 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            SpecContainer {
-                name,
-                id,
-                default_priority,
-            },
-            first.span(),
-        ))
+        Ok(SpecContainer {
+            node_id: self.node(first.span()),
+            name,
+            id,
+            default_priority,
+        })
     }
 
-    fn spec_record(&mut self) -> ParseResult<AstNode<SpecRecord>> {
+    fn spec_record(&mut self) -> ParseResult<SpecRecord> {
         let first = self.consume_keyword(Product)?;
         self.consume_keyword(Record)?;
         let name = self.ident()?;
@@ -1277,18 +1271,16 @@ impl<'a> Parser<'a> {
         };
 
         let id = self.opt_expr(Id)?;
-        Ok(self.node(
-            SpecRecord {
-                name,
-                record_type,
-                is_array,
-                id,
-            },
-            first.span(),
-        ))
+        Ok(SpecRecord {
+            node_id: self.node(first.span()),
+            name,
+            record_type,
+            is_array,
+            id,
+        })
     }
 
-    fn spec_event(&mut self) -> ParseResult<AstNode<SpecEvent>> {
+    fn spec_event(&mut self) -> ParseResult<SpecEvent> {
         let first = self.consume_keyword(Event)?;
         let name = self.ident()?;
         let params = self.formal_param_list()?;
@@ -1356,66 +1348,76 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            SpecEvent {
-                name,
-                params,
-                severity,
-                id,
-                format,
-                throttle,
-            },
-            first.span(),
-        ))
+        Ok(SpecEvent {
+            node_id: self.node(first.span()),
+            name,
+            params,
+            severity,
+            id,
+            format,
+            throttle,
+        })
     }
 
-    fn event_throttle(&mut self) -> ParseResult<AstNode<EventThrottle>> {
+    fn event_throttle(&mut self) -> ParseResult<EventThrottle> {
         let first = self.consume_keyword(Throttle)?;
         let count = self.expr()?;
         let every = self.opt_expr(Every)?;
 
-        Ok(self.node(EventThrottle { count, every }, first.span()))
+        Ok(EventThrottle {
+            node_id: self.node(first.span()),
+            count,
+            every,
+        })
     }
 
-    fn spec_include(&mut self) -> ParseResult<AstNode<SpecInclude>> {
+    fn spec_include(&mut self) -> ParseResult<SpecInclude> {
         let first = self.consume_keyword(Include)?;
         let file = self.lit_string()?;
-        Ok(self.node(SpecInclude { file }, first.span()))
+        Ok(SpecInclude {
+            node_id: self.node(first.span()),
+            file,
+        })
     }
 
-    fn spec_import_interface(&mut self) -> ParseResult<AstNode<SpecImport>> {
+    fn spec_import_interface(&mut self) -> ParseResult<SpecImport> {
         let first = self.consume_keyword(Import)?;
         let sym = self.qual_ident()?;
-        Ok(self.node(SpecImport { sym }, first.span()))
+        Ok(SpecImport {
+            node_id: self.node(first.span()),
+            sym,
+        })
     }
 
-    fn spec_internal_port(&mut self) -> ParseResult<AstNode<SpecInternalPort>> {
+    fn spec_internal_port(&mut self) -> ParseResult<SpecInternalPort> {
         let first = self.consume_keyword(Internal)?;
         self.consume_keyword(Port)?;
         let name = self.ident()?;
         let params = self.formal_param_list()?;
         let priority = self.opt_expr(Priority)?;
         let queue_full = self.opt_queue_full()?;
-        Ok(self.node(
-            SpecInternalPort {
-                name,
-                params,
-                priority,
-                queue_full,
-            },
-            first.span(),
-        ))
+        Ok(SpecInternalPort {
+            node_id: self.node(first.span()),
+            name,
+            params,
+            priority,
+            queue_full,
+        })
     }
 
-    fn spec_port_matching(&mut self) -> ParseResult<AstNode<SpecPortMatching>> {
+    fn spec_port_matching(&mut self) -> ParseResult<SpecPortMatching> {
         let first = self.consume_keyword(Match)?;
         let port1 = self.ident()?;
         self.consume_keyword(With)?;
         let port2 = self.ident()?;
-        Ok(self.node(SpecPortMatching { port1, port2 }, first.span()))
+        Ok(SpecPortMatching {
+            node_id: self.node(first.span()),
+            port1,
+            port2,
+        })
     }
 
-    fn spec_param(&mut self) -> ParseResult<AstNode<SpecParam>> {
+    fn spec_param(&mut self) -> ParseResult<SpecParam> {
         let first_span = self.current_span()?;
         let is_external = match self.peek(0) {
             Keyword(External) => {
@@ -1450,21 +1452,19 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            SpecParam {
-                name,
-                type_name,
-                default,
-                id,
-                set_opcode,
-                save_opcode,
-                is_external,
-            },
-            first_span,
-        ))
+        Ok(SpecParam {
+            node_id: self.node(first_span),
+            name,
+            type_name,
+            default,
+            id,
+            set_opcode,
+            save_opcode,
+            is_external,
+        })
     }
 
-    fn spec_tlm_channel(&mut self) -> ParseResult<AstNode<SpecTlmChannel>> {
+    fn spec_tlm_channel(&mut self) -> ParseResult<SpecTlmChannel> {
         let first = self.consume_keyword(Telemetry)?;
         let name = self.ident()?;
         self.consume(Colon)?;
@@ -1515,18 +1515,16 @@ impl<'a> Parser<'a> {
             _ => vec![],
         };
 
-        Ok(self.node(
-            SpecTlmChannel {
-                name,
-                type_name,
-                id,
-                update,
-                format,
-                low,
-                high,
-            },
-            first.span(),
-        ))
+        Ok(SpecTlmChannel {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+            id,
+            update,
+            format,
+            low,
+            high,
+        })
     }
 
     fn limit_sequence(&mut self) -> ParseResult<Vec<TlmChannelLimit>> {
@@ -1537,14 +1535,17 @@ impl<'a> Parser<'a> {
     }
 
     fn limit(&mut self) -> ParseResult<TlmChannelLimit> {
+        let first_span = self.current_span()?;
         let kind = self.limit_kind()?;
         let value = self.expr()?;
-        Ok(TlmChannelLimit { kind, value })
+        Ok(TlmChannelLimit {
+            node_id: self.node(first_span),
+            kind,
+            value,
+        })
     }
 
-    fn limit_kind(&mut self) -> ParseResult<AstNode<TlmChannelLimitKind>> {
-        let first_span = self.current_span()?;
-
+    fn limit_kind(&mut self) -> ParseResult<TlmChannelLimitKind> {
         let kind = match self.peek(0) {
             Keyword(Orange) => Ok(TlmChannelLimitKind::Orange),
             Keyword(Red) => Ok(TlmChannelLimitKind::Red),
@@ -1555,10 +1556,10 @@ impl<'a> Parser<'a> {
             )),
         }?;
 
-        Ok(self.node(kind, first_span))
+        Ok(kind)
     }
 
-    fn def_struct(&mut self) -> ParseResult<AstNode<DefStruct>> {
+    fn def_struct(&mut self) -> ParseResult<DefStruct> {
         let first = self.consume_keyword(Struct)?;
         let name = self.ident()?;
 
@@ -1575,19 +1576,17 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            DefStruct {
-                name,
-                members,
-                default,
-            },
-            first.span(),
-        ))
+        Ok(DefStruct {
+            node_id: self.node(first.span()),
+            name,
+            members,
+            default,
+        })
     }
 
-    fn struct_type_member(&mut self) -> ParseResult<AstNode<StructTypeMember>> {
+    fn struct_type_member(&mut self) -> ParseResult<StructTypeMember> {
         let name = self.ident()?;
-        let name_span = name.span();
+        let first_span = name.span();
 
         self.consume(Colon)?;
         let size = match self.peek(0) {
@@ -1604,18 +1603,16 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            StructTypeMember {
-                name,
-                size,
-                type_name,
-                format,
-            },
-            name_span,
-        ))
+        Ok(StructTypeMember {
+            node_id: self.node(first_span),
+            name,
+            size,
+            type_name,
+            format,
+        })
     }
 
-    fn def_state(&mut self) -> ParseResult<AstNode<DefState>> {
+    fn def_state(&mut self) -> ParseResult<DefState> {
         let first = self.consume_keyword(State)?;
         let name = self.ident()?;
 
@@ -1630,10 +1627,14 @@ impl<'a> Parser<'a> {
             _ => vec![],
         };
 
-        Ok(self.node(DefState { name, members }, first.span()))
+        Ok(DefState {
+            node_id: self.node(first.span()),
+            name,
+            members,
+        })
     }
 
-    fn def_signal(&mut self) -> ParseResult<AstNode<DefSignal>> {
+    fn def_signal(&mut self) -> ParseResult<DefSignal> {
         let first = self.consume_keyword(Signal)?;
         let name = self.ident()?;
         self.consume(Colon)?;
@@ -1645,10 +1646,14 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(DefSignal { name, type_name }, first.span()))
+        Ok(DefSignal {
+            node_id: self.node(first.span()),
+            name,
+            type_name,
+        })
     }
 
-    fn spec_port_general(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+    fn spec_port_general(&mut self) -> ParseResult<SpecPortInstance> {
         let first = match self.peek_span(0) {
             Some(span) => span,
             None => {
@@ -1724,8 +1729,9 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(self.node(
-            SpecPortInstance::General {
+        Ok(SpecPortInstance {
+            node_id: self.node(first),
+            kind: SpecPortInstanceKind::General {
                 kind,
                 name,
                 size,
@@ -1733,11 +1739,10 @@ impl<'a> Parser<'a> {
                 priority,
                 queue_full,
             },
-            first,
-        ))
+        })
     }
 
-    fn spec_port_special(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+    fn spec_port_special(&mut self) -> ParseResult<SpecPortInstance> {
         let first = match self.peek_span(0) {
             Some(span) => span,
             None => {
@@ -1884,19 +1889,19 @@ impl<'a> Parser<'a> {
 
         let queue_full = self.opt_queue_full()?;
 
-        Ok(self.node(
-            SpecPortInstance::Special {
+        Ok(SpecPortInstance {
+            node_id: self.node(first),
+            kind: SpecPortInstanceKind::Special {
                 input_kind,
                 kind,
                 name,
                 priority,
                 queue_full,
             },
-            first,
-        ))
+        })
     }
 
-    fn spec_port_instance(&mut self) -> ParseResult<AstNode<SpecPortInstance>> {
+    fn spec_port_instance(&mut self) -> ParseResult<SpecPortInstance> {
         match self.peek(0) {
             Keyword(Async) | Keyword(Guarded) | Keyword(Sync) => match self.peek(1) {
                 Keyword(Input) => self.spec_port_general(),
@@ -1907,7 +1912,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn spec_command(&mut self) -> ParseResult<AstNode<SpecCommand>> {
+    fn spec_command(&mut self) -> ParseResult<SpecCommand> {
         let first_span = self.current_span()?;
 
         let kind = match self.peek(0) {
@@ -1938,17 +1943,15 @@ impl<'a> Parser<'a> {
         let priority = self.opt_expr(Priority)?;
         let queue_full = self.opt_queue_full()?;
 
-        Ok(self.node(
-            SpecCommand {
-                kind,
-                name,
-                params,
-                opcode,
-                priority,
-                queue_full,
-            },
-            first_span,
-        ))
+        Ok(SpecCommand {
+            node_id: self.node(first_span),
+            kind,
+            name,
+            params,
+            opcode,
+            priority,
+            queue_full,
+        })
     }
 
     fn opt_queue_full(&mut self) -> ParseResult<Option<QueueFull>> {
@@ -2139,83 +2142,79 @@ impl<'a> Parser<'a> {
         Ok(out)
     }
 
-    fn index(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn index(&mut self) -> ParseResult<Expr> {
         self.consume(LeftSquare)?;
         let out = self.expr()?;
         self.consume(RightSquare)?;
         Ok(out)
     }
 
-    fn qual_ident(&mut self) -> ParseResult<AstNode<QualIdent>> {
+    fn qual_ident(&mut self) -> ParseResult<QualIdent> {
         let first = self.ident()?;
-        let first_span = first.span();
         let mut out = vec![];
         while self.peek(0) == Dot {
             self.next();
             out.push(self.ident()?)
         }
 
-        Ok(out.into_iter().fold(
-            self.node(QualIdent::Unqualified(first), first_span),
-            |q, ident| {
+        Ok(out
+            .into_iter()
+            .fold(QualIdent::Unqualified(first), |q, ident| {
                 let q_span = q.span();
-                self.node(
-                    QualIdent::Qualified {
-                        qualifier: Box::new(q),
-                        name: ident,
-                    },
-                    q_span,
-                )
-            },
-        ))
+                QualIdent::Qualified {
+                    node_id: self.node(q_span),
+                    qualifier: Box::new(q),
+                    name: ident,
+                }
+            }))
     }
 
-    fn type_name(&mut self) -> ParseResult<AstNode<TypeName>> {
+    fn type_name(&mut self) -> ParseResult<TypeName> {
         let first_span = self.current_span()?;
-        let tn = match self.peek(0) {
+        let kind = match self.peek(0) {
             Keyword(Bool) => {
                 self.next();
-                Ok(TypeName::Bool())
+                Ok(TypeNameKind::Bool())
             }
             Keyword(I8) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::I8))
+                Ok(TypeNameKind::Integer(IntegerType::I8))
             }
             Keyword(U8) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::U8))
+                Ok(TypeNameKind::Integer(IntegerType::U8))
             }
             Keyword(I16) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::I16))
+                Ok(TypeNameKind::Integer(IntegerType::I16))
             }
             Keyword(U16) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::U16))
+                Ok(TypeNameKind::Integer(IntegerType::U16))
             }
             Keyword(I32) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::I32))
+                Ok(TypeNameKind::Integer(IntegerType::I32))
             }
             Keyword(U32) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::U32))
+                Ok(TypeNameKind::Integer(IntegerType::U32))
             }
             Keyword(I64) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::I64))
+                Ok(TypeNameKind::Integer(IntegerType::I64))
             }
             Keyword(U64) => {
                 self.next();
-                Ok(TypeName::Integer(IntegerType::U64))
+                Ok(TypeNameKind::Integer(IntegerType::U64))
             }
             Keyword(F32) => {
                 self.next();
-                Ok(TypeName::Floating(FloatType::F32))
+                Ok(TypeNameKind::Floating(FloatType::F32))
             }
             Keyword(F64) => {
                 self.next();
-                Ok(TypeName::Floating(FloatType::F64))
+                Ok(TypeNameKind::Floating(FloatType::F64))
             }
             Keyword(String_) => {
                 self.next();
@@ -2226,9 +2225,9 @@ impl<'a> Parser<'a> {
                     }
                     _ => None,
                 };
-                Ok(TypeName::String(size))
+                Ok(TypeNameKind::String(size))
             }
-            Identifier => Ok(TypeName::QualIdent(self.qual_ident()?)),
+            Identifier => Ok(TypeNameKind::QualIdent(self.qual_ident()?)),
             _ => Err(self.cursor.err_expected_one_of(
                 "type name expected",
                 vec![
@@ -2249,10 +2248,13 @@ impl<'a> Parser<'a> {
             )),
         }?;
 
-        Ok(self.node(tn, first_span))
+        Ok(TypeName {
+            node_id: self.node(first_span),
+            kind,
+        })
     }
 
-    fn expr(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn expr(&mut self) -> ParseResult<Expr> {
         let left = self.expr_add_sub_operand()?;
         let first_span = left.span();
 
@@ -2266,20 +2268,20 @@ impl<'a> Parser<'a> {
             Some(op) => {
                 self.next();
                 let right = self.expr_add_sub_operand()?;
-                Ok(self.node(
-                    Expr::Binop {
+                Ok(Expr {
+                    node_id: self.node(first_span),
+                    kind: ExprKind::Binop {
                         left: Box::new(left),
                         op,
                         right: Box::new(right),
                     },
-                    first_span,
-                ))
+                })
             }
             None => Ok(left),
         }
     }
 
-    fn expr_add_sub_operand(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn expr_add_sub_operand(&mut self) -> ParseResult<Expr> {
         let left = self.expr_mul_div_operand()?;
         let first_span = left.span();
 
@@ -2293,37 +2295,37 @@ impl<'a> Parser<'a> {
             Some(op) => {
                 self.next();
                 let right = self.expr_mul_div_operand()?;
-                Ok(self.node(
-                    Expr::Binop {
+                Ok(Expr {
+                    node_id: self.node(first_span),
+                    kind: ExprKind::Binop {
                         left: Box::new(left),
                         op,
                         right: Box::new(right),
                     },
-                    first_span,
-                ))
+                })
             }
             None => Ok(left),
         }
     }
 
-    fn expr_mul_div_operand(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn expr_mul_div_operand(&mut self) -> ParseResult<Expr> {
         match self.peek(0) {
             Minus => {
                 let first = self.next().unwrap();
                 let right = self.expr_postfix()?;
-                Ok(self.node(
-                    Expr::Unop {
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::Unop {
                         op: Unop::Minus,
                         e: Box::new(right),
                     },
-                    first.span(),
-                ))
+                })
             }
             _ => self.expr_postfix(),
         }
     }
 
-    fn expr_postfix(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn expr_postfix(&mut self) -> ParseResult<Expr> {
         let mut left = self.expr_primary()?;
         let first_span = left.span();
         loop {
@@ -2331,61 +2333,82 @@ impl<'a> Parser<'a> {
                 Dot => {
                     self.next();
                     let id = self.ident()?;
-                    left = self.node(
-                        Expr::Dot {
+                    left = Expr {
+                        node_id: self.node(first_span),
+                        kind: ExprKind::Dot {
                             e: Box::new(left),
                             id,
                         },
-                        first_span,
-                    )
+                    }
                 }
                 LeftSquare => {
                     let e2 = self.index()?;
-                    left = self.node(
-                        Expr::ArraySubscript {
+                    left = Expr {
+                        node_id: self.node(first_span),
+                        kind: ExprKind::ArraySubscript {
                             e1: Box::new(left),
                             e2: Box::new(e2),
                         },
-                        first_span,
-                    )
+                    }
                 }
                 _ => return Ok(left),
             }
         }
     }
 
-    fn expr_primary(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn expr_primary(&mut self) -> ParseResult<Expr> {
         match self.peek(0) {
             LeftSquare => self.array_expr(),
             Keyword(False) => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::LiteralBool(false), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::LiteralBool(false),
+                })
             }
             Keyword(True) => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::LiteralBool(true), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::LiteralBool(true),
+                })
             }
             LiteralFloat => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::LiteralFloat(first.text().to_string()), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::LiteralFloat(first.text().to_string()),
+                })
             }
             Identifier => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::Ident(first.text().to_string()), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::Ident(first.text().to_string()),
+                })
             }
             LiteralInt => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::LiteralInt(first.text().to_string()), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::LiteralInt(first.text().to_string()),
+                })
             }
             LeftParen => {
                 let first = self.next().unwrap();
                 let e = self.expr()?;
                 self.consume(RightParen)?;
-                Ok(self.node(Expr::Paren(Box::new(e)), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::Paren(Box::new(e)),
+                })
             }
             LiteralString => {
                 let first = self.next().unwrap();
-                Ok(self.node(Expr::LiteralString(first.text().to_string()), first.span()))
+                Ok(Expr {
+                    node_id: self.node(first.span()),
+                    kind: ExprKind::LiteralString(first.text().to_string()),
+                })
             }
             LeftCurly => self.struct_expr(),
             _ => Err(self.cursor.err_expected_one_of(
@@ -2405,20 +2428,26 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn array_expr(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn array_expr(&mut self) -> ParseResult<Expr> {
         let first = self.consume(LeftSquare)?;
         let members = self.element_sequence(&Parser::expr, Comma, RightSquare)?;
         self.consume(RightSquare)?;
 
-        Ok(self.node(Expr::Array(members), first.span()))
+        Ok(Expr {
+            node_id: self.node(first.span()),
+            kind: ExprKind::Array(members),
+        })
     }
 
-    fn struct_expr(&mut self) -> ParseResult<AstNode<Expr>> {
+    fn struct_expr(&mut self) -> ParseResult<Expr> {
         let first = self.consume(LeftCurly)?;
         let members = self.element_sequence(&Parser::struct_member, Comma, RightCurly)?;
         self.consume(RightCurly)?;
 
-        Ok(self.node(Expr::Struct(members), first.span()))
+        Ok(Expr {
+            node_id: self.node(first.span()),
+            kind: ExprKind::Struct(members),
+        })
     }
 
     fn struct_member(&mut self) -> ParseResult<StructMember> {
@@ -2428,9 +2457,12 @@ impl<'a> Parser<'a> {
         Ok(StructMember { name, value })
     }
 
-    fn lit_string(&mut self) -> ParseResult<AstNode<String>> {
+    fn lit_string(&mut self) -> ParseResult<LitString> {
         let tok = self.consume(LiteralString)?;
-        Ok(self.node(tok.text().to_string(), tok.span()))
+        Ok(LitString {
+            node_id: self.node(tok.span()),
+            data: tok.text().to_string(),
+        })
     }
 
     fn formal_param_list(&mut self) -> ParseResult<FormalParamList> {
@@ -2447,7 +2479,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn formal_param(&mut self) -> ParseResult<AstNode<FormalParam>> {
+    fn formal_param(&mut self) -> ParseResult<FormalParam> {
         let first_span = self.current_span()?;
 
         let kind = match self.peek(0) {
@@ -2463,17 +2495,15 @@ impl<'a> Parser<'a> {
 
         let type_name = self.type_name()?;
 
-        Ok(self.node(
-            FormalParam {
-                kind,
-                name,
-                type_name,
-            },
-            first_span,
-        ))
+        Ok(FormalParam {
+            node_id: self.node(first_span),
+            kind,
+            name,
+            type_name,
+        })
     }
 
-    fn opt_expr(&mut self, prefix_keyword: KeywordKind) -> ParseResult<Option<AstNode<Expr>>> {
+    fn opt_expr(&mut self, prefix_keyword: KeywordKind) -> ParseResult<Option<Expr>> {
         if self.peek(0) == Keyword(prefix_keyword) {
             self.next();
             Ok(Some(self.expr()?))

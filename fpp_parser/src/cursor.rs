@@ -1,7 +1,7 @@
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenKind};
-use fpp_core::{Positioned, SourceFile};
+use fpp_core::{Spanned, SourceFile};
 use std::collections::VecDeque;
 
 pub struct Cursor<'a> {

@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 fpp_core = { path = "../fpp_core" }
+fpp_derive = { path = "../fpp_derive" }

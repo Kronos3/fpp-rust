@@ -1,104 +1,96 @@
-extern crate proc_macro2;
-extern crate quote;
-extern crate syn;
-
-extern crate proc_macro;
-
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{Data, Error, parse_macro_input};
-use syn::{DeriveInput, Fields};
+use quote::{format_ident, quote};
+use syn::{parse_macro_input, ItemStruct, Fields, Field, Type, Visibility};
 
-#[proc_macro_derive(Ast)]
-pub fn ast_node_derive(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+///
+/// Converts a struct into an AstNode by adding a public node_id field
+/// and implementing the proper traits.
+///
+/// This macro applies the following checks:
+/// 1. No field in the struct definition is named 'node_id'
+/// 2. All fields are 'pub'
+///
+/// # Examples
+///
+/// ```
+/// #[ast_node]
+/// pub struct TlmChannelIdentifier {
+///    pub component_instance: QualIdent,
+///    pub channel_name: Ident,
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let input = parse_macro_input!(item as ItemStruct);
 
-    let name = input.ident;
-
-    let out = match input.data {
-        Data::Struct(s) => match s.fields {
-            // Named fields of a struct or struct variant such as `Point { x: f64,
-            // y: f64 }`.
-            Fields::Named(sct) => match (sct.named.first(), sct.named.last()) {
-                (Some(a), Some(b)) => {
-                    let a_name = a.ident.clone().unwrap();
-                    let b_name = b.ident.clone().unwrap();
-
-                    Ok(quote! {
-                        impl Node for #name {
-                            fn span(&self) -> Span {
-                                Span::merge(self.#a_name.span(), self.#b_name.span())
-                            }
-                        }
-                    })
-                }
-
-                _ => Err(Error::new(
-                    name.span(),
-                    "AST structured node must have at least one field",
-                )),
-            },
-            // Unnamed fields of a tuple struct or tuple variant such as `Some(T)`.
-            Fields::Unnamed(_) => Err(Error::new(
-                name.span(),
-                "Unnamed structs cannot be AST nodes",
-            )),
-            Fields::Unit => Err(Error::new(name.span(), "Unit structs cannot be AST nodes")),
-        },
-        Data::Union(_) => Err(Error::new(name.span(), "Unions cannot be AST nodes")),
-        Data::Enum(e) => {
-            let fields = &e.variants;
-            let name_rep = vec![&name; fields.len()];
-            let field_names = fields.iter().map(|f| &f.ident);
-
-            Ok(quote! {
-                impl Node for #name {
-                    fn span(&self) -> Span {
-                        match self {
-                            #(#name_rep::#field_names(x) => x.span()),*
+    // Ensure it's a named-field struct (not tuple or unit)
+    let mut new_struct = input.clone();
+    match &mut new_struct.fields {
+        Fields::Named(fields_named) => {
+            for field in &fields_named.named {
+                match &field.ident {
+                    Some(ident) => {
+                        if ident.to_string() == "node_id" {
+                            let err = syn::Error::new_spanned(
+                                field,
+                                "ast_node reserves the 'node_id' field name",
+                            )
+                                .to_compile_error();
+                            return err.into()
                         }
                     }
+                    _ => {}
                 }
-            })
-        },
-    };
 
-    match out {
-        Ok(ts) => ts.into(),
-        Err(err) => TokenStream::from(err.into_compile_error()),
+                match field.vis {
+                    Visibility::Public(_) => {}
+                    _ => {
+                        let err = syn::Error::new_spanned(
+                            field,
+                            "all members of ast_node must be 'pub'",
+                        )
+                            .to_compile_error();
+                        return err.into()
+                    }
+                }
+            }
+
+            let node_id_field_ident = format_ident!("node_id");
+            let node_id_field_type: Type = syn::parse_quote!(fpp_core::NodeId);
+            let node_id_field = Field {
+                attrs: Vec::new(),
+                vis: syn::Visibility::Public(syn::parse_quote!(pub)),
+                mutability: syn::FieldMutability::None,
+                ident: Some(node_id_field_ident.clone()),
+                colon_token: Some(<syn::Token![:]>::default()),
+                ty: node_id_field_type,
+            };
+            fields_named.named.push(node_id_field);
+        }
+        Fields::Unit | Fields::Unnamed(_) => {
+            // Return a compile_error if user applied macro on unsupported struct
+            let err = syn::Error::new_spanned(
+                input,
+                "#[ast_node] only supports structs with named fields (braced structs).",
+            )
+                .to_compile_error();
+            return err.into();
+        }
     }
-}
 
-#[proc_macro_derive(Keyword)]
-pub fn ast_keyword_derive(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+    let struct_ident = &new_struct.ident;
+    let generics = &new_struct.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let output = quote! {
+        #new_struct
 
-    let name = input.ident;
-
-    let out = match input.data {
-        Data::Union(_) => Err(Error::new(name.span(), "Unions cannot be AST nodes")),
-        Data::Enum(e) => {
-            let fields = &e.variants;
-            let name_rep = vec![&name; fields.len()];
-            let field_names = fields.iter().map(|f| &f.ident);
-
-            Ok(quote! {
-                impl Node for #name {
-                    fn span(&self) -> Span {
-                        match self {
-                            #(#name_rep::#field_names(x) => x.span()),*
-                        }
-                    }
-                }
-            })
-        },
-        Data::Struct(_) => {
-            Err(Error::new(name.span(), "Struc"))
+        impl #impl_generics fpp_core::Spanned for #struct_ident #ty_generics #where_clause {
+            fn span(&self) -> fpp_core::Span {
+                fpp_core::Spanned::span(&self.node_id)
+            }
         }
     };
 
-    match out {
-        Ok(ts) => ts.into(),
-        Err(err) => TokenStream::from(err.into_compile_error()),
-    }
+    output.into()
 }

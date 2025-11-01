@@ -1,26 +1,28 @@
 use crate::{*};
 
+use fpp_derive::ast_node;
+
 #[derive(Debug)]
 pub enum ComponentMember {
-    DefAbsType(AstNode<DefAbsType>),
-    DefAliasType(AstNode<DefAliasType>),
-    DefArray(AstNode<DefArray>),
-    DefConstant(AstNode<DefConstant>),
-    DefEnum(AstNode<DefEnum>),
-    DefStateMachine(AstNode<DefStateMachine>),
-    DefStruct(AstNode<DefStruct>),
-    SpecCommand(AstNode<SpecCommand>),
-    SpecContainer(AstNode<SpecContainer>),
-    SpecEvent(AstNode<SpecEvent>),
-    SpecInclude(AstNode<SpecInclude>),
-    SpecInternalPort(AstNode<SpecInternalPort>),
-    SpecParam(AstNode<SpecParam>),
-    SpecPortInstance(AstNode<SpecPortInstance>),
-    SpecPortMatching(AstNode<SpecPortMatching>),
-    SpecRecord(AstNode<SpecRecord>),
-    SpecStateMachineInstance(AstNode<SpecStateMachineInstance>),
-    SpecTlmChannel(AstNode<SpecTlmChannel>),
-    SpecImportInterface(AstNode<SpecImport>),
+    DefAbsType(DefAbsType),
+    DefAliasType(DefAliasType),
+    DefArray(DefArray),
+    DefConstant(DefConstant),
+    DefEnum(DefEnum),
+    DefStateMachine(DefStateMachine),
+    DefStruct(DefStruct),
+    SpecCommand(SpecCommand),
+    SpecContainer(SpecContainer),
+    SpecEvent(SpecEvent),
+    SpecInclude(SpecInclude),
+    SpecInternalPort(SpecInternalPort),
+    SpecParam(SpecParam),
+    SpecPortInstance(SpecPortInstance),
+    SpecPortMatching(SpecPortMatching),
+    SpecRecord(SpecRecord),
+    SpecStateMachineInstance(SpecStateMachineInstance),
+    SpecTlmChannel(SpecTlmChannel),
+    SpecImportInterface(SpecImport),
 }
 
 #[derive(Debug)]
@@ -39,21 +41,23 @@ pub enum QueueFull {
     Hook,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecCommand {
     pub kind: InputPortKind,
     pub name: Ident,
     pub params: FormalParamList,
-    pub opcode: Option<AstNode<Expr>>,
-    pub priority: Option<AstNode<Expr>>,
+    pub opcode: Option<Expr>,
+    pub priority: Option<Expr>,
     pub queue_full: Option<QueueFull>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecContainer {
     pub name: Ident,
-    pub id: Option<AstNode<Expr>>,
-    pub default_priority: Option<AstNode<Expr>>,
+    pub id: Option<Expr>,
+    pub default_priority: Option<Expr>,
 }
 
 #[derive(Debug)]
@@ -67,39 +71,43 @@ pub enum EventSeverity {
     WarningLow,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct EventThrottle {
-    pub count: AstNode<Expr>,
-    pub every: Option<AstNode<Expr>>
+    pub count: Expr,
+    pub every: Option<Expr>
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
     pub severity: EventSeverity,
-    pub id: Option<AstNode<Expr>>,
-    pub format: AstNode<String>,
-    pub throttle: Option<AstNode<EventThrottle>>,
+    pub id: Option<Expr>,
+    pub format: LitString,
+    pub throttle: Option<EventThrottle>,
 }
 
 /** Internal port specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
-    pub priority: Option<AstNode<Expr>>,
+    pub priority: Option<Expr>,
     pub queue_full: Option<QueueFull>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecParam {
     pub name: Ident,
-    pub type_name: AstNode<TypeName>,
-    pub default: Option<AstNode<Expr>>,
-    pub id: Option<AstNode<Expr>>,
-    pub set_opcode: Option<AstNode<Expr>>,
-    pub save_opcode: Option<AstNode<Expr>>,
+    pub type_name: TypeName,
+    pub default: Option<Expr>,
+    pub id: Option<Expr>,
+    pub set_opcode: Option<Expr>,
+    pub save_opcode: Option<Expr>,
     pub is_external: bool
 }
 
@@ -126,25 +134,28 @@ pub enum SpecialPortInstanceKind {
     TimeGet,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecRecord {
     pub name: Ident,
-    pub record_type: AstNode<TypeName>,
+    pub record_type: TypeName,
     pub is_array: bool,
-    pub id: Option<AstNode<Expr>>,
+    pub id: Option<Expr>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
-    pub state_machine: AstNode<QualIdent>,
-    pub priority: Option<AstNode<Expr>>,
+    pub state_machine: QualIdent,
+    pub priority: Option<Expr>,
     pub queue_full: Option<QueueFull>
 }
 
@@ -161,19 +172,21 @@ pub enum TlmChannelLimitKind {
     Yellow,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct TlmChannelLimit {
-    pub kind: AstNode<TlmChannelLimitKind>,
-    pub value: AstNode<Expr>,
+    pub kind: TlmChannelLimitKind,
+    pub value: Expr,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecTlmChannel {
     pub name: Ident,
-    pub type_name: AstNode<TypeName>,
-    pub id: Option<AstNode<Expr>>,
+    pub type_name: TypeName,
+    pub id: Option<Expr>,
     pub update: Option<TlmChannelUpdate>,
-    pub format: Option<AstNode<String>>,
+    pub format: Option<LitString>,
     pub low: Vec<TlmChannelLimit>,
     pub high: Vec<TlmChannelLimit>
 }

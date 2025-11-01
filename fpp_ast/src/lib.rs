@@ -4,27 +4,27 @@ pub mod topology;
 pub mod visit;
 
 pub use component::*;
-use fpp_core::Positioned;
+use fpp_core::{NodeId, Span};
 pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-#[derive(Debug)]
-pub struct AstNode<T> {
-    pub id: fpp_core::NodeId,
-    pub data: T,
-}
-
-impl<T> Positioned for AstNode<T> {
-    fn span(&self) -> fpp_core::Span {
-        fpp_core::Positioned::span(&self.id)
-    }
-}
+use fpp_derive::ast_node;
 
 pub type Annotated<T> = (Vec<String>, T, Vec<String>);
 
+#[ast_node]
+#[derive(Debug)]
+pub struct LitString {
+    pub data: String
+}
+
 /** Identifier */
-pub type Ident = AstNode<String>;
+#[ast_node]
+#[derive(Debug)]
+pub struct Ident {
+    pub data: String,
+}
 
 #[derive(Debug)]
 pub enum FloatType {
@@ -45,43 +45,59 @@ pub enum IntegerType {
 }
 
 #[derive(Debug)]
-pub enum TypeName {
+pub enum TypeNameKind {
     Floating(FloatType),
     Integer(IntegerType),
-    QualIdent(AstNode<QualIdent>),
+    QualIdent(QualIdent),
     Bool(),
-    String(Option<AstNode<Expr>>),
+    String(Option<Expr>),
+}
+
+#[ast_node]
+#[derive(Debug)]
+pub struct TypeName {
+    pub kind: TypeNameKind
 }
 
 #[derive(Debug)]
 pub enum QualIdent {
     Unqualified(Ident),
     Qualified {
-        qualifier: Box<AstNode<QualIdent>>,
+        node_id: NodeId,
+        qualifier: Box<QualIdent>,
         name: Ident,
     },
+}
+
+impl fpp_core::Spanned for QualIdent {
+    fn span(&self) -> Span {
+        match self {
+            QualIdent::Unqualified(i) => i.span(),
+            QualIdent::Qualified { node_id, .. } => node_id.span(),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct StructMember {
     pub name: Ident,
-    pub value: AstNode<Expr>,
+    pub value: Expr,
 }
 
 #[derive(Debug)]
-pub enum Expr {
-    Array(Vec<AstNode<Expr>>),
+pub enum ExprKind {
+    Array(Vec<Expr>),
     ArraySubscript {
-        e1: Box<AstNode<Expr>>,
-        e2: Box<AstNode<Expr>>,
+        e1: Box<Expr>,
+        e2: Box<Expr>,
     },
     Binop {
-        left: Box<AstNode<Expr>>,
+        left: Box<Expr>,
         op: Binop,
-        right: Box<AstNode<Expr>>,
+        right: Box<Expr>,
     },
     Dot {
-        e: Box<AstNode<Expr>>,
+        e: Box<Expr>,
         id: Ident,
     },
     Ident(String),
@@ -89,12 +105,18 @@ pub enum Expr {
     LiteralInt(String),
     LiteralFloat(String),
     LiteralString(String),
-    Paren(Box<AstNode<Expr>>),
+    Paren(Box<Expr>),
     Struct(Vec<StructMember>),
     Unop {
         op: Unop,
-        e: Box<AstNode<Expr>>,
+        e: Box<Expr>,
     },
+}
+
+#[ast_node]
+#[derive(Debug)]
+pub struct Expr {
+    pub kind: ExprKind,
 }
 
 #[derive(Debug)]
@@ -103,14 +125,15 @@ pub enum FormalParamKind {
     Value,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct FormalParam {
     pub kind: FormalParamKind,
     pub name: Ident,
-    pub type_name: AstNode<TypeName>,
+    pub type_name: TypeName,
 }
 
-pub type FormalParamList = Vec<Annotated<AstNode<FormalParam>>>;
+pub type FormalParamList = Vec<Annotated<FormalParam>>;
 
 /** Binary operation */
 #[derive(Debug)]
@@ -127,26 +150,29 @@ pub enum Unop {
 }
 
 /** Abstract type definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefAbsType {
     pub name: Ident,
 }
 
 /** Aliased type definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefAliasType {
     pub name: Ident,
-    pub type_name: AstNode<TypeName>,
+    pub type_name: TypeName,
 }
 
 /** Array definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefArray {
     pub name: Ident,
-    pub size: AstNode<Expr>,
-    pub elt_type: AstNode<TypeName>,
-    pub default: Option<AstNode<Expr>>,
-    pub format: Option<AstNode<String>>,
+    pub size: Expr,
+    pub elt_type: TypeName,
+    pub default: Option<Expr>,
+    pub format: Option<LitString>,
 }
 
 #[derive(Debug)]
@@ -157,6 +183,7 @@ pub enum ComponentKind {
 }
 
 /** Component definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefComponent {
     pub kind: ComponentKind,
@@ -165,51 +192,57 @@ pub struct DefComponent {
 }
 
 /** Component instance definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefComponentInstance {
     pub name: Ident,
-    pub component: AstNode<QualIdent>,
-    pub base_id: AstNode<Expr>,
-    pub impl_type: Option<AstNode<String>>,
-    pub file: Option<AstNode<String>>,
-    pub queue_size: Option<AstNode<Expr>>,
-    pub stack_size: Option<AstNode<Expr>>,
-    pub priority: Option<AstNode<Expr>>,
-    pub cpu: Option<AstNode<Expr>>,
-    pub init_specs: Vec<Annotated<AstNode<SpecInit>>>,
+    pub component: QualIdent,
+    pub base_id: Expr,
+    pub impl_type: Option<LitString>,
+    pub file: Option<LitString>,
+    pub queue_size: Option<Expr>,
+    pub stack_size: Option<Expr>,
+    pub priority: Option<Expr>,
+    pub cpu: Option<Expr>,
+    pub init_specs: Vec<Annotated<SpecInit>>,
 }
 
 /** Init specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecInit {
-    pub phase: AstNode<Expr>,
-    pub code: AstNode<String>,
+    pub phase: Expr,
+    pub code: LitString,
 }
 
 /** Constant definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefConstant {
     pub name: Ident,
-    pub value: AstNode<Expr>,
+    pub value: Expr,
 }
 
 /** Enum definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefEnum {
     pub name: Ident,
-    pub type_name: Option<AstNode<TypeName>>,
-    pub constants: Vec<Annotated<AstNode<DefEnumConstant>>>,
-    pub default: Option<AstNode<Expr>>,
+    pub type_name: Option<TypeName>,
+    pub constants: Vec<Annotated<DefEnumConstant>>,
+    pub default: Option<Expr>,
 }
 
 /** Enum constant definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefEnumConstant {
     pub name: Ident,
-    pub value: Option<AstNode<Expr>>,
+    pub value: Option<Expr>,
 }
 
 /** Module definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefModule {
     pub name: Ident,
@@ -218,21 +251,21 @@ pub struct DefModule {
 
 #[derive(Debug)]
 pub enum ModuleMember {
-    DefAbsType(AstNode<DefAbsType>),
-    DefAliasType(AstNode<DefAliasType>),
-    DefArray(AstNode<DefArray>),
-    DefComponent(AstNode<DefComponent>),
-    DefComponentInstance(AstNode<DefComponentInstance>),
-    DefConstant(AstNode<DefConstant>),
-    DefEnum(AstNode<DefEnum>),
-    DefInterface(AstNode<DefInterface>),
-    DefModule(AstNode<DefModule>),
-    DefPort(AstNode<DefPort>),
-    DefStateMachine(AstNode<DefStateMachine>),
-    DefStruct(AstNode<DefStruct>),
-    DefTopology(AstNode<DefTopology>),
-    SpecInclude(AstNode<SpecInclude>),
-    SpecLoc(AstNode<SpecLoc>),
+    DefAbsType(DefAbsType),
+    DefAliasType(DefAliasType),
+    DefArray(DefArray),
+    DefComponent(DefComponent),
+    DefComponentInstance(DefComponentInstance),
+    DefConstant(DefConstant),
+    DefEnum(DefEnum),
+    DefInterface(DefInterface),
+    DefModule(DefModule),
+    DefPort(DefPort),
+    DefStateMachine(DefStateMachine),
+    DefStruct(DefStruct),
+    DefTopology(DefTopology),
+    SpecInclude(SpecInclude),
+    SpecLoc(SpecLoc),
 }
 
 #[derive(Debug)]
@@ -248,77 +281,90 @@ pub enum SpecLocKind {
 }
 
 /** Location specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecLoc {
     pub kind: SpecLocKind,
-    pub symbol: AstNode<QualIdent>,
-    pub file: AstNode<String>,
+    pub symbol: QualIdent,
+    pub file: LitString,
 }
 
 #[derive(Debug)]
-pub enum SpecPortInstance {
+pub enum SpecPortInstanceKind {
     General {
         kind: GeneralPortInstanceKind,
         name: Ident,
-        size: Option<AstNode<Expr>>,
-        port: Option<AstNode<QualIdent>>,
-        priority: Option<AstNode<Expr>>,
+        size: Option<Expr>,
+        port: Option<QualIdent>,
+        priority: Option<Expr>,
         queue_full: Option<QueueFull>,
     },
     Special {
         input_kind: Option<InputPortKind>,
         kind: SpecialPortInstanceKind,
         name: Ident,
-        priority: Option<AstNode<Expr>>,
+        priority: Option<Expr>,
         queue_full: Option<QueueFull>,
     },
+}
+
+#[ast_node]
+#[derive(Debug)]
+pub struct SpecPortInstance {
+    pub kind: SpecPortInstanceKind,
 }
 
 /** Interface member */
 #[derive(Debug)]
 pub enum InterfaceMember {
-    SpecPortInstance(AstNode<SpecPortInstance>),
-    SpecImport(AstNode<SpecImport>),
+    SpecPortInstance(SpecPortInstance),
+    SpecImport(SpecImport),
 }
 
 /** Interface definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefInterface {
     pub name: Ident,
     pub members: Vec<Annotated<InterfaceMember>>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct StructTypeMember {
     pub name: Ident,
-    pub size: Option<AstNode<Expr>>,
-    pub type_name: AstNode<TypeName>,
-    pub format: Option<AstNode<String>>,
+    pub size: Option<Expr>,
+    pub type_name: TypeName,
+    pub format: Option<LitString>,
 }
 
 /** Struct definition */
+#[ast_node]
 #[derive(Debug)]
 pub struct DefStruct {
     pub name: Ident,
-    pub members: Vec<Annotated<AstNode<StructTypeMember>>>,
-    pub default: Option<AstNode<Expr>>,
+    pub members: Vec<Annotated<StructTypeMember>>,
+    pub default: Option<Expr>,
 }
 
+#[ast_node]
 #[derive(Debug)]
 pub struct DefPort {
     pub name: Ident,
     pub params: FormalParamList,
-    pub return_type: Option<AstNode<TypeName>>,
+    pub return_type: Option<TypeName>,
 }
 
 /** Include specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecInclude {
-    pub file: AstNode<String>,
+    pub file: LitString,
 }
 
 /** Import specifier */
+#[ast_node]
 #[derive(Debug)]
 pub struct SpecImport {
-    pub sym: AstNode<QualIdent>,
+    pub sym: QualIdent,
 }

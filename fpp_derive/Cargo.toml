@@ -9,6 +9,5 @@ name = "fpp_derive"
 path = "src/lib.rs"
 
 [dependencies]
-proc-macro2 = { workspace = true, features = ["proc-macro"] }
-quote = { workspace = true, features = ["proc-macro"] }
-syn = { workspace = true, features = ["clone-impls", "derive", "parsing", "printing", "proc-macro"] }
+quote = "1.0.41"
+syn = { version = "2.0.108", features = ["full"] }

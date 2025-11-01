@@ -2,7 +2,7 @@ use crate::Span;
 use crate::interface::with;
 use std::fmt::{Debug, Formatter};
 
-pub trait Positioned {
+pub trait Spanned {
     fn span(&self) -> Span;
 }
 
@@ -23,7 +23,7 @@ impl NodeId {
     }
 }
 
-impl Positioned for NodeId {
+impl Spanned for NodeId {
     fn span(&self) -> Span {
         with(|w| w.node_span(self))
     }
