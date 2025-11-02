@@ -1,14 +1,14 @@
 use crate::*;
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefStateMachine {
     pub name: Ident,
     pub members: Option<Vec<StateMachineMember>>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub enum StateMachineMember {
     DefAction(DefAction),
     DefChoice(DefChoice),
@@ -20,16 +20,16 @@ pub enum StateMachineMember {
 }
 
 /** Action definition */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefAction {
     pub name: Ident,
     pub type_name: Option<TypeName>,
 }
 
 /** Choice definition */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefChoice {
     pub name: Ident,
     pub guard: Ident,
@@ -38,15 +38,15 @@ pub struct DefChoice {
 }
 
 /** Guard definition */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefGuard {
     pub name: Ident,
     pub type_name: Option<TypeName>,
 }
 
 /** Transition expression */
-#[ast_node]
+#[ast]
 #[derive(Debug)]
 pub struct TransitionExpr {
     pub actions: Option<DoExpr>,
@@ -54,22 +54,22 @@ pub struct TransitionExpr {
 }
 
 /** Signal definition */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefSignal {
     pub name: Ident,
     pub type_name: Option<TypeName>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct DefState {
     pub name: Ident,
     pub members: Vec<StateMember>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub enum StateMember {
     DefChoice(DefChoice),
     DefState(DefState),
@@ -80,36 +80,36 @@ pub enum StateMember {
 }
 
 /** Initial state specifier */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecInitialTransition {
     pub transition: TransitionExpr,
 }
 
 /** State entry specifier */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecStateEntry {
     pub actions: DoExpr,
 }
 
 /** State exit specifier */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecStateExit {
     pub actions: DoExpr,
 }
 
 /** Transition specifier */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecStateTransition {
     pub signal: Ident,
     pub guard: Option<Ident>,
     pub transition_or_do: TransitionOrDo,
 }
 
-#[ast_node]
+#[ast]
 #[derive(Debug)]
 pub struct DoExpr {
     pub actions: Vec<Ident>,

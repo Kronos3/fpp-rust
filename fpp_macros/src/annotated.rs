@@ -5,10 +5,9 @@ use syn::{Fields, ItemEnum, ItemStruct, Type};
 
 pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
     // Ensure it's a named-field struct (not tuple or unit)
-    let new_struct = input.clone();
     let name = &input.ident; // struct name
 
-    let debug_fields = match &new_struct.fields {
+    let debug_fields = match &input.fields {
         Fields::Named(fields_named) => {
             // Validate that the node_id field exists
             let node_id_type: Type = syn::parse_quote!(fpp_core::Node);
@@ -63,12 +62,10 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
         }
     };
 
-    let struct_ident = &new_struct.ident;
-    let generics = &new_struct.generics;
+    let struct_ident = &input.ident;
+    let generics = &input.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let output = quote! {
-        #new_struct
-
         impl #impl_generics fpp_core::Annotated for #struct_ident #ty_generics #where_clause {
             fn pre_annotation(&self) -> Vec<String> {
                 self.node_id.pre_annotation()
@@ -121,8 +118,6 @@ pub(crate) fn annotated_enum(input: &ItemEnum) -> TokenStream {
     }
 
     let output = quote! {
-        #input
-
         impl #impl_generics fpp_core::Annotated for #enum_ident #ty_generics #where_clause {
             fn pre_annotation(&self) -> Vec<String> {
                 match self {

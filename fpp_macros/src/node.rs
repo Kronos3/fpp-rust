@@ -49,7 +49,8 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
             // Return a compile_error if user applied macro on unsupported struct
             let err = syn::Error::new_spanned(
                 input,
-                "#[ast_node] only supports structs with named fields (braced structs).",
+                "#[ast_node]
+#[derive(AstAnnotated)] only supports structs with named fields (braced structs).",
             )
                 .to_compile_error();
             return err.into();
@@ -112,6 +113,7 @@ pub(crate) fn ast_node_enum(input: &ItemEnum) -> TokenStream {
     }
 
     let output = quote! {
+
         #input
 
         impl #impl_generics fpp_core::Spanned for #enum_ident #ty_generics #where_clause {

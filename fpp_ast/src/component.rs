@@ -1,9 +1,9 @@
 use crate::*;
 
-use fpp_macros::ast_node;
+use fpp_macros::ast;
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -42,8 +42,8 @@ pub enum QueueFull {
     Hook,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecCommand {
     pub kind: InputPortKind,
     pub name: Ident,
@@ -53,8 +53,8 @@ pub struct SpecCommand {
     pub queue_full: Option<QueueFull>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -72,15 +72,15 @@ pub enum EventSeverity {
     WarningLow,
 }
 
-#[ast_node]
+#[ast]
 #[derive(Debug)]
 pub struct EventThrottle {
     pub count: Expr,
     pub every: Option<Expr>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
@@ -91,8 +91,8 @@ pub struct SpecEvent {
 }
 
 /** Internal port specifier */
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -100,8 +100,8 @@ pub struct SpecInternalPort {
     pub queue_full: Option<QueueFull>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: TypeName,
@@ -135,15 +135,15 @@ pub enum SpecialPortInstanceKind {
     TimeGet,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: TypeName,
@@ -151,8 +151,8 @@ pub struct SpecRecord {
     pub id: Option<Expr>,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
@@ -173,15 +173,15 @@ pub enum TlmChannelLimitKind {
     Yellow,
 }
 
-#[ast_node]
+#[ast]
 #[derive(Debug)]
 pub struct TlmChannelLimit {
     pub kind: TlmChannelLimitKind,
     pub value: Expr,
 }
 
-#[ast_node]
-#[ast_annotated]
+#[ast]
+#[derive(AstAnnotated)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: TypeName,

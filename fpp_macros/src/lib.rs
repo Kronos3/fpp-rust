@@ -31,56 +31,58 @@ use syn::{parse_macro_input, Item};
 /// ```
 ///
 /// For enums:
-/// ```ignore
-/// use fpp_macros::ast_node;
+/// ```
+/// use fpp_macros::ast;
 ///
-/// #[ast_node]
+/// #[ast]
 /// pub enum InterfaceMember {
 ///     SpecPortInstance(SpecPortInstance),
 ///     SpecImport(SpecImport),
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn ast_node(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
-    let input = parse_macro_input!(item as Item);
+    let item = parse_macro_input!(input);
 
-    (match input {
+    match &item {
         Item::Struct(item_struct) => ast_node_struct(&item_struct),
         Item::Enum(item_enum) => ast_node_enum(&item_enum),
         other => {
-            let err = syn::Error::new_spanned(other, "#[ast_node] only supports structs or enums")
-                .to_compile_error();
-            return err.into();
+            let err = syn::Error::new_spanned(
+                other,
+                "#[ast_node] #[derive(AstAnnotated)] only supports structs or enums",
+            )
+            .to_compile_error();
+            err.into()
         }
-    })
-        .into()
+    }
 }
 
+
 ///
-/// Implements Annotated trait for inserting and getting annotations associated with
-/// an AST node.
+/// Derives wrapper trait for accessing ast node annotation which are
+/// interned in the compiler context.
 ///
-/// Note: Annotated structs must first apply the ast_node macro
 ///
-/// # Examples
 ///
-/// ```ignore
+/// For enums:
+/// ```
 /// use fpp_macros::ast_node;
-/// use fpp_macros::ast_annotated;
 ///
 /// #[ast_node]
-/// #[ast_annotated]
-/// pub struct ANode {
-///     pub name: Option<String>,
+/// #[derive(AstAnnotated)]
+/// pub enum InterfaceMember {
+///     SpecPortInstance(SpecPortInstance),
+///     SpecImport(SpecImport),
 /// }
 /// ```
-#[proc_macro_attribute]
-pub fn ast_annotated(_attr: TokenStream, item: TokenStream) -> TokenStream {
+#[proc_macro_derive(AstAnnotated)]
+pub fn ast_annotated(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
-    let input = parse_macro_input!(item as Item);
+    let item = parse_macro_input!(input);
 
-    (match input {
+    (match item {
         Item::Struct(item_struct) => annotated_struct(&item_struct),
         Item::Enum(item_enum) => annotated_enum(&item_enum),
         other => {
@@ -89,5 +91,5 @@ pub fn ast_annotated(_attr: TokenStream, item: TokenStream) -> TokenStream {
             return err.into();
         }
     })
-        .into()
+    .into()
 }
