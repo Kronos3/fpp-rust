@@ -1,0 +1,37 @@
+[
+    DefConstant {
+        name: Ident {
+            data: "x",
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-1.fpp:1:10,
+                end: [ local path prefix ]/include-constant-1.fpp:1:11,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "1",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-1.fpp:1:14,
+                end: [ local path prefix ]/include-constant-1.fpp:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-constant-1.fpp:1:1,
+            end: [ local path prefix ]/include-constant-1.fpp:2:1,
+        },
+    },
+    SpecInclude {
+        file: LitString {
+            data: "include-constant-2.fppi",
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-1.fpp:3:10,
+                end: [ local path prefix ]/include-constant-1.fpp:4:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-constant-1.fpp:3:2,
+            end: [ local path prefix ]/include-constant-1.fpp:4:1,
+        },
+    },
+]

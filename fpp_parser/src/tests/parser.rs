@@ -67,7 +67,7 @@ parser_tests!(
     escaped_strings: "escaped-strings",
     illegal_character: "illegal-character",
     include_component: "include-component",
-    include_constant_1: "include_constant_1",
+    include_constant_1: "include-constant-1",
     include_missing_file: "include-missing-file",
     include_module: "include-module",
     include_parse_error: "include-parse-error",
