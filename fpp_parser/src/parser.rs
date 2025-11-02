@@ -2087,8 +2087,11 @@ impl<'a> Parser<'a> {
                     // Recover to an anchor
                     loop {
                         let current = self.peek(0);
-                        if current == punct || current == end || current == EOF {
+                        if current == punct || current == Eol || current == EOF {
+                            self.next();
                             break;
+                        } else if current == end {
+                            return out;
                         }
 
                         self.next();
@@ -2163,8 +2166,11 @@ impl<'a> Parser<'a> {
                     // Recover to an anchor
                     loop {
                         let current = self.peek(0);
-                        if current == punct || current == end || current == EOF {
+                        if current == punct || current == Eol || current == EOF {
+                            self.next();
                             break;
+                        } else if current == end {
+                            return out;
                         }
 
                         self.next();

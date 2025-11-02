@@ -30,7 +30,8 @@ impl Into<Diagnostic> for ParseError {
                 got_span,
                 msg,
                 expected,
-            } => Diagnostic::spanned(got_span, Level::Error, msg)
+            } => Diagnostic::new(Level::Error, "syntax error")
+                .span_error(got_span, msg)
                 .note(format!("expected one of {:?}", expected))
                 .note(format!("got {:?}", got_kind)),
             ParseError::ExpectedToken {
@@ -38,7 +39,8 @@ impl Into<Diagnostic> for ParseError {
                 msg,
                 expected,
                 got,
-            } => Diagnostic::spanned(last, Level::Error, msg)
+            } => Diagnostic::new(Level::Error, "syntax error")
+                .span_error(last, msg)
                 .note(format!("expected {:?}", expected))
                 .note(format!("got {:?}", got)),
             ParseError::UnexpectedEof { last } => {

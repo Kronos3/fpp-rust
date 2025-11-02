@@ -1,3 +1,4 @@
+error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:0:1
   |
 0 | %
@@ -5,3 +6,19 @@
   |
   = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
   = note: got Unknown('%')
+error: syntax error
+ --> [ local path prefix ]/illegal-character.fpp:2:1
+  |
+2 |     
+  | ^^^^ module member expected
+  |
+  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
+  = note: got Unknown('\t')
+error: syntax error
+ --> [ local path prefix ]/illegal-character.fpp:3:1
+  |
+3 | tok \     
+  | ^^^ module member expected
+  |
+  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
+  = note: got Identifier
