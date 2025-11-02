@@ -1,5 +1,5 @@
 use crate::token::TokenKind;
-use fpp_core::{Position};
+use fpp_core::Position;
 
 #[derive(Debug)]
 pub enum ParseError {

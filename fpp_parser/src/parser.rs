@@ -467,7 +467,7 @@ impl<'a> Parser<'a> {
             Keyword(Implements) => {
                 self.next();
                 self.element_sequence(&Parser::qual_ident, Comma, LeftCurly)?
-            },
+            }
             _ => vec![],
         };
 

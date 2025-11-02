@@ -24,14 +24,14 @@ fn run_test(file_path: &str) {
 
         parse(src, |p| p.module_members())
     })
-    .expect("compiler_error");
+        .expect("compiler_error");
 
     let output = fpp_core::run(&mut ctx, || match res {
         Ok(ast) => format!("{:#?}", ast),
         Err(err) => format!("{:#?}", err),
     })
-    .expect("compiler error")
-    .replace(path.to_str().unwrap(), "[ local path prefix ]");
+        .expect("compiler error")
+        .replace(path.to_str().unwrap(), "[ local path prefix ]");
 
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {
