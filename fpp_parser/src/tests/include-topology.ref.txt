@@ -25,7 +25,7 @@
         implements: [],
         node_id: Span {
             start: [ local path prefix ]/include-topology.fpp:1:1,
-            end: [ local path prefix ]/include-topology.fpp:6:1,
+            end: [ local path prefix ]/include-topology.fpp:5:1,
         },
     },
 ]

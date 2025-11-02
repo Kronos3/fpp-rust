@@ -1,7 +1,9 @@
+use crate::diagnostic::DiagnosticMessage;
 use crate::error::Error;
 use crate::file::SourceFile;
 use crate::span::Span;
-use crate::{BytePos, Node, Position};
+use crate::{BytePos, Diagnostic, Level, Node, Position};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 
@@ -19,6 +21,27 @@ pub(crate) struct SourceFileData {
 }
 
 impl SourceFileData {
+    fn new(handle: usize, path: String, content: String) -> SourceFileData {
+        // Compute the newline position
+        let lines = {
+            let mut out = vec![0];
+            for (i, c) in content.chars().enumerate() {
+                if c == '\n' {
+                    out.push(BytePos::from(i))
+                }
+            }
+
+            out
+        };
+
+        SourceFileData {
+            handle,
+            path,
+            content,
+            lines,
+        }
+    }
+
     pub fn position(&self, offset: BytePos) -> Position {
         let line = self
             .lines
@@ -35,6 +58,41 @@ impl SourceFileData {
             },
         }
     }
+
+    pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet {
+        // Find the line start of the start/end
+        let first_line = match self.lines.binary_search(&span.start) {
+            // The span start is a newline
+            Ok(newline_idx) => {
+                match newline_idx {
+                    0 => 0,
+                    _ => newline_idx - 1
+                }
+            }
+            Err(insert_position) => {
+                insert_position - 1
+            }
+        };
+
+        let last_line = self
+            .lines
+            .binary_search(&(span.start + span.length))
+            .unwrap_or_else(|line_insert| line_insert);
+
+        let first = *self.lines.get(first_line).unwrap();
+        let last = match self.lines.get(last_line) {
+            None => self.content.len(),
+            Some(last) => *last + 1,
+        };
+
+        DiagnosticDataSnippet {
+            start: span.start - first,
+            end: span.start + span.length - first,
+            line_offset: first_line,
+            file_path: self.path.as_str(),
+            file_content: &self.content.as_str()[first..last],
+        }
+    }
 }
 
 pub(crate) struct NodeData {
@@ -43,33 +101,51 @@ pub(crate) struct NodeData {
     pub post_annotation: Vec<String>,
 }
 
-pub struct CompilerContext {
+#[derive(Debug)]
+pub struct DiagnosticDataSnippet<'a> {
+    pub start: BytePos,
+    pub end: BytePos,
+    pub line_offset: usize,
+    pub file_path: &'a str,
+    pub file_content: &'a str,
+}
+
+#[derive(Debug)]
+pub struct DiagnosticMessageData<'a> {
+    pub level: Level,
+    pub message: String,
+    pub snippet: Option<DiagnosticDataSnippet<'a>>,
+}
+
+#[derive(Debug)]
+pub struct DiagnosticData<'a> {
+    pub message: DiagnosticMessageData<'a>,
+    pub children: Vec<DiagnosticMessageData<'a>>,
+}
+
+pub trait DiagnosticEmitter {
+    fn emit<'d>(&'_ mut self, diagnostic: DiagnosticData<'d>);
+}
+
+pub struct CompilerContext<E: DiagnosticEmitter> {
     spans: Vec<SpanData>,
     files: Vec<SourceFileData>,
 
     current_node_id: Node,
     nodes: HashMap<Node, NodeData>,
+
+    emitter: RefCell<E>,
 }
 
-impl CompilerContext {
-    pub fn new() -> CompilerContext {
+impl<E: DiagnosticEmitter> CompilerContext<E> {
+    pub fn new(emitter: E) -> CompilerContext<E> {
         CompilerContext {
             spans: vec![],
             files: vec![],
             current_node_id: Node { handle: 1 },
             nodes: HashMap::new(),
+            emitter: RefCell::new(emitter),
         }
-    }
-
-    fn compute_lines(src: &str) -> Vec<BytePos> {
-        let mut out = vec![0];
-        for (i, c) in src.chars().enumerate() {
-            if c == '\n' {
-                out.push(BytePos::from(i))
-            }
-        }
-
-        out
     }
 
     pub(crate) fn file_open(&mut self, path: &str) -> Result<SourceFile, Error> {
@@ -78,27 +154,19 @@ impl CompilerContext {
             Ok(c) => c,
             Err(err) => return Err(Error(format!("failed to read file {}: {}", path, err))),
         };
-        let lines = Self::compute_lines(content.as_str());
 
-        self.files.push(SourceFileData {
-            handle,
-            path: path.to_string(),
-            content,
-            lines,
-        });
-
+        self.files
+            .push(SourceFileData::new(handle, path.to_string(), content));
         Ok(SourceFile { handle })
     }
 
     pub(crate) fn file_from(&mut self, src: &str) -> SourceFile {
         let handle = self.files.len();
-
-        self.files.push(SourceFileData {
+        self.files.push(SourceFileData::new(
             handle,
-            path: "<input>".to_string(),
-            content: src.to_string(),
-            lines: CompilerContext::compute_lines(src),
-        });
+            "input".to_string(),
+            src.to_string(),
+        ));
 
         SourceFile { handle }
     }
@@ -160,5 +228,39 @@ impl CompilerContext {
         self.files
             .get(file.handle)
             .expect(&format!("invalid file: {}", file.handle))
+    }
+
+    fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData {
+        let snippet = match diagnostic.span {
+            None => None,
+            Some(span) => {
+                let span = self.span_get(&span);
+                let file = self.file_get(&span.file);
+                Some(file.snippet(span))
+            }
+        };
+
+        DiagnosticMessageData {
+            snippet,
+            message: diagnostic.message,
+            level: diagnostic.level,
+        }
+    }
+
+    fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData {
+        DiagnosticData {
+            message: self.diagnostic_message_get(diagnostic.msg),
+            children: diagnostic
+                .children
+                .into_iter()
+                .map(|child| self.diagnostic_message_get(child))
+                .collect(),
+        }
+    }
+
+    pub(crate) fn diagnostic_emit(&self, diag: Diagnostic) {
+        // Convert a standard diagnostic to a flattened diagnostic
+        // Send to the emitter
+        self.emitter.borrow_mut().emit(self.diagnostic_get(diag));
     }
 }

@@ -10,7 +10,8 @@ pub struct Lexer<'a> {
 
     indent: u32,
     escaped_identifier: bool,
-    annotation_end: BytePos,
+    token_has_trailing_whitespace: bool,
+    token_end_before_whitespace: BytePos,
 
     len_remaining: usize,
     content: &'a str,
@@ -19,7 +20,7 @@ pub struct Lexer<'a> {
     chars: Chars<'a>,
 }
 
-pub(crate) const EOF_CHAR: char = '\0';
+const EOF_CHAR: char = '\0';
 
 /** Verify if a character is within the number base system */
 #[inline]
@@ -70,12 +71,9 @@ impl<'a> Lexer<'a> {
             chars,
             len_remaining: file.len(),
             escaped_identifier: false,
-            annotation_end: 0,
+            token_has_trailing_whitespace: false,
+            token_end_before_whitespace: 0,
         }
-    }
-
-    pub fn file(&self) -> SourceFile {
-        self.file
     }
 
     pub fn next_token(&mut self) -> Option<Token> {
@@ -88,7 +86,7 @@ impl<'a> Lexer<'a> {
                 EOF => return None,
                 Whitespace => {}
                 kind => {
-                    let length = self.pos_within_token();
+                    let length = self.token_length();
                     let end = start + length;
                     let (text, real_kind) = match kind {
                         LiteralString => {
@@ -104,14 +102,14 @@ impl<'a> Lexer<'a> {
                         PreAnnotation => {
                             // Remove the '@' and end at the first newline
                             (
-                                Some(self.content[start + 1..start + self.annotation_end].trim().to_string()),
+                                Some(self.content[start + 1..end].trim().to_string()),
                                 PreAnnotation,
                             )
                         }
                         PostAnnotation => {
                             // Remove the '@<' and end at the first newline
                             (
-                                Some(self.content[start + 2..start + self.annotation_end].trim().to_string()),
+                                Some(self.content[start + 2..end].trim().to_string()),
                                 PostAnnotation,
                             )
                         }
@@ -372,12 +370,10 @@ impl<'a> Lexer<'a> {
                 if self.first() == '<' {
                     self.bump();
                     self.eat_until('\n' as u8);
-                    self.annotation_end = self.pos_within_token();
                     self.eat_newlines();
                     PostAnnotation
                 } else {
                     self.eat_until('\n' as u8);
-                    self.annotation_end = self.pos_within_token();
                     self.eat_newlines();
                     PreAnnotation
                 }
@@ -450,6 +446,9 @@ impl<'a> Lexer<'a> {
     }
 
     fn eat_newlines(&mut self) {
+        self.token_end_before_whitespace = self.pos_within_token();
+        self.token_has_trailing_whitespace = true;
+
         loop {
             match self.first() {
                 '\n' | ' ' => {
@@ -577,7 +576,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Peeks the second symbol from the input stream without consuming it.
-    pub(crate) fn second(&self) -> char {
+    pub fn second(&self) -> char {
         // `.next()` optimizes better than `.nth(1)`
         let mut iter = self.chars.clone();
         iter.next();
@@ -594,36 +593,46 @@ impl<'a> Lexer<'a> {
     }
 
     /// Checks if there is nothing more to consume.
-    pub(crate) fn is_eof(&self) -> bool {
+    pub fn is_eof(&self) -> bool {
         self.chars.as_str().is_empty()
     }
 
     /// Returns amount of already consumed symbols.
-    pub(crate) fn pos_within_token(&self) -> BytePos {
+    pub fn pos_within_token(&self) -> BytePos {
         self.len_remaining - self.chars.as_str().len()
     }
 
+    fn token_length(&self) -> BytePos {
+        if self.token_has_trailing_whitespace {
+            self.token_end_before_whitespace
+        } else {
+            self.pos_within_token()
+        }
+    }
+
     /// Resets the number of bytes consumed to 0.
-    pub(crate) fn reset_token(&mut self) {
+    fn reset_token(&mut self) {
         self.len_remaining = self.chars.as_str().len();
+        self.token_has_trailing_whitespace = false;
+        self.token_end_before_whitespace = 0;
         self.indent = 0;
         self.escaped_identifier = false;
     }
 
     /// Moves to the next character.
-    pub(crate) fn bump(&mut self) -> Option<char> {
+    fn bump(&mut self) -> Option<char> {
         let c = self.chars.next()?;
 
         Some(c)
     }
 
     /// Moves to a substring by a number of bytes.
-    pub(crate) fn bump_bytes(&mut self, n: usize) {
+    fn bump_bytes(&mut self, n: usize) {
         self.chars = self.as_str()[n..].chars();
     }
 
     /// Eats symbols while predicate returns true or until the end of file is reached.
-    pub(crate) fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
+    fn eat_while(&mut self, mut predicate: impl FnMut(char) -> bool) {
         // It was tried making optimized version of this for e.g. line comments, but
         // LLVM can inline all of this and compile it down to fast iteration over bytes.
         while predicate(self.first()) && !self.is_eof() {
@@ -631,7 +640,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(crate) fn eat_until(&mut self, byte: u8) {
+    fn eat_until(&mut self, byte: u8) {
         self.chars = match memchr::memchr(byte, self.as_str().as_bytes()) {
             Some(index) => self.as_str()[index..].chars(),
             None => "".chars(),

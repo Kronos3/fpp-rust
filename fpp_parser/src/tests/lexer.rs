@@ -14,7 +14,9 @@ impl Index {
 }
 
 fn lex(content: &str) -> Vec<Token> {
-    let mut ctx = fpp_core::CompilerContext::new();
+    let mut diagnostics_str = vec![];
+    let mut ctx =
+        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
     fpp_core::run(&mut ctx, || {
         let file = SourceFile::from(content);
         let mut cursor = Cursor::new(file, content);
@@ -31,7 +33,7 @@ fn lex(content: &str) -> Vec<Token> {
 
         out
     })
-        .expect("compiler error")
+    .expect("compiler error")
 }
 
 fn assert_token_eq(token: &Token, kind: TokenKind, text: &str) {

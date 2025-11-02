@@ -1,21 +1,21 @@
 use crate::context::CompilerContext;
 use crate::error::Error;
-use crate::{BytePos, Node, Position, SourceFile, Span};
-use std::cell::{Cell, RefCell};
+use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
+use std::cell::{Cell, Ref, RefCell};
 
-pub struct Container<'ctx> {
-    ctx: RefCell<&'ctx mut CompilerContext>,
+pub struct Container<'ctx, E: DiagnosticEmitter> {
+    ctx: RefCell<&'ctx mut CompilerContext<E>>,
 }
 
-impl<'ctx> Container<'ctx> {
-    pub fn new(ctx: &'ctx mut CompilerContext) -> Container<'ctx> {
+impl<'ctx, E: DiagnosticEmitter> Container<'ctx, E> {
+    pub fn new(ctx: &'ctx mut CompilerContext<E>) -> Container<'ctx, E> {
         Container {
             ctx: RefCell::new(ctx),
         }
     }
 }
 
-impl<'ctx> CompilerInterface for Container<'ctx> {
+impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn node_add(&self, span: &Span) -> Node {
         self.ctx.borrow_mut().node_add(span)
     }
@@ -51,8 +51,15 @@ impl<'ctx> CompilerInterface for Container<'ctx> {
         self.ctx.borrow().file_get(file).path.to_string()
     }
 
-    fn file_content(&self, file: &SourceFile) -> String {
-        self.ctx.borrow().file_get(file).content.clone()
+    fn file_content(&self, file: &SourceFile) -> Ref<String> {
+        // self.ctx.borrow().file_get(file).content.clone()
+        let ctx = self.ctx.borrow();
+        Ref::map(ctx, |c| &c.file_get(file).content)
+    }
+
+    fn file_lines(&self, file: &SourceFile) -> Ref<Vec<BytePos>> {
+        let ctx = self.ctx.borrow();
+        Ref::map(ctx, |c| &c.file_get(file).lines)
     }
 
     fn file_len(&self, file: &SourceFile) -> usize {
@@ -80,6 +87,10 @@ impl<'ctx> CompilerInterface for Container<'ctx> {
         let ctx = self.ctx.borrow();
         ctx.span_get(s).file
     }
+
+    fn diagnostic_emit(&self, diag: Diagnostic) {
+        self.ctx.borrow().diagnostic_emit(diag)
+    }
 }
 
 pub(crate) trait CompilerInterface {
@@ -94,15 +105,18 @@ pub(crate) trait CompilerInterface {
     fn file_open(&self, path: &str) -> Result<SourceFile, Error>;
     fn file_from(&self, content: &str) -> SourceFile;
     fn file_path(&self, file: &SourceFile) -> String;
-    fn file_content(&self, file: &SourceFile) -> String;
+    fn file_content(&self, file: &SourceFile) -> Ref<String>;
+    fn file_lines(&self, file: &SourceFile) -> Ref<Vec<BytePos>>;
     fn file_len(&self, file: &SourceFile) -> usize;
 
     /** Span related functions */
     fn span_add(&self, file: SourceFile, start: BytePos, length: BytePos) -> Span;
-
     fn span_start(&self, s: &Span) -> Position;
     fn span_end(&self, s: &Span) -> Position;
     fn span_file(&self, s: &Span) -> SourceFile;
+
+    /** Diagnostic related functions */
+    fn diagnostic_emit(&self, diag: Diagnostic);
 }
 
 // A thread local variable that stores a pointer to [`CompilerInterface`].
@@ -114,9 +128,10 @@ scoped_tls::scoped_thread_local!(static TLV: Cell<*const ()>);
 ///
 /// * `ctx`: Context to attach to the core compiler
 /// * `f`: Function closure to run
-pub fn run<F, T>(ctx: &mut CompilerContext, f: F) -> Result<T, Error>
+pub fn run<F, T, E>(ctx: &mut CompilerContext<E>, f: F) -> Result<T, Error>
 where
     F: FnOnce() -> T,
+    E: DiagnosticEmitter
 {
     let container = Container::new(ctx);
     run1(&container, f)
@@ -138,7 +153,7 @@ where
 ///
 /// I.e., This function will load the current interface and calls a function with it.
 /// Do not nest these, as that will ICE.
-pub(crate) fn with<R>(f: impl FnOnce(&dyn CompilerInterface) -> R) -> R {
+pub(crate) fn with<R>(f: impl FnOnce(&'static dyn CompilerInterface) -> R) -> R {
     assert!(TLV.is_set());
     TLV.with(|tlv| {
         let ptr = tlv.get();

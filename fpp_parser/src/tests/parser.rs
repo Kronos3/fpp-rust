@@ -1,4 +1,4 @@
-use crate::{parse, ParseError};
+use crate::parse;
 use fpp_core::SourceFile;
 use std::path::PathBuf;
 use std::{env, fs};
@@ -15,23 +15,27 @@ fn run_test(file_path: &str) {
     ref_file.push(file_path);
     ref_file.set_extension("ref.txt");
 
-    let mut ctx = fpp_core::CompilerContext::new();
-    let res = fpp_core::run(&mut ctx, || {
-        let src = match SourceFile::open(fpp_file.to_str().unwrap()) {
+    let mut diagnostics_str = vec![];
+    let mut ctx =
+        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
+    let ast: String = fpp_core::run(&mut ctx, || {
+        let source_file_path = fpp_file.to_str().unwrap();
+        let src = match SourceFile::open(source_file_path) {
             Ok(src) => src,
-            Err(err) => return Err(ParseError::FileOpen { error: err }),
+            Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
         };
 
-        parse(src, |p| p.module_members())
+        // Parse the source
+        format!("{:#?}", parse(src, |p| p.module_members()))
     })
-        .expect("compiler_error");
+    .expect("compiler_error");
 
-    let output = fpp_core::run(&mut ctx, || match res {
-        Ok(ast) => format!("{:#?}", ast),
-        Err(err) => format!("{:#?}", err),
-    })
-        .expect("compiler error")
-        .replace(path.to_str().unwrap(), "[ local path prefix ]");
+    let output = if diagnostics_str.is_empty() {
+        ast
+    } else {
+        String::from_utf8(diagnostics_str).expect("failed to convert error message to string")
+    }
+    .replace(path.to_str().unwrap(), "[ local path prefix ]");
 
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {
@@ -41,7 +45,7 @@ fn run_test(file_path: &str) {
         Err(_) => {
             // Read and compare against the ref file
             let ref_txt = fs::read_to_string(ref_file).expect("failed to read ref.txt");
-            assert_eq!(ref_txt, output)
+            assert_eq!(output, ref_txt)
         }
     }
 }

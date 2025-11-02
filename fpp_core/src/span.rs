@@ -2,7 +2,7 @@ use crate::diagnostic::Diagnostic;
 use crate::diagnostic::Level;
 use crate::file::SourceFile;
 use crate::interface::with;
-use crate::BytePos;
+use crate::{BytePos, Spanned};
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone, Copy)]
@@ -56,6 +56,12 @@ impl Span {
     diagnostic_method!(warning, Level::Warning);
     diagnostic_method!(note, Level::Note);
     diagnostic_method!(help, Level::Help);
+}
+
+impl Spanned for Span {
+    fn span(&self) -> Span {
+        self.clone()
+    }
 }
 
 pub struct Position {

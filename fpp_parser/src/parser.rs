@@ -17,13 +17,11 @@ enum ElementParsingResult<T> {
     None,
 }
 
-pub fn parse<T>(
-    source_file: SourceFile,
-    entry: fn(&mut Parser) -> ParseResult<T>,
-) -> ParseResult<T> {
-    let content = source_file.read();
+pub fn parse<T>(source_file: SourceFile, entry: fn(&mut Parser) -> T) -> T {
+    // We need our own copy of the source text since it needs to be long-lived
+    let content = source_file.read().as_ref().to_string();
     let mut parser = Parser {
-        cursor: Cursor::new(source_file, content.as_str()),
+        cursor: Cursor::new(source_file, content.as_ref()),
     };
 
     entry(&mut parser)
@@ -48,10 +46,7 @@ impl<'a> Parser<'a> {
 
     #[inline]
     fn node(&self, first_token: fpp_core::Span) -> fpp_core::Node {
-        let last_token_span = self
-            .cursor
-            .last_token_span()
-            .expect("last token should exist");
+        let last_token_span = self.cursor.last_token_span();
 
         fpp_core::Node::new(fpp_core::Span::new(
             first_token.file(),
@@ -174,8 +169,7 @@ impl<'a> Parser<'a> {
         let name = self.ident()?;
 
         self.consume(LeftCurly)?;
-        let members =
-            self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly)?;
+        let members = self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(DefComponent {
@@ -320,7 +314,7 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(Module)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
-        let members = self.module_members()?;
+        let members = self.module_members();
         self.consume(RightCurly)?;
 
         Ok(DefModule {
@@ -330,7 +324,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn module_members(&mut self) -> ParseResult<Vec<ModuleMember>> {
+    pub fn module_members(&mut self) -> Vec<ModuleMember> {
         self.annotated_element_sequence(&Parser::module_member, Semi, RightCurly)
     }
 
@@ -466,13 +460,13 @@ impl<'a> Parser<'a> {
         let implements = match self.peek(0) {
             Keyword(Implements) => {
                 self.next();
-                self.element_sequence(&Parser::qual_ident, Comma, LeftCurly)?
+                self.element_sequence(&Parser::qual_ident, Comma, LeftCurly)
             }
             _ => vec![],
         };
 
         self.consume(LeftCurly)?;
-        let members = self.topology_members()?;
+        let members = self.topology_members();
         self.consume(RightCurly)?;
 
         Ok(DefTopology {
@@ -483,7 +477,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn topology_members(&mut self) -> ParseResult<Vec<TopologyMember>> {
+    pub fn topology_members(&mut self) -> Vec<TopologyMember> {
         self.annotated_element_sequence(&Parser::topology_member, Semi, RightCurly)
     }
 
@@ -583,7 +577,7 @@ impl<'a> Parser<'a> {
         let targets = match self.peek(0) {
             LeftCurly => {
                 self.next();
-                let out = self.element_sequence(&Parser::qual_ident, Comma, RightCurly)?;
+                let out = self.element_sequence(&Parser::qual_ident, Comma, RightCurly);
                 self.consume(RightCurly)?;
                 out
             }
@@ -604,7 +598,7 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(Connections)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
-        let connections = self.element_sequence(&Parser::connection, Comma, RightCurly)?;
+        let connections = self.element_sequence(&Parser::connection, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(SpecConnectionGraph {
@@ -671,7 +665,7 @@ impl<'a> Parser<'a> {
         self.consume_keyword(Packets)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
-        let members = self.tlm_packet_set_members()?;
+        let members = self.tlm_packet_set_members();
         self.consume(RightCurly)?;
 
         let omitted = match self.peek(0) {
@@ -679,7 +673,7 @@ impl<'a> Parser<'a> {
                 self.next();
                 self.consume(LeftCurly)?;
                 let omit =
-                    self.element_sequence(&Parser::tlm_channel_identifier, Comma, RightCurly)?;
+                    self.element_sequence(&Parser::tlm_channel_identifier, Comma, RightCurly);
                 self.consume(RightCurly)?;
                 omit
             }
@@ -694,7 +688,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn tlm_packet_set_members(&mut self) -> ParseResult<Vec<TlmPacketSetMember>> {
+    pub fn tlm_packet_set_members(&mut self) -> Vec<TlmPacketSetMember> {
         self.annotated_element_sequence(&Parser::tlm_packet_set_member, Comma, RightCurly)
     }
 
@@ -716,7 +710,7 @@ impl<'a> Parser<'a> {
         self.consume_keyword(Group)?;
         let group = self.expr()?;
         self.consume(LeftCurly)?;
-        let members = self.tlm_packet_members()?;
+        let members = self.tlm_packet_members();
         self.consume(RightCurly)?;
 
         Ok(SpecTlmPacket {
@@ -728,7 +722,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn tlm_packet_members(&mut self) -> ParseResult<Vec<TlmPacketMember>> {
+    pub fn tlm_packet_members(&mut self) -> Vec<TlmPacketMember> {
         self.element_sequence(&Parser::tlm_packet_member, Comma, RightCurly)
     }
 
@@ -864,8 +858,7 @@ impl<'a> Parser<'a> {
             match self.peek(0) {
                 LeftCurly => {
                     self.next();
-                    let seq =
-                        self.annotated_element_sequence(&Parser::spec_init, Semi, RightCurly)?;
+                    let seq = self.annotated_element_sequence(&Parser::spec_init, Semi, RightCurly);
                     self.consume(RightCurly)?;
                     seq
                 }
@@ -904,8 +897,7 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(Interface)?;
         let name = self.ident()?;
         self.consume(LeftCurly)?;
-        let members =
-            self.annotated_element_sequence(&Parser::interface_member, Semi, RightCurly)?;
+        let members = self.annotated_element_sequence(&Parser::interface_member, Semi, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(DefInterface {
@@ -952,7 +944,7 @@ impl<'a> Parser<'a> {
 
         self.consume(LeftCurly)?;
         let constants =
-            self.annotated_element_sequence(&Parser::def_enum_constant, Comma, RightCurly)?;
+            self.annotated_element_sequence(&Parser::def_enum_constant, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         let default = match self.peek(0) {
@@ -1044,7 +1036,7 @@ impl<'a> Parser<'a> {
                     &Parser::state_machine_member,
                     Semi,
                     RightCurly,
-                )?;
+                );
 
                 self.consume(RightCurly)?;
 
@@ -1133,7 +1125,7 @@ impl<'a> Parser<'a> {
     fn do_expr(&mut self) -> ParseResult<DoExpr> {
         let first = self.consume_keyword(Do)?;
         self.consume(LeftCurly)?;
-        let actions = self.element_sequence(&Parser::ident, Comma, RightCurly)?;
+        let actions = self.element_sequence(&Parser::ident, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(DoExpr {
@@ -1542,7 +1534,7 @@ impl<'a> Parser<'a> {
 
     fn limit_sequence(&mut self) -> ParseResult<Vec<TlmChannelLimit>> {
         self.consume(LeftCurly)?;
-        let out = self.element_sequence(&Parser::limit, Comma, RightCurly)?;
+        let out = self.element_sequence(&Parser::limit, Comma, RightCurly);
         self.consume(RightCurly)?;
         Ok(out)
     }
@@ -1587,7 +1579,7 @@ impl<'a> Parser<'a> {
 
         self.consume(LeftCurly)?;
         let members =
-            self.annotated_element_sequence(&Parser::struct_type_member, Comma, RightCurly)?;
+            self.annotated_element_sequence(&Parser::struct_type_member, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         let default = match self.peek(0) {
@@ -1642,7 +1634,7 @@ impl<'a> Parser<'a> {
             LeftCurly => {
                 self.next();
                 let members =
-                    self.annotated_element_sequence(&Parser::state_member, Semi, RightCurly)?;
+                    self.annotated_element_sequence(&Parser::state_member, Semi, RightCurly);
                 self.consume(RightCurly)?;
                 members
             }
@@ -2068,7 +2060,7 @@ impl<'a> Parser<'a> {
         element_parser: &dyn Fn(&mut Parser<'a>) -> ParseResult<T>,
         punct: TokenKind,
         end: TokenKind,
-    ) -> ParseResult<Vec<T>> {
+    ) -> Vec<T> {
         // Eat up all the EOLs
         while self.peek(0) == Eol {
             self.next();
@@ -2090,14 +2082,22 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 ElementParsingResult::Err(err) => {
-                    // TODO(tumbar) We can recover from this by pulling tokens until the next element
-                    //   This is needed for the language server
-                    return Err(err);
+                    fpp_core::Diagnostic::from(err.into()).emit();
+
+                    // Recover to an anchor
+                    loop {
+                        let current = self.peek(0);
+                        if current == punct || current == end || current == EOF {
+                            break;
+                        }
+
+                        self.next();
+                    }
                 }
             }
         }
 
-        Ok(out)
+        out
     }
 
     fn element<T>(
@@ -2136,7 +2136,7 @@ impl<'a> Parser<'a> {
         element_parser: &dyn Fn(&mut Parser<'a>) -> ParseResult<T>,
         punct: TokenKind,
         end: TokenKind,
-    ) -> ParseResult<Vec<T>> {
+    ) -> Vec<T> {
         // Eat up all the EOLs
         while self.peek(0) == Eol {
             self.next();
@@ -2158,14 +2158,22 @@ impl<'a> Parser<'a> {
                     break;
                 }
                 ElementParsingResult::Err(err) => {
-                    // TODO(tumbar) We can recover from this by pulling tokens until the next element
-                    //   This is needed for the language server
-                    return Err(err);
+                    fpp_core::Diagnostic::from(err.into()).emit();
+
+                    // Recover to an anchor
+                    loop {
+                        let current = self.peek(0);
+                        if current == punct || current == end || current == EOF {
+                            break;
+                        }
+
+                        self.next();
+                    }
                 }
             }
         }
 
-        Ok(out)
+        out
     }
 
     fn index(&mut self) -> ParseResult<Expr> {
@@ -2460,7 +2468,7 @@ impl<'a> Parser<'a> {
 
     fn array_expr(&mut self) -> ParseResult<Expr> {
         let first = self.consume(LeftSquare)?;
-        let members = self.element_sequence(&Parser::expr, Comma, RightSquare)?;
+        let members = self.element_sequence(&Parser::expr, Comma, RightSquare);
         self.consume(RightSquare)?;
 
         Ok(Expr {
@@ -2471,7 +2479,7 @@ impl<'a> Parser<'a> {
 
     fn struct_expr(&mut self) -> ParseResult<Expr> {
         let first = self.consume(LeftCurly)?;
-        let members = self.element_sequence(&Parser::struct_member, Comma, RightCurly)?;
+        let members = self.element_sequence(&Parser::struct_member, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(Expr {
@@ -2500,7 +2508,7 @@ impl<'a> Parser<'a> {
             LeftParen => {
                 self.next();
                 let members =
-                    self.annotated_element_sequence(&Parser::formal_param, Comma, RightParen)?;
+                    self.annotated_element_sequence(&Parser::formal_param, Comma, RightParen);
 
                 self.consume(RightParen)?;
                 Ok(members)

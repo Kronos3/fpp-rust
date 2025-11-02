@@ -1,9 +1,9 @@
 [package]
-name = "fpp"
+name = "fpp_errors"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+annotate-snippets = "0.12.8"
+anstream = "0.6.21"
 fpp_core = { path = "../fpp_core" }
-fpp_parser = { path = "../fpp_parser" }
-fpp_errors = { path = "../fpp_errors" }

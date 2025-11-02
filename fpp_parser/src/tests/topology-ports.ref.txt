@@ -58,7 +58,7 @@
         implements: [],
         node_id: Span {
             start: [ local path prefix ]/topology-ports.fpp:1:1,
-            end: [ local path prefix ]/topology-ports.fpp:6:1,
+            end: [ local path prefix ]/topology-ports.fpp:5:2,
         },
     },
 ]

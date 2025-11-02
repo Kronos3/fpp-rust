@@ -24,7 +24,7 @@
         ],
         node_id: Span {
             start: [ local path prefix ]/include-module.fpp:1:1,
-            end: [ local path prefix ]/include-module.fpp:6:1,
+            end: [ local path prefix ]/include-module.fpp:5:1,
         },
     },
 ]

@@ -1,13 +1,13 @@
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenKind};
-use fpp_core::{SourceFile, Spanned};
+use fpp_core::{SourceFile, Span, Spanned};
 use std::collections::VecDeque;
 
 pub struct Cursor<'a> {
     lexer: Lexer<'a>,
     token_queue: VecDeque<Token>,
-    last_consumed_span: Option<fpp_core::Span>,
+    last_consumed_span: Span,
 }
 
 impl<'a> Cursor<'a> {
@@ -15,7 +15,7 @@ impl<'a> Cursor<'a> {
         Cursor {
             lexer: Lexer::new(source_file, content),
             token_queue: Default::default(),
-            last_consumed_span: None,
+            last_consumed_span: Span::new(source_file, 1, 0),
         }
     }
 
@@ -51,7 +51,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    pub fn last_token_span(&self) -> Option<fpp_core::Span> {
+    pub fn last_token_span(&self) -> Span {
         self.last_consumed_span
     }
 
@@ -67,20 +67,14 @@ impl<'a> Cursor<'a> {
         ParseError::ExpectedToken {
             expected,
             got,
-            pos: match self.last_consumed_span {
-                None => fpp_core::Position::start(self.lexer.file()),
-                Some(span) => span.end(),
-            },
+            last: self.last_consumed_span,
             msg,
         }
     }
 
     pub fn err_unexpected_eof(&self) -> ParseError {
         ParseError::UnexpectedEof {
-            pos: match self.last_consumed_span {
-                None => fpp_core::Position::start(self.lexer.file()),
-                Some(span) => span.end(),
-            },
+            last: self.last_consumed_span,
         }
     }
 
@@ -96,10 +90,7 @@ impl<'a> Cursor<'a> {
     ) -> ParseError {
         ParseError::ExpectedOneOf {
             expected: expected_one_of,
-            pos: match self.last_consumed_span {
-                None => fpp_core::Position::start(self.lexer.file()),
-                Some(span) => span.end(),
-            },
+            last: self.last_consumed_span,
             msg,
         }
     }
@@ -116,7 +107,7 @@ impl<'a> Cursor<'a> {
 
         match tok {
             Some(tok) => {
-                self.last_consumed_span = Some(tok.span());
+                self.last_consumed_span = tok.span();
                 Some(tok)
             }
             None => None,

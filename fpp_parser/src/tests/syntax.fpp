@@ -2,7 +2,7 @@
 module DefinitionsAndSpecifiers {
 
   @ Abstract type definition
-  type T
+  type
   @< Abstract type definition
 
   @ Type alias definition
