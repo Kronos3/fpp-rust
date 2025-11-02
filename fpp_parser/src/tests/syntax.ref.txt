@@ -4,3 +4,6 @@
   |  _______^
 6 | |   @< Abstract type definition
   | |_^ unexpected token
+  |
+  = note: expected Identifier
+  = note: got Eol

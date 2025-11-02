@@ -84,14 +84,18 @@ impl<'a> Cursor<'a> {
     // }
 
     pub fn err_expected_one_of(
-        &self,
+        &mut self,
         msg: &'static str,
         expected_one_of: Vec<TokenKind>,
     ) -> ParseError {
-        ParseError::ExpectedOneOf {
-            expected: expected_one_of,
-            last: self.last_consumed_span,
-            msg,
+        match self.peek_internal(0) {
+            None => self.err_unexpected_eof(),
+            Some(got) => ParseError::ExpectedOneOf {
+                expected: expected_one_of,
+                got_span: got.span,
+                got_kind: got.kind,
+                msg,
+            },
         }
     }
 

@@ -160,10 +160,11 @@ pub enum TokenKind {
     Star,
 }
 
-pub struct Token {
-    kind: TokenKind,
-    span: Span,
-    text: Option<String>,
+#[derive(Debug)]
+pub(crate) struct Token {
+    pub kind: TokenKind,
+    pub span: Span,
+    pub text: Option<String>,
 }
 
 impl Token {

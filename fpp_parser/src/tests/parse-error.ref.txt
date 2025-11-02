@@ -1,4 +1,7 @@
- --> [ local path prefix ]/parse-error.fpp:0:12
+ --> [ local path prefix ]/parse-error.fpp:5:1
   |
-0 |   constant =     1
-  |            ^ unexpected token
+5 | + c
+  | ^ module member expected
+  |
+  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
+  = note: got Plus
