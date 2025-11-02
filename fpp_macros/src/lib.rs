@@ -31,7 +31,7 @@ use syn::{parse_macro_input, Item};
 /// ```
 ///
 /// For enums:
-/// ```
+/// ```ignore
 /// use fpp_macros::ast;
 ///
 /// #[ast]
@@ -64,13 +64,28 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// Derives wrapper trait for accessing ast node annotation which are
 /// interned in the compiler context.
 ///
+/// The following pre-requisites are checked:
+/// 1. Struct or Enum
+/// 2. Already inherits #[ast]
+/// 3. If enum, all variants also derive from AstAnnotated
 ///
+/// For structs
+/// ```ignore
+/// #[ast]
+/// #[derive(AstAnnotated)]
+/// pub struct SpecStateMachineInstance {
+///     pub name: Ident,
+///     pub state_machine: QualIdent,
+///     pub priority: Option<Expr>,
+///     pub queue_full: Option<QueueFull>,
+/// }
+/// ```
 ///
 /// For enums:
-/// ```
+/// ```ignore
 /// use fpp_macros::ast_node;
 ///
-/// #[ast_node]
+/// #[ast]
 /// #[derive(AstAnnotated)]
 /// pub enum InterfaceMember {
 ///     SpecPortInstance(SpecPortInstance),
