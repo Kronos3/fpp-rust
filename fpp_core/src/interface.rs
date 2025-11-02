@@ -52,7 +52,7 @@ impl<'ctx> CompilerInterface for Container<'ctx> {
     }
 
     fn file_content(&self, file: &SourceFile) -> String {
-        self.ctx.borrow().file_get(file).content.to_string()
+        self.ctx.borrow().file_get(file).content.clone()
     }
 
     fn file_len(&self, file: &SourceFile) -> usize {

@@ -44,7 +44,6 @@ pub enum QueueFull {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecCommand {
     pub kind: InputPortKind,
     pub name: Ident,
@@ -56,7 +55,6 @@ pub struct SpecCommand {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -83,7 +81,6 @@ pub struct EventThrottle {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
@@ -96,7 +93,6 @@ pub struct SpecEvent {
 /** Internal port specifier */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -106,7 +102,6 @@ pub struct SpecInternalPort {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: TypeName,
@@ -142,7 +137,6 @@ pub enum SpecialPortInstanceKind {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
@@ -150,7 +144,6 @@ pub struct SpecPortMatching {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: TypeName,
@@ -160,7 +153,6 @@ pub struct SpecRecord {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
@@ -190,7 +182,6 @@ pub struct TlmChannelLimit {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: TypeName,

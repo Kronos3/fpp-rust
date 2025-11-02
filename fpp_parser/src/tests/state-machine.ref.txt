@@ -22,6 +22,9 @@
                         start: [ local path prefix ]/state-machine.fpp:5:4,
                         end: [ local path prefix ]/state-machine.fpp:6:1,
                     },
+                    pre_annotation: [
+                        "Action a1",
+                    ],
                 },
                 DefAction {
                     name: Ident {
@@ -36,6 +39,9 @@
                         start: [ local path prefix ]/state-machine.fpp:8:4,
                         end: [ local path prefix ]/state-machine.fpp:9:1,
                     },
+                    pre_annotation: [
+                        "Action a2",
+                    ],
                 },
                 DefAction {
                     name: Ident {
@@ -50,6 +56,9 @@
                         start: [ local path prefix ]/state-machine.fpp:11:4,
                         end: [ local path prefix ]/state-machine.fpp:12:1,
                     },
+                    pre_annotation: [
+                        "Action a3",
+                    ],
                 },
                 DefAction {
                     name: Ident {
@@ -74,6 +83,9 @@
                         start: [ local path prefix ]/state-machine.fpp:14:4,
                         end: [ local path prefix ]/state-machine.fpp:15:1,
                     },
+                    pre_annotation: [
+                        "Action a4",
+                    ],
                 },
                 DefGuard {
                     name: Ident {
@@ -88,6 +100,9 @@
                         start: [ local path prefix ]/state-machine.fpp:17:4,
                         end: [ local path prefix ]/state-machine.fpp:18:1,
                     },
+                    pre_annotation: [
+                        "Guard g1",
+                    ],
                 },
                 DefGuard {
                     name: Ident {
@@ -112,6 +127,9 @@
                         start: [ local path prefix ]/state-machine.fpp:20:4,
                         end: [ local path prefix ]/state-machine.fpp:21:1,
                     },
+                    pre_annotation: [
+                        "Guard g2",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -136,6 +154,9 @@
                         start: [ local path prefix ]/state-machine.fpp:23:4,
                         end: [ local path prefix ]/state-machine.fpp:24:1,
                     },
+                    pre_annotation: [
+                        "Signal s1",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -150,6 +171,9 @@
                         start: [ local path prefix ]/state-machine.fpp:26:4,
                         end: [ local path prefix ]/state-machine.fpp:27:1,
                     },
+                    pre_annotation: [
+                        "Signal s2",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -164,6 +188,9 @@
                         start: [ local path prefix ]/state-machine.fpp:29:4,
                         end: [ local path prefix ]/state-machine.fpp:30:1,
                     },
+                    pre_annotation: [
+                        "Signal s3",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -178,6 +205,9 @@
                         start: [ local path prefix ]/state-machine.fpp:32:4,
                         end: [ local path prefix ]/state-machine.fpp:33:1,
                     },
+                    pre_annotation: [
+                        "Signal s4",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -192,6 +222,9 @@
                         start: [ local path prefix ]/state-machine.fpp:35:4,
                         end: [ local path prefix ]/state-machine.fpp:36:1,
                     },
+                    pre_annotation: [
+                        "Signal s5",
+                    ],
                 },
                 DefSignal {
                     name: Ident {
@@ -206,6 +239,9 @@
                         start: [ local path prefix ]/state-machine.fpp:38:4,
                         end: [ local path prefix ]/state-machine.fpp:39:1,
                     },
+                    pre_annotation: [
+                        "Signal s6",
+                    ],
                 },
                 SpecInitialTransition {
                     transition: TransitionExpr {
@@ -242,6 +278,9 @@
                         start: [ local path prefix ]/state-machine.fpp:41:4,
                         end: [ local path prefix ]/state-machine.fpp:42:1,
                     },
+                    pre_annotation: [
+                        "Initial transition",
+                    ],
                 },
                 DefChoice {
                     name: Ident {
@@ -290,6 +329,9 @@
                         start: [ local path prefix ]/state-machine.fpp:44:4,
                         end: [ local path prefix ]/state-machine.fpp:45:1,
                     },
+                    pre_annotation: [
+                        "Choice C",
+                    ],
                 },
                 DefState {
                     name: Ident {
@@ -304,6 +346,9 @@
                         start: [ local path prefix ]/state-machine.fpp:47:4,
                         end: [ local path prefix ]/state-machine.fpp:48:1,
                     },
+                    pre_annotation: [
+                        "State S1",
+                    ],
                 },
                 DefState {
                     name: Ident {
@@ -412,6 +457,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:56:6,
                                 end: [ local path prefix ]/state-machine.fpp:57:1,
                             },
+                            pre_annotation: [
+                                "Initial transition",
+                            ],
                         },
                         DefChoice {
                             name: Ident {
@@ -519,6 +567,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:59:6,
                                 end: [ local path prefix ]/state-machine.fpp:60:1,
                             },
+                            pre_annotation: [
+                                "Choice C",
+                            ],
                         },
                         DefState {
                             name: Ident {
@@ -533,6 +584,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:62:6,
                                 end: [ local path prefix ]/state-machine.fpp:63:1,
                             },
+                            pre_annotation: [
+                                "State S3",
+                            ],
                         },
                         SpecStateTransition {
                             signal: Ident {
@@ -587,6 +641,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:65:6,
                                 end: [ local path prefix ]/state-machine.fpp:66:1,
                             },
+                            pre_annotation: [
+                                "Transition to S1",
+                            ],
                         },
                         SpecStateTransition {
                             signal: Ident {
@@ -663,6 +720,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:69:6,
                                 end: [ local path prefix ]/state-machine.fpp:70:1,
                             },
+                            pre_annotation: [
+                                "Transition to S1",
+                            ],
                         },
                         SpecStateTransition {
                             signal: Ident {
@@ -693,6 +753,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:72:6,
                                 end: [ local path prefix ]/state-machine.fpp:73:1,
                             },
+                            pre_annotation: [
+                                "Transition to S1",
+                            ],
                         },
                         SpecStateTransition {
                             signal: Ident {
@@ -732,6 +795,9 @@
                                 start: [ local path prefix ]/state-machine.fpp:75:6,
                                 end: [ local path prefix ]/state-machine.fpp:76:1,
                             },
+                            pre_annotation: [
+                                "Internal transition",
+                            ],
                         },
                         SpecStateTransition {
                             signal: Ident {
@@ -763,12 +829,18 @@
                                 start: [ local path prefix ]/state-machine.fpp:78:6,
                                 end: [ local path prefix ]/state-machine.fpp:79:1,
                             },
+                            pre_annotation: [
+                                "Internal transition",
+                            ],
                         },
                     ],
                     node_id: Span {
                         start: [ local path prefix ]/state-machine.fpp:50:4,
                         end: [ local path prefix ]/state-machine.fpp:81:1,
                     },
+                    pre_annotation: [
+                        "State S2",
+                    ],
                 },
             ],
         ),
@@ -776,5 +848,8 @@
             start: [ local path prefix ]/state-machine.fpp:2:2,
             end: [ local path prefix ]/state-machine.fpp:83:1,
         },
+        pre_annotation: [
+            "State machine M",
+        ],
     },
 ]

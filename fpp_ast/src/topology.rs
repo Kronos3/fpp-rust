@@ -3,7 +3,6 @@ use crate::*;
 /** Topology definition */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefTopology {
     pub name: Ident,
     pub members: Vec<TopologyMember>,
@@ -22,7 +21,6 @@ pub enum TopologyMember {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecInstance {
     pub instance: QualIdent,
 }
@@ -70,7 +68,6 @@ pub enum SpecConnectionGraphKind {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecConnectionGraph {
     pub kind: SpecConnectionGraphKind,
 }
@@ -84,7 +81,6 @@ pub struct TlmChannelIdentifier {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecTopPort {
     pub name: Ident,
     pub underlying_port: PortInstanceIdentifier,
@@ -92,7 +88,6 @@ pub struct SpecTopPort {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecTlmPacketSet {
     pub name: Ident,
     pub members: Vec<TlmPacketSetMember>,
@@ -108,7 +103,6 @@ pub enum TlmPacketSetMember {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecTlmPacket {
     pub name: Ident,
     pub id: Option<Expr>,

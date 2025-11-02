@@ -10,6 +10,7 @@ pub struct Lexer<'a> {
 
     indent: u32,
     escaped_identifier: bool,
+    annotation_end: BytePos,
 
     len_remaining: usize,
     content: &'a str,
@@ -69,6 +70,7 @@ impl<'a> Lexer<'a> {
             chars,
             len_remaining: file.len(),
             escaped_identifier: false,
+            annotation_end: 0,
         }
     }
 
@@ -102,14 +104,14 @@ impl<'a> Lexer<'a> {
                         PreAnnotation => {
                             // Remove the '@' and end at the first newline
                             (
-                                Some(self.content[start + 1..end].trim().to_string()),
+                                Some(self.content[start + 1..start + self.annotation_end].trim().to_string()),
                                 PreAnnotation,
                             )
                         }
                         PostAnnotation => {
                             // Remove the '@<' and end at the first newline
                             (
-                                Some(self.content[start + 2..end].trim().to_string()),
+                                Some(self.content[start + 2..start + self.annotation_end].trim().to_string()),
                                 PostAnnotation,
                             )
                         }
@@ -370,10 +372,12 @@ impl<'a> Lexer<'a> {
                 if self.first() == '<' {
                     self.bump();
                     self.eat_until('\n' as u8);
+                    self.annotation_end = self.pos_within_token();
                     self.eat_newlines();
                     PostAnnotation
                 } else {
                     self.eat_until('\n' as u8);
+                    self.annotation_end = self.pos_within_token();
                     self.eat_newlines();
                     PreAnnotation
                 }

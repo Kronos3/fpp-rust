@@ -108,5 +108,8 @@
             start: [ local path prefix ]/comments.fpp:17:2,
             end: [ local path prefix ]/comments.fpp:18:1,
         },
+        pre_annotation: [
+            "Constant",
+        ],
     },
 ]

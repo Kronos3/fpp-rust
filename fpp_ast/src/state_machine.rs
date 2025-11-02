@@ -2,7 +2,6 @@ use crate::*;
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefStateMachine {
     pub name: Ident,
     pub members: Option<Vec<StateMachineMember>>,
@@ -23,7 +22,6 @@ pub enum StateMachineMember {
 /** Action definition */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefAction {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -32,7 +30,6 @@ pub struct DefAction {
 /** Choice definition */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefChoice {
     pub name: Ident,
     pub guard: Ident,
@@ -43,7 +40,6 @@ pub struct DefChoice {
 /** Guard definition */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefGuard {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -60,7 +56,6 @@ pub struct TransitionExpr {
 /** Signal definition */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefSignal {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -68,7 +63,6 @@ pub struct DefSignal {
 
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct DefState {
     pub name: Ident,
     pub members: Vec<StateMember>,
@@ -88,7 +82,6 @@ pub enum StateMember {
 /** Initial state specifier */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecInitialTransition {
     pub transition: TransitionExpr,
 }
@@ -96,7 +89,6 @@ pub struct SpecInitialTransition {
 /** State entry specifier */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecStateEntry {
     pub actions: DoExpr,
 }
@@ -104,7 +96,6 @@ pub struct SpecStateEntry {
 /** State exit specifier */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecStateExit {
     pub actions: DoExpr,
 }
@@ -112,7 +103,6 @@ pub struct SpecStateExit {
 /** Transition specifier */
 #[ast_node]
 #[ast_annotated]
-#[derive(Debug)]
 pub struct SpecStateTransition {
     pub signal: Ident,
     pub guard: Option<Ident>,

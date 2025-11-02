@@ -6,7 +6,9 @@ use syn::{Fields, ItemEnum, ItemStruct, Type};
 pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
     // Ensure it's a named-field struct (not tuple or unit)
     let new_struct = input.clone();
-    match &new_struct.fields {
+    let name = &input.ident; // struct name
+
+    let debug_fields = match &new_struct.fields {
         Fields::Named(fields_named) => {
             // Validate that the node_id field exists
             let node_id_type: Type = syn::parse_quote!(fpp_core::Node);
@@ -20,7 +22,7 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                             node_id_field,
                             "node_id member is not fpp_core::Node",
                         )
-                            .to_compile_error();
+                        .to_compile_error();
                         return err.into();
                     }
                 }
@@ -29,9 +31,25 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                         input,
                         "`annotated` must be placed after `ast_node`",
                     )
-                        .to_compile_error();
+                    .to_compile_error();
                     return err.into();
                 }
+            }
+
+            let field_names = fields_named.named.iter().map(|f| f.ident.as_ref().unwrap());
+            quote! {
+                let mut debug_struct = f.debug_struct(stringify!(#name));
+                #(debug_struct.field(stringify!(#field_names), &self.#field_names);)*
+                let pre = &self.pre_annotation();
+                if !pre.is_empty() {
+                    debug_struct.field("pre_annotation", pre);
+                }
+
+                let post = &self.post_annotation();
+                if !post.is_empty() {
+                    debug_struct.field("post_annotation", post);
+                }
+                debug_struct.finish()
             }
         }
         Fields::Unit | Fields::Unnamed(_) => {
@@ -40,10 +58,10 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                 input,
                 "#[ast_node] only supports structs with named fields (braced structs).",
             )
-                .to_compile_error();
+            .to_compile_error();
             return err.into();
         }
-    }
+    };
 
     let struct_ident = &new_struct.ident;
     let generics = &new_struct.generics;
@@ -57,6 +75,12 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
             }
             fn post_annotation(&self) -> Vec<String> {
                 self.node_id.post_annotation()
+            }
+        }
+
+        impl #impl_generics std::fmt::Debug for #struct_ident #ty_generics #where_clause {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                #debug_fields
             }
         }
     };
@@ -78,7 +102,8 @@ pub(crate) fn annotated_enum(input: &ItemEnum) -> TokenStream {
         match &v.fields {
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
                 pre_arms.push(quote! { #enum_ident::#var_ident(inner) => inner.pre_annotation(), });
-                post_arms.push(quote! { #enum_ident::#var_ident(inner) => inner.post_annotation(), });
+                post_arms
+                    .push(quote! { #enum_ident::#var_ident(inner) => inner.post_annotation(), });
             }
             _ => {
                 // Return a compile_error if user applied macro on unsupported struct
@@ -89,7 +114,7 @@ pub(crate) fn annotated_enum(input: &ItemEnum) -> TokenStream {
                         var_ident
                     ),
                 )
-                    .to_compile_error();
+                .to_compile_error();
                 return err.into();
             }
         }
