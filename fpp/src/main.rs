@@ -1,4 +1,5 @@
 use std::io::Read;
+use std::process::exit;
 
 fn compiler_main() -> String {
     let mut stdin = String::new();
@@ -17,5 +18,9 @@ fn main() {
         fpp_core::CompilerContext::new(fpp_errors::ConsoleEmitter::color());
     let out = fpp_core::run(&mut ctx, compiler_main).expect("Failed to run compiler");
 
-    println!("{}", out)
+    if ctx.has_errors() {
+        exit(1)
+    }
+
+    println!("{}", out);
 }

@@ -163,7 +163,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn def_component(&mut self) -> ParseResult<DefComponent> {
+    fn def_component(&mut self) -> ParseResult<DefComponent> {
         let (kind, first) = self.component_kind()?;
         self.consume_keyword(Component)?;
         let name = self.ident()?;
@@ -194,7 +194,7 @@ impl<'a> Parser<'a> {
         Ok((ck, self.next().unwrap()))
     }
 
-    pub fn component_member(&mut self) -> ParseResult<ComponentMember> {
+    fn component_member(&mut self) -> ParseResult<ComponentMember> {
         match self.peek(0) {
             Keyword(Type) => match self.peek(2) {
                 Equals => Ok(ComponentMember::DefAliasType(self.alias_type()?)),
@@ -907,7 +907,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn interface_member(&mut self) -> ParseResult<InterfaceMember> {
+    fn interface_member(&mut self) -> ParseResult<InterfaceMember> {
         match self.peek(0) {
             Keyword(Import) => Ok(InterfaceMember::SpecImport(self.spec_import_interface()?)),
             _ => Ok(InterfaceMember::SpecPortInstance(

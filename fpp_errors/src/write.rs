@@ -23,6 +23,7 @@ impl<W: Write> DiagnosticEmitter for WriteEmitter<W> {
         let group = diagnostic_to_snippet_group(&diagnostic);
         let mut out = self.renderer.render(&[group]);
         out.push('\n');
+        out.push('\n');
         self.write
             .write(out.as_bytes())
             .expect("failed to write diagnostic");

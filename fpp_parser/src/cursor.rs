@@ -1,7 +1,7 @@
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::Lexer;
 use crate::token::{Token, TokenKind};
-use fpp_core::{SourceFile, Span, Spanned};
+use fpp_core::{Diagnostic, Level, SourceFile, Span, Spanned};
 use std::collections::VecDeque;
 
 pub struct Cursor<'a> {
@@ -24,10 +24,21 @@ impl<'a> Cursor<'a> {
             Some(self.token_queue.get(n).unwrap())
         } else {
             // Queue up as many tokens as we need
-            for _ in 0..n + 1 {
+            while self.token_queue.len() <= n {
                 match self.lexer.next_token() {
                     None => return None,
-                    Some(tok) => self.token_queue.push_back(tok),
+                    Some(tok) => match tok.kind {
+                        TokenKind::Error(lexer_error) => {
+                            Diagnostic::new(Level::Error, "syntax error")
+                                .span_error(tok, "invalid token")
+                                .error(lexer_error)
+                                .emit()
+                        }
+                        TokenKind::Unknown(c) => Diagnostic::new(Level::Error, "syntax error")
+                            .span_error(tok, format!("invalid character {:#?}", c))
+                            .emit(),
+                        _ => self.token_queue.push_back(tok),
+                    },
                 }
             }
 

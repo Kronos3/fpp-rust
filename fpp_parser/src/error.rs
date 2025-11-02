@@ -2,7 +2,7 @@ use crate::token::TokenKind;
 use fpp_core::{Diagnostic, Level, Span};
 
 #[derive(Debug)]
-pub enum ParseError {
+pub(crate) enum ParseError {
     ExpectedOneOf {
         expected: Vec<TokenKind>,
         got_kind: TokenKind,
@@ -45,9 +45,9 @@ impl Into<Diagnostic> for ParseError {
                 .note(format!("got {:?}", got)),
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
-            }
+            },
         }
     }
 }
 
-pub type ParseResult<T> = Result<T, ParseError>;
+pub(crate) type ParseResult<T> = Result<T, ParseError>;

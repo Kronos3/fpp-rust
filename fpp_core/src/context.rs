@@ -135,6 +135,7 @@ pub struct CompilerContext<E: DiagnosticEmitter> {
     nodes: HashMap<Node, NodeData>,
 
     emitter: RefCell<E>,
+    seen_errors: bool
 }
 
 impl<E: DiagnosticEmitter> CompilerContext<E> {
@@ -145,6 +146,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             current_node_id: Node { handle: 1 },
             nodes: HashMap::new(),
             emitter: RefCell::new(emitter),
+            seen_errors: false,
         }
     }
 
@@ -258,9 +260,20 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         }
     }
 
-    pub(crate) fn diagnostic_emit(&self, diag: Diagnostic) {
+    pub(crate) fn diagnostic_emit(&mut self, diag: Diagnostic) {
+        match diag.msg.level {
+            Level::Error => {
+                self.seen_errors = true;
+            }
+            _ => {}
+        }
+
         // Convert a standard diagnostic to a flattened diagnostic
         // Send to the emitter
         self.emitter.borrow_mut().emit(self.diagnostic_get(diag));
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.seen_errors
     }
 }

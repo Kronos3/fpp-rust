@@ -89,7 +89,7 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     }
 
     fn diagnostic_emit(&self, diag: Diagnostic) {
-        self.ctx.borrow().diagnostic_emit(diag)
+        self.ctx.borrow_mut().diagnostic_emit(diag)
     }
 }
 

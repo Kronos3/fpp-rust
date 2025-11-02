@@ -4,7 +4,6 @@ mod token;
 mod error;
 mod cursor;
 
-pub use error::{ParseError, ParseResult};
 pub use parser::parse;
 
 #[cfg(test)]

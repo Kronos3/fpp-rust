@@ -24,6 +24,6 @@ impl ConsoleEmitter {
 impl fpp_core::DiagnosticEmitter for ConsoleEmitter {
     fn emit<'d>(&'_ mut self, diagnostic: DiagnosticData<'d>) {
         let group = diagnostic_to_snippet_group(&diagnostic);
-        anstream::println!("{}", self.renderer.render(&[group]));
+        anstream::println!("{}\n", self.renderer.render(&[group]));
     }
 }

@@ -2,18 +2,14 @@ error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:0:1
   |
 0 | %
-  | ^ module member expected
-  |
-  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
-  = note: got Unknown('%')
+  | ^ invalid character '%'
+
 error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:2:1
   |
 2 |     
-  | ^^^^ module member expected
-  |
-  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
-  = note: got Unknown('\t')
+  | ^^^^ invalid character '\t'
+
 error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:3:1
   |
@@ -22,3 +18,12 @@ error: syntax error
   |
   = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
   = note: got Identifier
+
+error: syntax error
+ --> [ local path prefix ]/illegal-character.fpp:4:6
+  |
+4 | tok2 \ illegal
+  |      ^^^^^^^^^ invalid token
+  |
+  = error: Non whitespace character illegal after line continuation
+
