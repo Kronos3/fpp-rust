@@ -53,7 +53,7 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 other,
                 "#[ast_node] #[derive(AstAnnotated)] only supports structs or enums",
             )
-            .to_compile_error();
+                .to_compile_error();
             err.into()
         }
     }
@@ -106,5 +106,5 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
             return err.into();
         }
     })
-    .into()
+        .into()
 }

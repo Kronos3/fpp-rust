@@ -1,6 +1,6 @@
-use std::fmt::{Formatter};
 use crate::token::TokenKind;
 use fpp_core::{Diagnostic, Level, Span};
+use std::fmt::Formatter;
 
 #[derive(Debug)]
 pub(crate) enum ParseError {
@@ -63,7 +63,7 @@ impl Into<Diagnostic> for ParseError {
                 .note(format!("got {}", got)),
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
-            },
+            }
         }
     }
 }

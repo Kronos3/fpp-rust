@@ -70,7 +70,7 @@ impl Diagnostic {
             msg: DiagnosticMessage {
                 level,
                 message: message.into(),
-                span: None
+                span: None,
             },
             children: vec![],
         }

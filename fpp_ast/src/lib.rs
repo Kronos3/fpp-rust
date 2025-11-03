@@ -9,8 +9,8 @@ pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-use fpp_macros::AstAnnotated;
 use fpp_macros::ast;
+use fpp_macros::AstAnnotated;
 
 pub trait AstNode: fpp_core::Spanned {
     fn id(&self) -> fpp_core::Node;

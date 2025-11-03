@@ -28,14 +28,14 @@ fn run_test(file_path: &str) {
         // Parse the source
         format!("{:#?}", parse(src, |p| p.module_members()))
     })
-    .expect("compiler_error");
+        .expect("compiler_error");
 
     let output = if diagnostics_str.is_empty() {
         ast
     } else {
         String::from_utf8(diagnostics_str).expect("failed to convert error message to string")
     }
-    .replace(path.to_str().unwrap(), "[ local path prefix ]");
+        .replace(path.to_str().unwrap(), "[ local path prefix ]");
 
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {

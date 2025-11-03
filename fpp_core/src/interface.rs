@@ -131,7 +131,7 @@ scoped_tls::scoped_thread_local!(static TLV: Cell<*const ()>);
 pub fn run<F, T, E>(ctx: &mut CompilerContext<E>, f: F) -> Result<T, Error>
 where
     F: FnOnce() -> T,
-    E: DiagnosticEmitter
+    E: DiagnosticEmitter,
 {
     let container = Container::new(ctx);
     run1(&container, f)

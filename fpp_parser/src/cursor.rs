@@ -46,7 +46,7 @@ impl<'a> Cursor<'a> {
         }
     }
 
-    pub fn peek_span(&mut self, n: usize) -> Option<fpp_core::Span> {
+    pub fn peek_span(&mut self, n: usize) -> Option<Span> {
         match self.peek_internal(n) {
             Some(tok) => Some(tok.span()),
             _ => None,

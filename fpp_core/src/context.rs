@@ -135,7 +135,7 @@ pub struct CompilerContext<E: DiagnosticEmitter> {
     nodes: HashMap<Node, NodeData>,
 
     emitter: RefCell<E>,
-    seen_errors: bool
+    seen_errors: bool,
 }
 
 impl<E: DiagnosticEmitter> CompilerContext<E> {
