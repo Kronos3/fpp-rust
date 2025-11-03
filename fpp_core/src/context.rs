@@ -59,7 +59,7 @@ impl SourceFileData {
         }
     }
 
-    pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet {
+    pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet<'_> {
         // Find the line start of the start/end
         let first_line = match self.lines.binary_search(&span.start) {
             // The span start is a newline
@@ -232,7 +232,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             .expect(&format!("invalid file: {}", file.handle))
     }
 
-    fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData {
+    fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData<'_> {
         let snippet = match diagnostic.span {
             None => None,
             Some(span) => {
@@ -249,7 +249,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         }
     }
 
-    fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData {
+    fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData<'_> {
         DiagnosticData {
             message: self.diagnostic_message_get(diagnostic.msg),
             children: diagnostic

@@ -3,7 +3,8 @@ use crate::*;
 use fpp_macros::ast;
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
+#[visitable(no_self)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -43,18 +44,20 @@ pub enum QueueFull {
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecCommand {
+    #[visitable(ignore)]
     pub kind: InputPortKind,
     pub name: Ident,
     pub params: FormalParamList,
     pub opcode: Option<Expr>,
     pub priority: Option<Expr>,
+    #[visitable(ignore)]
     pub queue_full: Option<QueueFull>,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -73,35 +76,38 @@ pub enum EventSeverity {
 }
 
 #[ast]
-#[derive(Debug)]
+#[derive(Debug, Walkable)]
 pub struct EventThrottle {
     pub count: Expr,
     pub every: Option<Expr>,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
+    #[visitable(ignore)]
     pub severity: EventSeverity,
     pub id: Option<Expr>,
+    #[visitable(ignore)]
     pub format: LitString,
     pub throttle: Option<EventThrottle>,
 }
 
 /** Internal port specifier */
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
     pub priority: Option<Expr>,
+    #[visitable(ignore)]
     pub queue_full: Option<QueueFull>,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: TypeName,
@@ -109,6 +115,7 @@ pub struct SpecParam {
     pub id: Option<Expr>,
     pub set_opcode: Option<Expr>,
     pub save_opcode: Option<Expr>,
+    #[visitable(ignore)]
     pub is_external: bool,
 }
 
@@ -136,27 +143,29 @@ pub enum SpecialPortInstanceKind {
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: TypeName,
+    #[visitable(ignore)]
     pub is_array: bool,
     pub id: Option<Expr>,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
     pub priority: Option<Expr>,
+    #[visitable(ignore)]
     pub queue_full: Option<QueueFull>,
 }
 
@@ -174,19 +183,22 @@ pub enum TlmChannelLimitKind {
 }
 
 #[ast]
-#[derive(Debug)]
+#[derive(Debug, Walkable)]
 pub struct TlmChannelLimit {
+    #[visitable(ignore)]
     pub kind: TlmChannelLimitKind,
     pub value: Expr,
 }
 
 #[ast]
-#[derive(AstAnnotated)]
+#[derive(AstAnnotated, Walkable)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: TypeName,
     pub id: Option<Expr>,
+    #[visitable(ignore)]
     pub update: Option<TlmChannelUpdate>,
+    #[visitable(ignore)]
     pub format: Option<LitString>,
     pub low: Vec<TlmChannelLimit>,
     pub high: Vec<TlmChannelLimit>,

@@ -1742,17 +1742,15 @@ impl<'a> Parser<'a> {
             _ => None,
         };
 
-        Ok(SpecPortInstance {
+        Ok(SpecPortInstance::General(SpecGeneralPortInstance {
             node_id: self.node(first),
-            kind: SpecPortInstanceKind::General {
-                kind,
-                name,
-                size,
-                port,
-                priority,
-                queue_full,
-            },
-        })
+            kind,
+            name,
+            size,
+            port,
+            priority,
+            queue_full,
+        }))
     }
 
     fn spec_port_special(&mut self) -> ParseResult<SpecPortInstance> {
@@ -1902,16 +1900,14 @@ impl<'a> Parser<'a> {
 
         let queue_full = self.opt_queue_full()?;
 
-        Ok(SpecPortInstance {
+        Ok(SpecPortInstance::Special(SpecSpecialPortInstance {
             node_id: self.node(first),
-            kind: SpecPortInstanceKind::Special {
-                input_kind,
-                kind,
-                name,
-                priority,
-                queue_full,
-            },
-        })
+            input_kind,
+            kind,
+            name,
+            priority,
+            queue_full,
+        }))
     }
 
     fn spec_port_instance(&mut self) -> ParseResult<SpecPortInstance> {

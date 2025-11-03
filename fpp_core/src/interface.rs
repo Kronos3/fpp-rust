@@ -51,13 +51,13 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         self.ctx.borrow().file_get(file).path.to_string()
     }
 
-    fn file_content(&self, file: &SourceFile) -> Ref<String> {
+    fn file_content(&self, file: &SourceFile) -> Ref<'_, String> {
         // self.ctx.borrow().file_get(file).content.clone()
         let ctx = self.ctx.borrow();
         Ref::map(ctx, |c| &c.file_get(file).content)
     }
 
-    fn file_lines(&self, file: &SourceFile) -> Ref<Vec<BytePos>> {
+    fn file_lines(&self, file: &SourceFile) -> Ref<'_, Vec<BytePos>> {
         let ctx = self.ctx.borrow();
         Ref::map(ctx, |c| &c.file_get(file).lines)
     }
@@ -105,8 +105,8 @@ pub(crate) trait CompilerInterface {
     fn file_open(&self, path: &str) -> Result<SourceFile, Error>;
     fn file_from(&self, content: &str) -> SourceFile;
     fn file_path(&self, file: &SourceFile) -> String;
-    fn file_content(&self, file: &SourceFile) -> Ref<String>;
-    fn file_lines(&self, file: &SourceFile) -> Ref<Vec<BytePos>>;
+    fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
+    fn file_lines(&self, file: &SourceFile) -> Ref<'_, Vec<BytePos>>;
     fn file_len(&self, file: &SourceFile) -> usize;
 
     /** Span related functions */

@@ -1,5 +1,6 @@
 mod annotated;
 mod node;
+mod visitable;
 
 use crate::annotated::{annotated_enum, annotated_struct};
 use crate::node::{ast_node_enum, ast_node_struct};
@@ -53,12 +54,11 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 other,
                 "#[ast_node] #[derive(AstAnnotated)] only supports structs or enums",
             )
-                .to_compile_error();
+            .to_compile_error();
             err.into()
         }
     }
 }
-
 
 ///
 /// Derives wrapper trait for accessing ast node annotation which are
@@ -106,5 +106,52 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
             return err.into();
         }
     })
-        .into()
+    .into()
+}
+
+// decl_derive!(
+//     [Walkable, attributes(visitable)] =>
+//     /// Derives `Walkable` for the annotated `struct` or `enum` (`union` is not supported).
+//     ///
+//     /// Each field of the struct or enum variant will be visited in definition order, using the
+//     /// `Walkable` implementation for its type. However, if a field of a struct or an enum
+//     /// variant is annotated with `#[visitable(ignore)]` then that field will not be
+//     /// visited (and its type is not required to implement `Walkable`).
+//     visitable::visitable_derive
+// );
+
+#[proc_macro_derive(Walkable, attributes(visitable))]
+/// Derives `Walkable` for the annotated `struct` or `enum` (`union` is not supported).
+///
+/// Each field of the struct or enum variant will be visited in definition order, using the
+/// `Walkable` implementation for its type. However, if a field of a struct or an enum
+/// variant is annotated with `#[visitable(ignore)]` then that field will not be
+/// visited (and its type is not required to implement `Walkable`).
+pub fn walk_derive(i: TokenStream) -> TokenStream {
+    let clone_i = i.clone();
+    let input = parse_macro_input!(i as syn::DeriveInput);
+
+    // Check for `#[visitable(no_self)]`
+    let mut no_self = false;
+    for attr in &input.attrs {
+        if attr.path().is_ident("visitable") {
+            // Use `parse_nested_meta` to process inner items like (no_self)
+            let _ = attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("no_self") {
+                    no_self = true;
+                }
+                Ok(())
+            });
+        }
+    }
+
+    match ::synstructure::macros::parse::<::synstructure::macros::DeriveInput>(clone_i) {
+        Ok(p) => match synstructure::Structure::try_new(&p) {
+            Ok(s) => {
+                synstructure::MacroResult::into_stream(visitable::visitable_derive(s, no_self))
+            }
+            Err(e) => ::core::convert::Into::into(e.to_compile_error()),
+        },
+        Err(e) => ::core::convert::Into::into(e.to_compile_error()),
+    }
 }

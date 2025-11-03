@@ -41,13 +41,13 @@ impl SourceFile {
         with(|w| w.file_path(self))
     }
 
-    pub fn read(&self) -> SourceFileContent {
+    pub fn read(&self) -> SourceFileContent<'_> {
         with(|w| SourceFileContent {
             data: w.file_content(self),
         })
     }
 
-    pub fn lines(&self) -> Ref<Vec<BytePos>> {
+    pub fn lines(&self) -> Ref<'_, Vec<BytePos>> {
         with(|w| w.file_lines(self))
     }
 
