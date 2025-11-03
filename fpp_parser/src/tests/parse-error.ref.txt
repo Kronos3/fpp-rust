@@ -4,8 +4,8 @@ error: syntax error
 5 | + c
   | ^ module member expected
   |
-  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
-  = note: got Plus
+  = note: expected one of type, array, constant, enum, struct, component, active, passive, queued, interface, module, port, state, topology, include, locate
+  = note: got +
 
 error: syntax error
  --> [ local path prefix ]/parse-error.fpp:7:1
@@ -13,8 +13,8 @@ error: syntax error
 7 | + c
   | ^ module member expected
   |
-  = note: expected one of [Keyword(Type), Keyword(Array), Keyword(Constant), Keyword(Enum), Keyword(Struct), Keyword(Component), Keyword(Active), Keyword(Passive), Keyword(Queued), Keyword(Interface), Keyword(Module), Keyword(Port), Keyword(State), Keyword(Topology), Keyword(Include), Keyword(Locate)]
-  = note: got Plus
+  = note: expected one of type, array, constant, enum, struct, component, active, passive, queued, interface, module, port, state, topology, include, locate
+  = note: got +
 
 error: syntax error
   --> [ local path prefix ]/parse-error.fpp:14:17
@@ -22,8 +22,8 @@ error: syntax error
 14 |     async input i: d -> d
    |                 ^ unexpected token
    |
-   = note: expected Keyword(Port)
-   = note: got Identifier
+   = note: expected port
+   = note: got identifier
 
 error: syntax error
   --> [ local path prefix ]/parse-error.fpp:18:53
@@ -33,6 +33,6 @@ error: syntax error
 19 | |
    | |_^ unexpected end of file
    |
-   = note: expected RightCurly
-   = note: got EOF
+   = note: expected }
+   = note: got eof
 

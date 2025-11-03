@@ -1,3 +1,4 @@
+use std::fmt::{Formatter};
 use crate::token::TokenKind;
 use fpp_core::{Diagnostic, Level, Span};
 
@@ -22,6 +23,23 @@ pub(crate) enum ParseError {
     },
 }
 
+struct TokenList(Vec<TokenKind>);
+impl std::fmt::Display for TokenList {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut first = true;
+        for tok in self.0.iter() {
+            if !first {
+                f.write_str(", ")?;
+            }
+
+            tok.fmt(f)?;
+            first = false
+        }
+
+        Ok(())
+    }
+}
+
 impl Into<Diagnostic> for ParseError {
     fn into(self) -> Diagnostic {
         match self {
@@ -32,8 +50,8 @@ impl Into<Diagnostic> for ParseError {
                 expected,
             } => Diagnostic::new(Level::Error, "syntax error")
                 .span_error(got_span, msg)
-                .note(format!("expected one of {:?}", expected))
-                .note(format!("got {:?}", got_kind)),
+                .note(format!("expected one of {}", TokenList(expected)))
+                .note(format!("got {}", got_kind)),
             ParseError::ExpectedToken {
                 last,
                 msg,
@@ -41,8 +59,8 @@ impl Into<Diagnostic> for ParseError {
                 got,
             } => Diagnostic::new(Level::Error, "syntax error")
                 .span_error(last, msg)
-                .note(format!("expected {:?}", expected))
-                .note(format!("got {:?}", got)),
+                .note(format!("expected {}", expected))
+                .note(format!("got {}", got)),
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
             },

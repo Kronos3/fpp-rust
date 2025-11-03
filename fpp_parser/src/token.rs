@@ -1,4 +1,5 @@
 use fpp_core::{BytePos, SourceFile, Span, Spanned};
+use std::fmt::Debug;
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {
@@ -116,6 +117,12 @@ pub enum KeywordKind {
     Yellow,
 }
 
+impl std::fmt::Display for KeywordKind {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "{}", format!("{:?}", self).to_lowercase())
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum TokenKind {
     EOF,
@@ -158,6 +165,45 @@ pub enum TokenKind {
     Semi,
     Slash,
     Star,
+}
+
+impl std::fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            TokenKind::EOF => "eof",
+            TokenKind::Whitespace => "<whitespace>",
+            TokenKind::Unknown(c) => {
+                return f.write_str(format!("{:#?}", c).as_str());
+            }
+            TokenKind::Error(err) => *err,
+            TokenKind::Identifier => "identifier",
+            TokenKind::PostAnnotation => "post-annotation",
+            TokenKind::PreAnnotation => "pre-annotation",
+            TokenKind::LiteralFloat => "literal float",
+            TokenKind::LiteralInt => "literal integer",
+            TokenKind::LiteralString => "literal string",
+            TokenKind::Keyword(keyword) => return std::fmt::Display::fmt(&keyword, f),
+            TokenKind::Colon => ":",
+            TokenKind::Comma => ",",
+            TokenKind::Dot => ".",
+            TokenKind::Eol => "end of line",
+            TokenKind::Equals => "=",
+            TokenKind::LeftParen => "(",
+            TokenKind::LeftCurly => "{",
+            TokenKind::LeftSquare => "[",
+            TokenKind::RightParen => ")",
+            TokenKind::RightCurly => "}",
+            TokenKind::RightSquare => "]",
+            TokenKind::RightArrow => "->",
+            TokenKind::Minus => "-",
+            TokenKind::Plus => "+",
+            TokenKind::Semi => ";",
+            TokenKind::Slash => "/",
+            TokenKind::Star => "*",
+        };
+
+        f.write_str(s)
+    }
 }
 
 #[derive(Debug)]
