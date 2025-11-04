@@ -28,7 +28,7 @@ impl Into<Diagnostic> for SemanticError {
                 loc,
                 prev_loc,
             } => Diagnostic::new(Level::Error, "duplicate symbol definition")
-                .span_error(loc, format!("redefinition of symbol {}", name))
+                .span_annotation(loc, format!("redefinition of symbol {}", name))
                 .span_note(prev_loc, "previous definition is here"),
         }
     }

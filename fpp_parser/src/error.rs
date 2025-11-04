@@ -49,7 +49,7 @@ impl Into<Diagnostic> for ParseError {
                 msg,
                 expected,
             } => Diagnostic::new(Level::Error, "syntax error")
-                .span_error(got_span, msg)
+                .span_annotation(got_span, msg)
                 .note(format!("expected one of {}", TokenList(expected)))
                 .note(format!("got {}", got_kind)),
             ParseError::ExpectedToken {
@@ -58,7 +58,7 @@ impl Into<Diagnostic> for ParseError {
                 expected,
                 got,
             } => Diagnostic::new(Level::Error, "syntax error")
-                .span_error(last, msg)
+                .span_annotation(last, msg)
                 .note(format!("expected {}", expected))
                 .note(format!("got {}", got)),
             ParseError::UnexpectedEof { last } => {

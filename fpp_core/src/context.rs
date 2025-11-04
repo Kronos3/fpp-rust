@@ -2,7 +2,7 @@ use crate::diagnostic::DiagnosticMessage;
 use crate::error::Error;
 use crate::file::SourceFile;
 use crate::span::Span;
-use crate::{BytePos, Diagnostic, Level, Node, Position};
+use crate::{BytePos, Diagnostic, Level, DiagnosticMessageKind, Node, Position};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
@@ -112,13 +112,14 @@ pub struct DiagnosticDataSnippet<'a> {
 
 #[derive(Debug)]
 pub struct DiagnosticMessageData<'a> {
-    pub level: Level,
+    pub kind: DiagnosticMessageKind,
     pub message: String,
     pub snippet: Option<DiagnosticDataSnippet<'a>>,
 }
 
 #[derive(Debug)]
 pub struct DiagnosticData<'a> {
+    pub level: Level,
     pub message: DiagnosticMessageData<'a>,
     pub children: Vec<DiagnosticMessageData<'a>>,
 }
@@ -245,12 +246,13 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         DiagnosticMessageData {
             snippet,
             message: diagnostic.message,
-            level: diagnostic.level,
+            kind: diagnostic.kind,
         }
     }
 
     fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData<'_> {
         DiagnosticData {
+            level: diagnostic.level,
             message: self.diagnostic_message_get(diagnostic.msg),
             children: diagnostic
                 .children
@@ -261,7 +263,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     }
 
     pub(crate) fn diagnostic_emit(&mut self, diag: Diagnostic) {
-        match diag.msg.level {
+        match diag.level {
             Level::Error => {
                 self.seen_errors = true;
             }

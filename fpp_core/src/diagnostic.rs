@@ -16,8 +16,14 @@ pub enum Level {
 }
 
 #[derive(Clone, Debug)]
+pub enum DiagnosticMessageKind {
+    Primary,
+    Note
+}
+
+#[derive(Clone, Debug)]
 pub(crate) struct DiagnosticMessage {
-    pub level: Level,
+    pub kind: DiagnosticMessageKind,
     pub message: String,
     pub span: Option<Span>,
 }
@@ -26,21 +32,22 @@ pub(crate) struct DiagnosticMessage {
 /// messages.
 #[derive(Clone, Debug)]
 pub struct Diagnostic {
+    pub(crate) level: Level,
     pub(crate) msg: DiagnosticMessage,
     pub(crate) children: Vec<DiagnosticMessage>,
 }
 
 macro_rules! diagnostic_child_methods {
-    ($spanned:ident, $regular:ident, $level:expr) => {
+    ($spanned:ident, $regular:ident, $kind:expr) => {
         #[doc = concat!("Adds a new child diagnostics message to `self` with the [`",
-                        stringify!($level), "`] level, and the given `span` and `message`.")]
+                        stringify!($kind), "`] level, and the given `span` and `message`.")]
         pub fn $spanned<S, T>(mut self, span: S, message: T) -> Diagnostic
         where
             S: Spanned,
             T: Into<String>,
         {
             self.children.push(DiagnosticMessage {
-                level: $level,
+                kind: $kind,
                 message: message.into(),
                 span: Some(span.span()),
             });
@@ -48,10 +55,10 @@ macro_rules! diagnostic_child_methods {
         }
 
         #[doc = concat!("Adds a new child diagnostic message to `self` with the [`",
-                        stringify!($level), "`] level, and the given `message`.")]
+                        stringify!($kind), "`] level, and the given `message`.")]
         pub fn $regular<T: Into<String>>(mut self, message: T) -> Diagnostic {
             self.children.push(DiagnosticMessage {
-                level: $level,
+                kind: $kind,
                 message: message.into(),
                 span: None
             });
@@ -67,8 +74,9 @@ impl Diagnostic {
         T: Into<String>,
     {
         Diagnostic {
+            level,
             msg: DiagnosticMessage {
-                level,
+                kind: DiagnosticMessageKind::Primary,
                 message: message.into(),
                 span: None,
             },
@@ -84,8 +92,9 @@ impl Diagnostic {
         T: Into<String>,
     {
         Diagnostic {
+            level,
             msg: DiagnosticMessage {
-                level,
+                kind: DiagnosticMessageKind::Primary,
                 message: message.into(),
                 span: Some(span.span()),
             },
@@ -93,10 +102,8 @@ impl Diagnostic {
         }
     }
 
-    diagnostic_child_methods!(span_error, error, Level::Error);
-    diagnostic_child_methods!(span_warning, warning, Level::Warning);
-    diagnostic_child_methods!(span_note, note, Level::Note);
-    diagnostic_child_methods!(span_help, help, Level::Help);
+    diagnostic_child_methods!(span_annotation, annotation, DiagnosticMessageKind::Primary);
+    diagnostic_child_methods!(span_note, note, DiagnosticMessageKind::Note);
 
     /// Emit the diagnostic.
     pub fn emit(self) {
