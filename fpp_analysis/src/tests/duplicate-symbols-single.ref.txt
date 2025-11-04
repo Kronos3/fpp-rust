@@ -1,10 +1,10 @@
 error: duplicate symbol definition
- --> [ local path prefix ]/duplicate-symbols.fpp:5:18
+ --> [ local path prefix ]/duplicate-symbols-single.fpp:5:18
   |
 5 |   active component C {
   |                    ^ redefinition of symbol C
   |
- ::: [ local path prefix ]/duplicate-symbols.fpp:0:1
+ ::: [ local path prefix ]/duplicate-symbols-single.fpp:0:1
   |
 0 | / passive component C {
 1 | |

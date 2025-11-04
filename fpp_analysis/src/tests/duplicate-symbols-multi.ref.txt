@@ -1,0 +1,24 @@
+error: duplicate symbol definition
+ --> [ local path prefix ]/duplicate-symbols-multi.fpp:5:18
+  |
+5 |   active component C {
+  |                    ^ redefinition of symbol C
+  |
+ ::: [ local path prefix ]/duplicate-symbols-multi.fpp:0:1
+  |
+0 | / passive component C {
+1 | |
+2 | | }
+  | |_^ previous definition is here
+
+error: duplicate symbol definition
+  --> [ local path prefix ]/duplicate-symbols-multi.fpp:14:22
+   |
+14 |     active component C2 {}
+   |                      ^^ redefinition of symbol C2
+   |
+  ::: [ local path prefix ]/duplicate-symbols-multi.fpp:12:5
+   |
+12 |     active component C2 {}
+   |     ^^^^^^^^^^^^^^^^^^^^^^ previous definition is here
+

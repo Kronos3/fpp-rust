@@ -61,5 +61,6 @@ macro_rules! check_tests {
 }
 
 check_tests!(
-    duplicate_symbols: "duplicate-symbols",
+    duplicate_symbols_single: "duplicate-symbols-single",
+    duplicate_symbols_multi: "duplicate-symbols-multi",
 );
