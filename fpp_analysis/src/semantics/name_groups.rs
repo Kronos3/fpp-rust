@@ -10,7 +10,7 @@ pub enum NameGroups {
 }
 
 impl NameGroups {
-    pub fn iter_variants() -> impl Iterator<Item = NameGroups> {
+    pub fn iter_variants() -> impl Iterator<Item=NameGroups> {
         vec![
             NameGroups::Component,
             NameGroups::Port,

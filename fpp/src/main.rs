@@ -14,7 +14,7 @@ fn compiler_main() -> String {
 
     fpp_analysis::passes::check_semantics(
         &a,
-        &ast
+        &ast,
     );
 
     format!("{:#?}", ast)

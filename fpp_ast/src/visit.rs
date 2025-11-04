@@ -32,86 +32,74 @@ macro_rules! visit_signatures_mut {
     };
 }
 
-/// Each method of the `Visitor` trait is a hook to be potentially
-/// overridden. Each method's default implementation recursively visits
-/// the substructure of the input via the corresponding `walk` method;
-/// e.g., the `visit_item` method by default calls `visit::walk_item`.
+/// This trait outlines a standard Visitor pattern for FPP.
+/// It includes a function signature for each of the 'interesting' nodes in the AST.
+/// It also provides generic mechanisms for visiting the AST.
 ///
-/// If you want to ensure that your code handles every variant
-/// explicitly, you need to override each method. (And you also need
-/// to monitor future changes to `Visitor` in case a new method with a
-/// new default implementation gets introduced.)
+/// [Visitor] is the non-mutable variant of the visitor pattern. It takes the ast's
+/// lifetime as a parameter which allows implementations to pass out references to nodes.
+///
+/// If you need to modify the AST, you'll need to use the mutable [MutVisitor] variant instead.
+///
+/// # Shallow traversal
+///
+/// Shallow traversal is the most common pattern you'll see compiler passes in FPP
+/// implement. They only walk child leaves in the AST when explicitly told to. The default
+/// implementation of [Visitor::visit] is a shallow traversal.
+///
+/// Here is an example of a shallow pass visiting all the members of a component definition:
+/// > Note: Member function implementations were omitted.
+/// ```
+/// use std::ops::ControlFlow;
+/// use fpp_ast::{DefComponent, DefModule, Visitor, Walkable};
+///
+/// struct ComponentPass {}
+/// impl<'ast> Visitor<'ast> for ComponentPass {
+///     type Break = ();
+///
+///     fn visit_def_component(&mut self, def: &'ast DefComponent) -> ControlFlow<Self::Break> {
+///         def.walk_ref(self)
+///     }
+///
+///     fn visit_def_module(&mut self, def: &'ast DefModule) -> ControlFlow<Self::Break> {
+///         def.walk_ref(self)
+///     }
+/// }
+/// ```
+///
+/// Notice how both [Visitor::visit_def_module] and [Visitor::visit_def_component] were both
+/// implemented to recursive through the nodes.
+///
+/// ## Deep traversal
+///
+/// Deep traversal is the inverse of shallow traverse. It walks all child nodes in the AST unless
+/// explicitly told not to. This is useful if you need to implement a pass that hits the majority
+/// of the AST such as [Visitor::visit_expr] or [Visitor::visit_type_name].
+///
+/// Here is an example of a deep traversal:
+/// ```
+/// use std::ops::ControlFlow;
+/// use fpp_ast::{Expr, Visitor, Walkable};
+///
+/// struct ExprPass {}
+/// impl<'ast> Visitor<'ast> for ExprPass {
+///     type Break = ();
+///
+///     fn visit<V: Walkable<'ast, Self>>(&mut self, node: &'ast V) -> ControlFlow<Self::Break> {
+///         node.walk_ref(self)
+///     }
+///
+///     fn visit_expr(&mut self, node: &'ast Expr) -> ControlFlow<Self::Break> {
+///         // Run on all the expressions in the entire AST
+///         ControlFlow::Continue(())
+///     }
+/// }
+/// ```
 pub trait Visitor<'a>: Sized {
     type Break;
 
-    /// The default action to take when visiting a node.
-    /// The default....default? of this trait is to do nothing.
-    ///
-    /// Of course this can be overridden, see examples below.
-    ///
-    /// # Arguments
-    ///
-    /// * `node`: The ast node to visit
-    ///
-    /// returns: ControlFlow<Self::Break, ()>
-    ///
-    /// # Examples
-    ///
-    /// ## Shallow traversal
-    ///
-    /// Shallow traversal is the most common pattern you'll see compiler passes in FPP
-    /// implement. They only walk child leaves in the AST when explicitly told to. The default
-    /// implementation of [Visitor::visit] is a shallow traversal.
-    ///
-    /// Here is an example of a shallow pass visiting all the members of a component definition:
-    /// > Note: Member function implementations were omitted.
-    /// ```
-    /// use std::ops::ControlFlow;
-    /// use fpp_ast::{DefComponent, DefModule, Visitor, Walkable};
-    ///
-    /// struct ComponentPass {}
-    /// impl<'ast> Visitor<'ast> for ComponentPass {
-    ///     type Break = ();
-    ///
-    ///     fn visit_def_component(&mut self, def: &'ast DefComponent) -> ControlFlow<Self::Break> {
-    ///         def.walk_ref(self)
-    ///     }
-    ///
-    ///     fn visit_def_module(&mut self, def: &'ast DefModule) -> ControlFlow<Self::Break> {
-    ///         def.walk_ref(self)
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// Notice how both [Visitor::visit_def_module] and [Visitor::visit_def_component] were both
-    /// implemented to recursive through the nodes.
-    ///
-    /// ## Deep traversal
-    ///
-    /// Deep traversal is the inverse of shallow traverse. It walks all child nodes in the AST unless
-    /// explicitly told not to. This is useful if you need to implement a pass that hits the majority
-    /// of the AST such as [Visitor::visit_expr] or [Visitor::visit_type_name].
-    ///
-    /// Here is an example of a deep traversal:
-    /// ```
-    /// use std::ops::ControlFlow;
-    /// use fpp_ast::{Expr, Visitor, Walkable};
-    ///
-    /// struct ExprPass {}
-    /// impl<'ast> Visitor<'ast> for ExprPass {
-    ///     type Break = ();
-    ///
-    ///     fn visit<V: Walkable<'ast, Self>>(&mut self, node: &'ast V) -> ControlFlow<Self::Break> {
-    ///         node.walk_ref(self)
-    ///     }
-    ///
-    ///     fn visit_expr(&mut self, node: &'ast Expr) -> ControlFlow<Self::Break> {
-    ///         // Run on all the expressions in the entire AST
-    ///         ControlFlow::Continue(())
-    ///     }
-    /// }
-    /// ```
-    ///
+    /// The default node visiting before.
+    /// By default, this will just continue without visiting the children of `node`
     fn visit<V: Walkable<'a, Self>>(&mut self, node: &'a V) -> ControlFlow<Self::Break> {
         let _ = node;
         ControlFlow::Continue(())
@@ -186,11 +174,25 @@ pub trait Visitor<'a>: Sized {
     );
 }
 
+/// This is the mutable variant of [Visitor]. It allows making changes to the AST
+/// during traversal.
+///
+/// Notice that this visitor does not take a lifetime life [Visitor].
+/// This is because we cannot pass out mutable references to nodes in the AST that live
+/// past the execution of the visitor.
+///
+/// Generally these visitors should not collect any of the elements AST but rather purely
+/// modify the nodes it needs to.
+///
+/// For more information of implementing a visitor, see [Visitor]
 pub trait MutVisitor: Sized {
     type Break;
 
+    /// The default node visiting before.
+    /// By default, this will just continue without visiting the children of `node`
     fn visit<V: MutWalkable<Self>>(&mut self, node: &mut V) -> ControlFlow<Self::Break> {
-        MutWalkable::walk_mut(node, self)
+        let _ = node;
+        ControlFlow::Continue(())
     }
 
     visit_signatures_mut!(

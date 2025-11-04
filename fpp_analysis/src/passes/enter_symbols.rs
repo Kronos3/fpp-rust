@@ -14,9 +14,7 @@ impl<'a> EnterSymbols<'a> {
         let _ = ast.walk_ref(&mut pass);
     }
 
-    fn enter_symbol(&mut self, sym: Symbol<'a>, ng: NameGroups) {
-
-    }
+    fn enter_symbol(&mut self, sym: Symbol<'a>, ng: NameGroups) {}
 }
 
 impl<'ast> Visitor<'ast> for EnterSymbols<'ast> {

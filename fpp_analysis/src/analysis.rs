@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::semantics::Symbol;
+use std::collections::HashMap;
 
 struct Scope(i32);
 

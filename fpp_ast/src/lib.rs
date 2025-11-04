@@ -9,7 +9,7 @@ pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-use fpp_macros::{AstAnnotated, ast, VisitorWalkable, DirectWalkable};
+use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
 
 pub trait AstNode: fpp_core::Spanned {
     fn id(&self) -> fpp_core::Node;
