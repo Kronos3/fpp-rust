@@ -173,7 +173,7 @@ impl std::fmt::Display for TokenKind {
             TokenKind::EOF => "eof",
             TokenKind::Whitespace => "<whitespace>",
             TokenKind::Unknown(c) => {
-                return f.write_str(format!("{:#?}", c).as_str());
+                return f.write_str(&format!("{:#?}", c));
             }
             TokenKind::Error(err) => *err,
             TokenKind::Identifier => "identifier",

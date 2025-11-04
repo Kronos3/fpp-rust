@@ -1,8 +1,11 @@
 mod annotated;
+mod enum_map;
 mod node;
 mod visitable;
+mod util;
 
 use crate::annotated::{annotated_enum, annotated_struct};
+use crate::enum_map::enum_map;
 use crate::node::{ast_node_enum, ast_node_struct};
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, Item};
@@ -55,7 +58,7 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
                 other,
                 "#[ast_node] #[derive(AstAnnotated)] only supports structs or enums",
             )
-                .to_compile_error();
+            .to_compile_error();
             err.into()
         }
     }
@@ -107,7 +110,7 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
             return err.into();
         }
     })
-        .into()
+    .into()
 }
 
 decl_derive!(
@@ -150,3 +153,20 @@ decl_derive!(
     /// The type's [Walkable] implementation will be run
     visitable::walkable_direct_derive
 );
+
+/// Count the number of variants in an enum and emit a `SIZE` constant in the impl
+#[proc_macro_derive(EnumMap)]
+pub fn enum_count(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let item = parse_macro_input!(input);
+
+    (match item {
+        Item::Enum(input) => enum_map(input),
+        other => {
+            let err = syn::Error::new_spanned(other, "#[ast_node] only supports structs or enums")
+                .to_compile_error();
+            return err.into();
+        }
+    })
+    .into()
+}

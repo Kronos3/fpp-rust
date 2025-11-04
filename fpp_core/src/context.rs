@@ -89,8 +89,8 @@ impl SourceFileData {
             start: span.start - first,
             end: span.start + span.length - first,
             line_offset: first_line,
-            file_path: self.path.as_str(),
-            file_content: &self.content.as_str()[first..last],
+            file_path: &self.path,
+            file_content: &self.content[first..last],
         }
     }
 }

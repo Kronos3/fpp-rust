@@ -11,7 +11,7 @@ pub use visit::*;
 
 use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
 
-pub trait AstNode: fpp_core::Spanned {
+pub trait AstNode: fpp_core::Spanned + Sized {
     fn id(&self) -> fpp_core::Node;
 }
 

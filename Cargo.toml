@@ -7,7 +7,7 @@ members = [
     "fpp_errors",
     "fpp_macros",
     "fpp_parser"
-]
+, "fpp_util"]
 
 resolver = "2"
 

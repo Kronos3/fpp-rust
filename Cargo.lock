@@ -84,6 +84,8 @@ version = "0.1.0"
 dependencies = [
  "fpp_ast",
  "fpp_core",
+ "fpp_macros",
+ "fpp_util",
 ]
 
 [[package]]
@@ -129,6 +131,10 @@ dependencies = [
  "fpp_errors",
  "memchr",
 ]
+
+[[package]]
+name = "fpp_util"
+version = "0.1.0"
 
 [[package]]
 name = "is_terminal_polyfill"

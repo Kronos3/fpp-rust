@@ -1,15 +1,17 @@
-use crate::semantics::Symbol;
+use crate::semantics::{NestedScope, Scope, Symbol};
+use std::cell::RefCell;
 use std::collections::HashMap;
-
-struct Scope(i32);
+use std::rc::Rc;
 
 pub struct Analysis<'ast> {
     /** The current parent symbol */
-    parent_symbol: Option<Symbol<'ast>>,
+    pub parent_symbol: Option<Symbol<'ast>>,
     /** The mapping from symbols to their parent symbols */
-    parent_symbol_map: HashMap<Symbol<'ast>, Symbol<'ast>>,
+    pub parent_symbol_map: HashMap<Symbol<'ast>, Symbol<'ast>>,
     /** The mapping from symbols with scopes to their scopes */
-    symbol_scope_map: HashMap<Symbol<'ast>, Scope>,
+    pub symbol_scope_map: HashMap<Symbol<'ast>, Rc<RefCell<Scope<'ast>>>>,
+    /** The current nested scope for symbol lookup */
+    pub nested_scope: NestedScope<'ast>,
 }
 
 impl<'a> Analysis<'a> {
@@ -18,6 +20,7 @@ impl<'a> Analysis<'a> {
             parent_symbol: None,
             parent_symbol_map: Default::default(),
             symbol_scope_map: Default::default(),
+            nested_scope: NestedScope::empty(),
         }
     }
 }

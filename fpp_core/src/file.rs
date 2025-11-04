@@ -22,13 +22,13 @@ impl<'a> AsRef<str> for SourceFileContent<'a> {
 
 impl Debug for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.path().as_str())
+        f.write_str(&self.path())
     }
 }
 
 impl Display for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.path().as_str())
+        f.write_str(&self.path())
     }
 }
 

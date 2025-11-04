@@ -1,3 +1,6 @@
+use fpp_macros::EnumMap;
+
+#[derive(EnumMap, Copy, Clone)]
 pub enum NameGroups {
     Component,
     Port,
@@ -7,19 +10,4 @@ pub enum NameGroups {
     Template,
     Type,
     Value,
-}
-
-impl NameGroups {
-    pub fn iter_variants() -> impl Iterator<Item=NameGroups> {
-        vec![
-            NameGroups::Component,
-            NameGroups::Port,
-            NameGroups::StateMachine,
-            NameGroups::PortInterfaceInstance,
-            NameGroups::PortInterface,
-            NameGroups::Template,
-            NameGroups::Type,
-            NameGroups::Value,
-        ].into_iter()
-    }
 }

@@ -1,33 +1,14 @@
-use proc_macro2::Ident;
+use crate::util::{camel_to_snake_case, ident_with_prefix};
 use quote::quote;
 
-fn camel_to_snake_case(ident: &Ident, prefix: &str) -> Ident {
-    let name = ident.to_string();
-    let mut snake_case_name = String::new();
-    let mut prev_char_is_upper = false; // To handle consecutive uppercase letters
-
-    for (i, c) in name.chars().enumerate() {
-        if c.is_ascii_uppercase() {
-            // Insert underscore if it's not the first character and not a consecutive uppercase
-            if i > 0 && !prev_char_is_upper {
-                snake_case_name.push('_');
-            }
-            snake_case_name.push(c.to_ascii_lowercase());
-            prev_char_is_upper = true;
-        } else {
-            snake_case_name.push(c);
-            prev_char_is_upper = false;
-        }
-    }
-    Ident::new(&(prefix.to_string() + &snake_case_name), ident.span())
-}
-
-pub(super) fn walkable_visit_derive(mut s: synstructure::Structure<'_>) -> proc_macro2::TokenStream {
+pub(super) fn walkable_visit_derive(
+    mut s: synstructure::Structure<'_>,
+) -> proc_macro2::TokenStream {
     if let syn::Data::Union(_) = s.ast().data {
         panic!("cannot derive on union")
     }
 
-    let visit_function_name = camel_to_snake_case(&s.ast().ident, "visit_");
+    let visit_function_name = ident_with_prefix("visit_", &camel_to_snake_case(&s.ast().ident));
 
     let has_attr = |attrs: &[syn::Attribute], name| {
         let mut found = false;

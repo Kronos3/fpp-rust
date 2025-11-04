@@ -1,3 +1,10 @@
+use fpp_core::{Node};
+
+pub trait SymbolInterface<'ast>: Clone {
+    fn node(&self) -> Node;
+    fn name(&self) -> &'ast fpp_ast::Ident;
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Symbol<'ast> {
     AbsType(&'ast fpp_ast::DefAbsType),
@@ -15,8 +22,26 @@ pub enum Symbol<'ast> {
     Topology(&'ast fpp_ast::DefTopology),
 }
 
-impl<'a> Symbol<'a> {
-    pub fn name(&self) -> &fpp_ast::Ident {
+impl<'a> SymbolInterface<'a> for Symbol<'a> {
+    fn node(&self) -> Node {
+        match self {
+            Symbol::AbsType(node) => node.node_id,
+            Symbol::AliasType(node) => node.node_id,
+            Symbol::Array(node) => node.node_id,
+            Symbol::Component(node) => node.node_id,
+            Symbol::ComponentInstance(node) => node.node_id,
+            Symbol::Constant(node) => node.node_id,
+            Symbol::Enum(node) => node.node_id,
+            Symbol::EnumConstant(node) => node.node_id,
+            Symbol::Interface(node) => node.node_id,
+            Symbol::Module(node) => node.node_id,
+            Symbol::StateMachine(node) => node.node_id,
+            Symbol::Struct(node) => node.node_id,
+            Symbol::Topology(node) => node.node_id,
+        }
+    }
+
+    fn name(&self) -> &'a fpp_ast::Ident {
         match self {
             Symbol::AbsType(def) => &def.name,
             Symbol::AliasType(def) => &def.name,
