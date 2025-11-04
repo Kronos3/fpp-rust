@@ -9,5 +9,5 @@ error: duplicate symbol definition
 1 | / passive component C {
 2 | |
 3 | | }
-  | |_^ previous definition is here
+  | |_- previous definition is here
 

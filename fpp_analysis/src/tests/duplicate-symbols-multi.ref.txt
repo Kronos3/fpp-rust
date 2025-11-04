@@ -9,7 +9,7 @@ error: duplicate symbol definition
 1 | / passive component C {
 2 | |
 3 | | }
-  | |_^ previous definition is here
+  | |_- previous definition is here
 
 error: duplicate symbol definition
   --> [ local path prefix ]/duplicate-symbols-multi.fpp:14:22
@@ -20,5 +20,5 @@ error: duplicate symbol definition
   ::: [ local path prefix ]/duplicate-symbols-multi.fpp:12:5
    |
 12 |     active component C2 {}
-   |     ^^^^^^^^^^^^^^^^^^^^^^ previous definition is here
+   |     ---------------------- previous definition is here
 
