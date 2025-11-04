@@ -84,7 +84,9 @@ version = "0.1.0"
 dependencies = [
  "fpp_ast",
  "fpp_core",
+ "fpp_errors",
  "fpp_macros",
+ "fpp_parser",
  "fpp_util",
 ]
 

@@ -37,6 +37,7 @@ pub(super) fn enum_map(input: ItemEnum) -> proc_macro2::TokenStream {
     }
 
     quote! {
+        #[derive(Debug)]
         #vis struct #map_ident<V> {
             #( #members )*
         }

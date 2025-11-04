@@ -25,3 +25,6 @@ pub mod semantics {
     mod generic_nested_scope;
     mod generic_name_symbol_map;
 }
+
+#[cfg(test)]
+mod test;

@@ -1,6 +1,6 @@
 use fpp_macros::EnumMap;
 
-#[derive(EnumMap, Copy, Clone)]
+#[derive(EnumMap, Copy, Clone, Debug)]
 pub enum NameGroups {
     Component,
     Port,

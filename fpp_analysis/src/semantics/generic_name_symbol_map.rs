@@ -3,6 +3,7 @@ use crate::semantics::SymbolInterface;
 use fpp_core::Spanned;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct GenericNameSymbolMap<'a, S: SymbolInterface<'a>>(HashMap<&'a str, S>);
 
 impl<'a, S: SymbolInterface<'a>> GenericNameSymbolMap<'a, S> {

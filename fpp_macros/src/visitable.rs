@@ -126,12 +126,12 @@ pub(super) fn walkable_direct_derive(
     });
 
     let ref_visit = s.each(|bind| {
-        quote! { crate::visit::Walkable::walk_ref(#bind, __visitor)? }
+        quote! { crate::visit::Visitable::visit(#bind, __visitor)? }
     });
 
     s.bind_with(|_| synstructure::BindStyle::RefMut);
     let mut_visit = s.each(|bind| {
-        quote! { crate::visit::MutWalkable::walk_mut(#bind, __visitor)? }
+        quote! { crate::visit::MutVisitable::visit(#bind, __visitor)? }
     });
 
     s.gen_impl(quote! {
