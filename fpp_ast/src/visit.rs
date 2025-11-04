@@ -2,16 +2,16 @@ use std::ops::{ControlFlow, Deref, DerefMut};
 
 macro_rules! visit_signature {
     ($ty:ident, $visitor:ident) => {
-        fn $visitor (&mut self, node: &'a crate::$ty) -> ControlFlow<Self::Break> {
-            crate::Walkable::walk_ref(node, self)
+        fn $visitor(&mut self, node: &'a crate::$ty) -> ControlFlow<Self::Break> {
+            self.visit(node)
         }
     };
 }
 
 macro_rules! visit_signature_mut {
     ($ty:ident, $visitor:ident) => {
-        fn $visitor (&mut self, node: &mut crate::$ty) -> ControlFlow<Self::Break> {
-            crate::MutWalkable::walk_mut(node, self)
+        fn $visitor(&mut self, node: &mut crate::$ty) -> ControlFlow<Self::Break> {
+            self.visit(node)
         }
     };
 }
@@ -43,7 +43,79 @@ macro_rules! visit_signatures_mut {
 /// new default implementation gets introduced.)
 pub trait Visitor<'a>: Sized {
     type Break;
-    const DEFAULT: ControlFlow<Self::Break> = ControlFlow::Continue(());
+
+    /// The default action to take when visiting a node.
+    /// The default....default? of this trait is to do nothing.
+    ///
+    /// Of course this can be overridden, see examples below.
+    ///
+    /// # Arguments
+    ///
+    /// * `node`: The ast node to visit
+    ///
+    /// returns: ControlFlow<Self::Break, ()>
+    ///
+    /// # Examples
+    ///
+    /// ## Shallow traversal
+    ///
+    /// Shallow traversal is the most common pattern you'll see compiler passes in FPP
+    /// implement. They only walk child leaves in the AST when explicitly told to. The default
+    /// implementation of [Visitor::visit] is a shallow traversal.
+    ///
+    /// Here is an example of a shallow pass visiting all the members of a component definition:
+    /// > Note: Member function implementations were omitted.
+    /// ```
+    /// use std::ops::ControlFlow;
+    /// use fpp_ast::{DefComponent, DefModule, Visitor, Walkable};
+    ///
+    /// struct ComponentPass {}
+    /// impl<'ast> Visitor<'ast> for ComponentPass {
+    ///     type Break = ();
+    ///
+    ///     fn visit_def_component(&mut self, def: &'ast DefComponent) -> ControlFlow<Self::Break> {
+    ///         def.walk_ref(self)
+    ///     }
+    ///
+    ///     fn visit_def_module(&mut self, def: &'ast DefModule) -> ControlFlow<Self::Break> {
+    ///         def.walk_ref(self)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Notice how both [Visitor::visit_def_module] and [Visitor::visit_def_component] were both
+    /// implemented to recursive through the nodes.
+    ///
+    /// ## Deep traversal
+    ///
+    /// Deep traversal is the inverse of shallow traverse. It walks all child nodes in the AST unless
+    /// explicitly told not to. This is useful if you need to implement a pass that hits the majority
+    /// of the AST such as [Visitor::visit_expr] or [Visitor::visit_type_name].
+    ///
+    /// Here is an example of a deep traversal:
+    /// ```
+    /// use std::ops::ControlFlow;
+    /// use fpp_ast::{Expr, Visitor, Walkable};
+    ///
+    /// struct ExprPass {}
+    /// impl<'ast> Visitor<'ast> for ExprPass {
+    ///     type Break = ();
+    ///
+    ///     fn visit<V: Walkable<'ast, Self>>(&mut self, node: &'ast V) -> ControlFlow<Self::Break> {
+    ///         node.walk_ref(self)
+    ///     }
+    ///
+    ///     fn visit_expr(&mut self, node: &'ast Expr) -> ControlFlow<Self::Break> {
+    ///         // Run on all the expressions in the entire AST
+    ///         ControlFlow::Continue(())
+    ///     }
+    /// }
+    /// ```
+    ///
+    fn visit<V: Walkable<'a, Self>>(&mut self, node: &'a V) -> ControlFlow<Self::Break> {
+        let _ = node;
+        ControlFlow::Continue(())
+    }
 
     visit_signatures!(
         /* Definitions */
@@ -116,7 +188,10 @@ pub trait Visitor<'a>: Sized {
 
 pub trait MutVisitor: Sized {
     type Break;
-    const DEFAULT: ControlFlow<Self::Break> = ControlFlow::Continue(());
+
+    fn visit<V: MutWalkable<Self>>(&mut self, node: &mut V) -> ControlFlow<Self::Break> {
+        MutWalkable::walk_mut(node, self)
+    }
 
     visit_signatures_mut!(
         /* Definitions */
