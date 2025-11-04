@@ -9,22 +9,25 @@ pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
 
-use fpp_macros::AstAnnotated;
+use fpp_macros::{AstAnnotated, MatchWalkable};
 use fpp_macros::{ast, Walkable};
 
 pub trait AstNode: fpp_core::Spanned {
     fn id(&self) -> fpp_core::Node;
 }
 
+pub type TranslationUnit = Vec<ModuleMember>;
+
 #[ast]
-#[derive(Debug)]
+#[derive(Debug, Walkable)]
 pub struct LitString {
+    #[visitable(ignore)]
     pub data: String,
 }
 
 /** Identifier */
 #[ast]
-#[derive(Debug, Walkable)]
+#[derive(Debug, Walkable, Clone)]
 pub struct Ident {
     #[visitable(ignore)]
     pub data: String,
@@ -51,12 +54,12 @@ pub enum IntegerType {
 #[derive(Debug, Walkable)]
 pub enum TypeNameKind {
     #[visitable(ignore)]
+    Bool(),
+    #[visitable(ignore)]
     Floating(FloatType),
     #[visitable(ignore)]
     Integer(IntegerType),
     QualIdent(QualIdent),
-    #[visitable(ignore)]
-    Bool(),
     String(Option<Expr>),
 }
 
@@ -80,14 +83,14 @@ pub enum QualIdent {
     Qualified(Qualified),
 }
 
+#[ast]
 #[derive(Debug, Walkable)]
 pub struct StructMember {
     pub name: Ident,
     pub value: Expr,
 }
 
-#[derive(Debug, Walkable)]
-#[visitable(no_self)]
+#[derive(Debug, MatchWalkable)]
 pub enum ExprKind {
     Array(Vec<Expr>),
     ArraySubscript {
@@ -266,8 +269,7 @@ pub struct DefModule {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -336,8 +338,7 @@ pub struct SpecSpecialPortInstance {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum SpecPortInstance {
     General(SpecGeneralPortInstance),
     Special(SpecSpecialPortInstance),
@@ -345,8 +346,7 @@ pub enum SpecPortInstance {
 
 /** Interface member */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum InterfaceMember {
     SpecPortInstance(SpecPortInstance),
     SpecImport(SpecImport),

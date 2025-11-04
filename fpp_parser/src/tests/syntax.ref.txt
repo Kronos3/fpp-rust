@@ -1383,6 +1383,10 @@
                                                             end: [ local path prefix ]/syntax.fpp:104:110,
                                                         },
                                                     },
+                                                    node_id: Span {
+                                                        start: [ local path prefix ]/syntax.fpp:104:100,
+                                                        end: [ local path prefix ]/syntax.fpp:104:110,
+                                                    },
                                                 },
                                             ],
                                         ),
@@ -3666,6 +3670,10 @@
                                         end: [ local path prefix ]/syntax.fpp:310:32,
                                     },
                                 },
+                                node_id: Span {
+                                    start: [ local path prefix ]/syntax.fpp:310:27,
+                                    end: [ local path prefix ]/syntax.fpp:310:32,
+                                },
                             },
                             StructMember {
                                 name: Ident {
@@ -3684,6 +3692,10 @@
                                         end: [ local path prefix ]/syntax.fpp:310:39,
                                     },
                                 },
+                                node_id: Span {
+                                    start: [ local path prefix ]/syntax.fpp:310:34,
+                                    end: [ local path prefix ]/syntax.fpp:310:39,
+                                },
                             },
                             StructMember {
                                 name: Ident {
@@ -3701,6 +3713,10 @@
                                         start: [ local path prefix ]/syntax.fpp:310:45,
                                         end: [ local path prefix ]/syntax.fpp:310:46,
                                     },
+                                },
+                                node_id: Span {
+                                    start: [ local path prefix ]/syntax.fpp:310:41,
+                                    end: [ local path prefix ]/syntax.fpp:310:46,
                                 },
                             },
                         ],

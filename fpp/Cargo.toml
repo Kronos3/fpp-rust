@@ -7,3 +7,4 @@ edition = "2024"
 fpp_core = { path = "../fpp_core" }
 fpp_parser = { path = "../fpp_parser" }
 fpp_errors = { path = "../fpp_errors" }
+fpp_analysis = { path = "../fpp_analysis" }

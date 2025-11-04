@@ -63,8 +63,8 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
     let output = quote! {
         #new_struct
 
-        impl #impl_generics fpp_core::Spanned for #struct_ident #ty_generics #where_clause {
-            fn span(&self) -> fpp_core::Span {
+        impl #impl_generics ::fpp_core::Spanned for #struct_ident #ty_generics #where_clause {
+            fn span(&self) -> ::fpp_core::Span {
                 fpp_core::Spanned::span(&self.node_id)
             }
         }
@@ -72,6 +72,20 @@ pub(crate) fn ast_node_struct(input: &ItemStruct) -> TokenStream {
         impl #impl_generics crate::AstNode for #struct_ident #ty_generics #where_clause {
             fn id(&self) -> fpp_core::Node {
                 self.node_id
+            }
+        }
+
+        impl #impl_generics ::core::cmp::PartialEq for #struct_ident #ty_generics #where_clause {
+            fn eq(&self, other: &Self) -> bool {
+                self.id() == other.id()
+            }
+        }
+
+        impl #impl_generics ::core::cmp::Eq for #struct_ident #ty_generics #where_clause {}
+
+        impl #impl_generics ::core::hash::Hash for #struct_ident #ty_generics #where_clause {
+            fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+                self.id().hash(state)
             }
         }
     };

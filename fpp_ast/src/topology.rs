@@ -10,8 +10,7 @@ pub struct DefTopology {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum TopologyMember {
     SpecInstance(SpecInstance),
     SpecConnectionGraph(SpecConnectionGraph),
@@ -55,8 +54,7 @@ pub enum ConnectionPatternKind {
     Time,
 }
 
-#[derive(Debug, Walkable)]
-#[visitable(no_self)]
+#[derive(Debug, MatchWalkable)]
 pub enum SpecConnectionGraphKind {
     Direct {
         name: Ident,
@@ -99,8 +97,7 @@ pub struct SpecTlmPacketSet {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
     SpecTlmPacket(SpecTlmPacket),
@@ -116,8 +113,7 @@ pub struct SpecTlmPacket {
 }
 
 #[ast]
-#[derive(Walkable)]
-#[visitable(no_self)]
+#[derive(MatchWalkable)]
 pub enum TlmPacketMember {
     SpecInclude(SpecInclude),
     TlmChannelIdentifier(TlmChannelIdentifier),

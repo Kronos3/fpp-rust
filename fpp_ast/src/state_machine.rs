@@ -8,8 +8,7 @@ pub struct DefStateMachine {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum StateMachineMember {
     DefAction(DefAction),
     DefChoice(DefChoice),
@@ -69,8 +68,7 @@ pub struct DefState {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum StateMember {
     DefChoice(DefChoice),
     DefState(DefState),
@@ -117,8 +115,7 @@ pub struct DoExpr {
 }
 
 /** Transition or do within transition specifier */
-#[derive(Debug, Walkable)]
-#[visitable(no_self)]
+#[derive(Debug, MatchWalkable)]
 pub enum TransitionOrDo {
     Transition(TransitionExpr),
     Do(DoExpr),

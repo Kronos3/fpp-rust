@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "fpp",
+    "fpp_analysis",
     "fpp_ast",
     "fpp_core",
     "fpp_errors",

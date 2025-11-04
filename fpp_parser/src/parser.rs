@@ -2494,7 +2494,11 @@ impl<'a> Parser<'a> {
         let name = self.ident()?;
         self.consume(Equals)?;
         let value = self.expr()?;
-        Ok(StructMember { name, value })
+        Ok(StructMember {
+            node_id: self.node(name.span()),
+            name,
+            value,
+        })
     }
 
     fn lit_string(&mut self) -> ParseResult<LitString> {

@@ -3,8 +3,7 @@ use crate::*;
 use fpp_macros::ast;
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
-#[visitable(no_self)]
+#[derive(AstAnnotated, MatchWalkable)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -189,6 +188,38 @@ pub struct TlmChannelLimit {
     pub kind: TlmChannelLimitKind,
     pub value: Expr,
 }
+
+// const _: () = {
+//     impl<'__ast, __V> crate::visit::Walkable<'__ast, __V> for TlmChannelLimit
+//     where
+//         __V: crate::visit::Visitor<'__ast>,
+//     {
+//         fn walk_ref(&'__ast self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+//             __visitor.visit_tlm_channel_limit(self)?;
+//             match *self {
+//                 TlmChannelLimit {
+//                     value: ref __binding_1, ..
+//                 } => { { crate::visit::Walkable::walk_ref(__binding_1, __visitor )? } }
+//             }
+//             std::ops::ControlFlow::Continue(())
+//         }
+//     }
+//     impl<__V> crate::visit::MutWalkable<__V> for TlmChannelLimit
+//     where
+//         __V: crate::visit::MutVisitor,
+//     {
+//         fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+//             let r = ::std::cell::RefCell::new(self);
+//             __visitor.visit_tlm_channel_limit(r.borrow_mut())?;
+//             match r.borrow_mut().deref_mut() {
+//                 TlmChannelLimit {
+//                     value: __binding_1, ..
+//                 } => { { crate::visit::MutWalkable::walk_mut(__binding_1, __visitor )? } }
+//             }
+//             std::ops::ControlFlow::Continue(())
+//         }
+//     }
+// };
 
 #[ast]
 #[derive(AstAnnotated, Walkable)]

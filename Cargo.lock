@@ -72,9 +72,18 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 name = "fpp"
 version = "0.1.0"
 dependencies = [
+ "fpp_analysis",
  "fpp_core",
  "fpp_errors",
  "fpp_parser",
+]
+
+[[package]]
+name = "fpp_analysis"
+version = "0.1.0"
+dependencies = [
+ "fpp_ast",
+ "fpp_core",
 ]
 
 [[package]]

@@ -8,8 +8,15 @@ fn compiler_main() -> String {
         .expect("Failed to read input stream");
 
     let src = fpp_core::SourceFile::from(stdin.as_str());
-
     let ast = fpp_parser::parse(src, |p| p.module_members());
+
+    let a = fpp_analysis::Analysis::new();
+
+    fpp_analysis::passes::check_semantics(
+        &a,
+        &ast
+    );
+
     format!("{:#?}", ast)
 }
 
