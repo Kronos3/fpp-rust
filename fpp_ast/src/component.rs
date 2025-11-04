@@ -3,7 +3,7 @@ use crate::*;
 use fpp_macros::ast;
 
 #[ast]
-#[derive(AstAnnotated, MatchWalkable)]
+#[derive(AstAnnotated, DirectWalkable)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -43,7 +43,7 @@ pub enum QueueFull {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecCommand {
     #[visitable(ignore)]
     pub kind: InputPortKind,
@@ -56,7 +56,7 @@ pub struct SpecCommand {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -75,14 +75,14 @@ pub enum EventSeverity {
 }
 
 #[ast]
-#[derive(Debug, Walkable)]
+#[derive(Debug, VisitorWalkable)]
 pub struct EventThrottle {
     pub count: Expr,
     pub every: Option<Expr>,
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
@@ -96,7 +96,7 @@ pub struct SpecEvent {
 
 /** Internal port specifier */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -106,7 +106,7 @@ pub struct SpecInternalPort {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: TypeName,
@@ -142,14 +142,14 @@ pub enum SpecialPortInstanceKind {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: TypeName,
@@ -159,7 +159,7 @@ pub struct SpecRecord {
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
@@ -182,47 +182,15 @@ pub enum TlmChannelLimitKind {
 }
 
 #[ast]
-#[derive(Debug, Walkable)]
+#[derive(Debug, VisitorWalkable)]
 pub struct TlmChannelLimit {
     #[visitable(ignore)]
     pub kind: TlmChannelLimitKind,
     pub value: Expr,
 }
 
-// const _: () = {
-//     impl<'__ast, __V> crate::visit::Walkable<'__ast, __V> for TlmChannelLimit
-//     where
-//         __V: crate::visit::Visitor<'__ast>,
-//     {
-//         fn walk_ref(&'__ast self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
-//             __visitor.visit_tlm_channel_limit(self)?;
-//             match *self {
-//                 TlmChannelLimit {
-//                     value: ref __binding_1, ..
-//                 } => { { crate::visit::Walkable::walk_ref(__binding_1, __visitor )? } }
-//             }
-//             std::ops::ControlFlow::Continue(())
-//         }
-//     }
-//     impl<__V> crate::visit::MutWalkable<__V> for TlmChannelLimit
-//     where
-//         __V: crate::visit::MutVisitor,
-//     {
-//         fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
-//             let r = ::std::cell::RefCell::new(self);
-//             __visitor.visit_tlm_channel_limit(r.borrow_mut())?;
-//             match r.borrow_mut().deref_mut() {
-//                 TlmChannelLimit {
-//                     value: __binding_1, ..
-//                 } => { { crate::visit::MutWalkable::walk_mut(__binding_1, __visitor )? } }
-//             }
-//             std::ops::ControlFlow::Continue(())
-//         }
-//     }
-// };
-
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: TypeName,

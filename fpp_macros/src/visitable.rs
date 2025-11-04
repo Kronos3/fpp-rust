@@ -22,7 +22,7 @@ fn camel_to_snake_case(ident: &Ident, prefix: &str) -> Ident {
     Ident::new(&(prefix.to_string() + &snake_case_name), ident.span())
 }
 
-pub(super) fn walkable_derive(mut s: synstructure::Structure<'_>) -> proc_macro2::TokenStream {
+pub(super) fn walkable_visit_derive(mut s: synstructure::Structure<'_>) -> proc_macro2::TokenStream {
     if let syn::Data::Union(_) = s.ast().data {
         panic!("cannot derive on union")
     }
@@ -107,7 +107,7 @@ pub(super) fn walkable_derive(mut s: synstructure::Structure<'_>) -> proc_macro2
     })
 }
 
-pub(super) fn walkable_match_derive(
+pub(super) fn walkable_direct_derive(
     mut s: synstructure::Structure<'_>,
 ) -> proc_macro2::TokenStream {
     if let syn::Data::Union(_) = s.ast().data {

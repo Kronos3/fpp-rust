@@ -111,23 +111,42 @@ pub fn ast_annotated(input: TokenStream) -> TokenStream {
 }
 
 decl_derive!(
-    [Walkable, attributes(visitable)] =>
-    /// Derives `Walkable` for the annotated `struct` or `enum` (`union` is not supported).
+    [VisitorWalkable, attributes(visitable)] =>
+    /// Derives `Walkable + Visitable` for the annotated `struct` or `enum` (`union` is not supported).
     ///
+    /// For `Walkable`:
     /// Each field of the struct or enum variant will be visited in definition order, using the
-    /// `Walkable` implementation for its type. However, if a field of a struct or an enum
+    /// `Visitable` implementation for its type. However, if a field of a struct or an enum
     /// variant is annotated with `#[visitable(ignore)]` then that field will not be
     /// visited (and its type is not required to implement `Walkable`).
-    visitable::walkable_derive
+    ///
+    /// For `Visitable`:
+    /// The visitor's callback for this node type will be called. The function will be called
+    /// `visit_<type_name_in_snake_case>. For example, for the type DefAliasType, the
+    /// [fpp_ast::Visitor::visit_def_alias_type] will be called.
+    visitable::walkable_visit_derive
 );
 
 decl_derive!(
-    [MatchWalkable, attributes(visitable)] =>
-    /// Derives `Walkable` for the annotated `struct` or `enum` (`union` is not supported).
+    [DirectWalkable, attributes(visitable)] =>
+    /// Derives `Walkable + Visitable` for the annotated `struct` or `enum` (`union` is not supported).
     ///
+    /// This macro differs from [VisitorWalkable] as it does not delegate to the `Visitor`. Instead, it
+    /// directly walks the children. This effectively means that the behavior cannot be overridden
+    /// in the visitor and also avoid the need to have a signature in the Visitor to implement the
+    /// walking behavior.
+    ///
+    /// Typically, this derivation should be used for the `*Member` or `*Kind` enums which just wrap
+    /// different implementations of a type of node. Each of the variant nodes would be [VisitorWalkable]
+    /// and therefore another trip through the visitor would be redundant.
+    ///
+    /// For `Walkable`:
     /// Each field of the struct or enum variant will be visited in definition order, using the
     /// `Walkable` implementation for its type. However, if a field of a struct or an enum
     /// variant is annotated with `#[visitable(ignore)]` then that field will not be
     /// visited (and its type is not required to implement `Walkable`).
-    visitable::walkable_match_derive
+    ///
+    /// For `Visitable`:
+    /// The type's [Walkable] implementation will be run
+    visitable::walkable_direct_derive
 );

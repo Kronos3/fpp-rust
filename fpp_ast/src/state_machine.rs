@@ -1,14 +1,14 @@
 use crate::*;
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefStateMachine {
     pub name: Ident,
     pub members: Option<Vec<StateMachineMember>>,
 }
 
 #[ast]
-#[derive(AstAnnotated, MatchWalkable)]
+#[derive(AstAnnotated, DirectWalkable)]
 pub enum StateMachineMember {
     DefAction(DefAction),
     DefChoice(DefChoice),
@@ -20,7 +20,7 @@ pub enum StateMachineMember {
 
 /** Action definition */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefAction {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -28,7 +28,7 @@ pub struct DefAction {
 
 /** Choice definition */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefChoice {
     pub name: Ident,
     pub guard: Ident,
@@ -38,7 +38,7 @@ pub struct DefChoice {
 
 /** Guard definition */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefGuard {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -46,7 +46,7 @@ pub struct DefGuard {
 
 /** Transition expression */
 #[ast]
-#[derive(Debug, Walkable)]
+#[derive(Debug, VisitorWalkable)]
 pub struct TransitionExpr {
     pub actions: Option<DoExpr>,
     pub target: QualIdent,
@@ -54,21 +54,21 @@ pub struct TransitionExpr {
 
 /** Signal definition */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefSignal {
     pub name: Ident,
     pub type_name: Option<TypeName>,
 }
 
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct DefState {
     pub name: Ident,
     pub members: Vec<StateMember>,
 }
 
 #[ast]
-#[derive(AstAnnotated, MatchWalkable)]
+#[derive(AstAnnotated, DirectWalkable)]
 pub enum StateMember {
     DefChoice(DefChoice),
     DefState(DefState),
@@ -80,28 +80,28 @@ pub enum StateMember {
 
 /** Initial state specifier */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecInitialTransition {
     pub transition: TransitionExpr,
 }
 
 /** State entry specifier */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecStateEntry {
     pub actions: DoExpr,
 }
 
 /** State exit specifier */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecStateExit {
     pub actions: DoExpr,
 }
 
 /** Transition specifier */
 #[ast]
-#[derive(AstAnnotated, Walkable)]
+#[derive(AstAnnotated, VisitorWalkable)]
 pub struct SpecStateTransition {
     pub signal: Ident,
     pub guard: Option<Ident>,
@@ -109,13 +109,13 @@ pub struct SpecStateTransition {
 }
 
 #[ast]
-#[derive(Debug, Walkable)]
+#[derive(Debug, VisitorWalkable)]
 pub struct DoExpr {
     pub actions: Vec<Ident>,
 }
 
 /** Transition or do within transition specifier */
-#[derive(Debug, MatchWalkable)]
+#[derive(Debug, DirectWalkable)]
 pub enum TransitionOrDo {
     Transition(TransitionExpr),
     Do(DoExpr),
