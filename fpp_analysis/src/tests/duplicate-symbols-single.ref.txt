@@ -4,10 +4,10 @@ error: duplicate symbol definition
 5 |   active component C {
   |                    ^ redefinition of symbol C
   |
- ::: [ local path prefix ]/duplicate-symbols-single.fpp:0:1
+ ::: [ local path prefix ]/duplicate-symbols-single.fpp:1:1
   |
-0 | / passive component C {
-1 | |
-2 | | }
+1 | / passive component C {
+2 | |
+3 | | }
   | |_^ previous definition is here
 

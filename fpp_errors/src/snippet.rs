@@ -19,7 +19,11 @@ pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) ->
         ),
         Some(snippet) => Group::with_level(diagnostic_level(diagnostic.message.level)).element(
             Snippet::source(snippet.file_content)
-                .line_start(snippet.line_offset)
+                .line_start(if snippet.line_offset == 0 {
+                    1
+                } else {
+                    snippet.line_offset
+                })
                 .path(snippet.file_path)
                 .annotation(
                     AnnotationKind::Primary
@@ -28,18 +32,22 @@ pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) ->
                 ),
         ),
     })
-        .elements(diagnostic.children.iter().map(|child| {
-            match &child.snippet {
-                None => Element::Message(diagnostic_level(child.level).message(child.message.clone())),
-                Some(snippet) => Snippet::source(snippet.file_content)
-                    .line_start(snippet.line_offset)
-                    .path(snippet.file_path)
-                    .annotation(
-                        AnnotationKind::Primary
-                            .span(snippet.start..snippet.end)
-                            .label(child.message.clone()),
-                    )
-                    .into(),
-            }
-        }))
+    .elements(diagnostic.children.iter().map(|child| {
+        match &child.snippet {
+            None => Element::Message(diagnostic_level(child.level).message(child.message.clone())),
+            Some(snippet) => Snippet::source(snippet.file_content)
+                .line_start(if snippet.line_offset == 0 {
+                    1
+                } else {
+                    snippet.line_offset
+                })
+                .path(snippet.file_path)
+                .annotation(
+                    AnnotationKind::Primary
+                        .span(snippet.start..snippet.end)
+                        .label(child.message.clone()),
+                )
+                .into(),
+        }
+    }))
 }
