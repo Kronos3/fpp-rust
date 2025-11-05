@@ -2,16 +2,16 @@ use std::ops::{ControlFlow, Deref, DerefMut};
 
 macro_rules! visit_signature {
     ($ty:ident, $visitor:ident) => {
-        fn $visitor(&mut self, node: &'a crate::$ty) -> ControlFlow<Self::Break> {
-            self.visit(node)
+        fn $visitor(&mut self, node: &'a crate::$ty, extra: <crate::$ty as crate::Visitable<'a, Self>>::Extra) -> ControlFlow<Self::Break> {
+            self.visit(node, extra)
         }
     };
 }
 
 macro_rules! visit_signature_mut {
     ($ty:ident, $visitor:ident) => {
-        fn $visitor(&mut self, node: &mut crate::$ty) -> ControlFlow<Self::Break> {
-            self.visit(node)
+        fn $visitor(&mut self, node: &mut crate::$ty, extra: <crate::$ty as crate::MutVisitable<Self>>::Extra) -> ControlFlow<Self::Break> {
+            self.visit(node, extra)
         }
     };
 }
@@ -100,8 +100,9 @@ pub trait Visitor<'a>: Sized {
 
     /// The default node visiting before.
     /// By default, this will just continue without visiting the children of `node`
-    fn visit<V: Walkable<'a, Self>>(&mut self, node: &'a V) -> ControlFlow<Self::Break> {
+    fn visit<V: Walkable<'a, Self>>(&mut self, node: &'a V, extra: V::Extra) -> ControlFlow<Self::Break> {
         let _ = node;
+        let _ = extra;
         ControlFlow::Continue(())
     }
 
@@ -190,8 +191,9 @@ pub trait MutVisitor: Sized {
 
     /// The default node visiting before.
     /// By default, this will just continue without visiting the children of `node`
-    fn visit<V: MutWalkable<Self>>(&mut self, node: &mut V) -> ControlFlow<Self::Break> {
+    fn visit<V: MutWalkable<Self>>(&mut self, node: &mut V, extra: V::Extra) -> ControlFlow<Self::Break> {
         let _ = node;
+        let _ = extra;
         ControlFlow::Continue(())
     }
 
@@ -273,6 +275,8 @@ pub trait MutVisitor: Sized {
 /// derive macro. This macro also implements the [Visitable] trait for that type
 /// so that it may itself be visited.
 pub trait Walkable<'a, V: Visitor<'a>> {
+    type Extra: Copy;
+
     /// Walk all the child nodes of this node
     ///
     /// # Arguments
@@ -280,37 +284,45 @@ pub trait Walkable<'a, V: Visitor<'a>> {
     /// * `visitor`: the visitor that should be called into when visiting nodes
     ///
     /// returns: ControlFlow<<V as Visitor>::Break, ()>
-    fn walk_ref(&'a self, visitor: &mut V) -> ControlFlow<V::Break>;
+    fn walk_ref(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break>;
 }
 
 pub trait MutWalkable<V: MutVisitor> {
-    fn walk_mut(&mut self, visitor: &mut V) -> ControlFlow<V::Break>;
+    type Extra: Copy;
+
+    fn walk_mut(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break>;
 }
 
 pub trait Visitable<'a, V: Visitor<'a>> {
-    fn visit(&'a self, visitor: &mut V) -> ControlFlow<V::Break>;
+    type Extra: Copy;
+    fn visit(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break>;
 }
 
 pub trait MutVisitable<V: MutVisitor> {
-    fn visit(&mut self, visitor: &mut V) -> ControlFlow<V::Break>;
+    type Extra: Copy;
+    fn visit(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break>;
 }
 
 /// Visitable for Option<T>
 
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Option<T> {
-    fn visit(&'a self, visitor: &mut V) -> ControlFlow<V::Break> {
+    type Extra = T::Extra;
+
+    fn visit(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
         match self {
             None => ControlFlow::Continue(()),
-            Some(s) => s.visit(visitor),
+            Some(s) => s.visit(visitor, extra),
         }
     }
 }
 
 impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Option<T> {
-    fn visit(&mut self, visitor: &mut V) -> ControlFlow<V::Break> {
+    type Extra = T::Extra;
+
+    fn visit(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
         match self {
             None => ControlFlow::Continue(()),
-            Some(s) => s.visit(visitor),
+            Some(s) => s.visit(visitor, extra),
         }
     }
 }
@@ -318,37 +330,47 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Option<T> {
 /// Walkable for Box<T> by visiting the inner object
 
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Walkable<'a, V> for Box<T> {
-    fn walk_ref(&'a self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.visit(visitor)
+    type Extra = T::Extra;
+
+    fn walk_ref(&'a self, visitor: &mut V, extra: T::Extra) -> ControlFlow<V::Break> {
+        self.visit(visitor, extra)
     }
 }
 
 impl<V: MutVisitor, T: MutVisitable<V>> MutWalkable<V> for Box<T> {
-    fn walk_mut(&mut self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.visit(visitor)
+    type Extra = T::Extra;
+
+    fn walk_mut(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
+        self.visit(visitor, extra)
     }
 }
 
 /// Visitable for Box<T>
 
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Box<T> {
-    fn visit(&'a self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.deref().visit(visitor)
+    type Extra = T::Extra;
+
+    fn visit(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
+        self.deref().visit(visitor, extra)
     }
 }
 
 impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Box<T> {
-    fn visit(&mut self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.deref_mut().visit(visitor)
+    type Extra = T::Extra;
+
+    fn visit(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
+        self.deref_mut().visit(visitor, extra)
     }
 }
 
 /// Walkable for Vec<T> by visiting all the children
 
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Walkable<'a, V> for Vec<T> {
-    fn walk_ref(&'a self, visitor: &mut V) -> ControlFlow<V::Break> {
+    type Extra = T::Extra;
+
+    fn walk_ref(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
         for child in self {
-            child.visit(visitor)?;
+            child.visit(visitor, extra)?;
         }
 
         ControlFlow::Continue(())
@@ -356,9 +378,11 @@ impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Walkable<'a, V> for Vec<T> {
 }
 
 impl<V: MutVisitor, T: MutVisitable<V>> MutWalkable<V> for Vec<T> {
-    fn walk_mut(&mut self, visitor: &mut V) -> ControlFlow<V::Break> {
+    type Extra = T::Extra;
+
+    fn walk_mut(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
         for child in self {
-            child.visit(visitor)?;
+            child.visit(visitor, extra)?;
         }
 
         ControlFlow::Continue(())
@@ -368,13 +392,17 @@ impl<V: MutVisitor, T: MutVisitable<V>> MutWalkable<V> for Vec<T> {
 /// Visitable for Vec<T> by walking all the elements in the vec
 
 impl<'a, V: Visitor<'a>, T: Visitable<'a, V>> Visitable<'a, V> for Vec<T> {
-    fn visit(&'a self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.walk_ref(visitor)
+    type Extra = T::Extra;
+
+    fn visit(&'a self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
+        self.walk_ref(visitor, extra)
     }
 }
 
 impl<V: MutVisitor, T: MutVisitable<V>> MutVisitable<V> for Vec<T> {
-    fn visit(&mut self, visitor: &mut V) -> ControlFlow<V::Break> {
-        self.walk_mut(visitor)
+    type Extra = T::Extra;
+
+    fn visit(&mut self, visitor: &mut V, extra: Self::Extra) -> ControlFlow<V::Break> {
+        self.walk_mut(visitor, extra)
     }
 }

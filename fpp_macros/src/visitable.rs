@@ -41,19 +41,21 @@ pub(super) fn walkable_visit_derive(
     });
 
     let ref_visit = s.each(|bind| {
-        quote! { crate::visit::Visitable::visit(#bind, __visitor)? }
+        quote! { crate::visit::Visitable::visit(#bind, __visitor, extra)? }
     });
 
     s.bind_with(|_| synstructure::BindStyle::RefMut);
     let mut_visit = s.each(|bind| {
-        quote! { crate::visit::MutVisitable::visit(#bind, __visitor)? }
+        quote! { crate::visit::MutVisitable::visit(#bind, __visitor, extra)? }
     });
 
     s.gen_impl(quote! {
         gen impl<'__ast, __V> crate::visit::Walkable<'__ast, __V> for @Self
             where __V: crate::visit::Visitor<'__ast>,
         {
-            fn walk_ref(&'__ast self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            type Extra = ();
+
+            fn walk_ref(&'__ast self, __visitor: &mut __V, extra: Self::Extra) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #ref_visit }
 
                 std::ops::ControlFlow::Continue(())
@@ -63,7 +65,9 @@ pub(super) fn walkable_visit_derive(
         gen impl<__V> crate::visit::MutWalkable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            type Extra = ();
+
+            fn walk_mut(&mut self, __visitor: &mut __V, extra: Self::Extra) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #mut_visit }
 
                 std::ops::ControlFlow::Continue(())
@@ -73,16 +77,20 @@ pub(super) fn walkable_visit_derive(
         gen impl<'__ast, __V> crate::Visitable<'__ast, __V> for @Self
             where __V: crate::visit::Visitor<'__ast>,
         {
-            fn visit(&'__ast self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                visitor.#visit_function_name(self)
+            type Extra = ();
+
+            fn visit(&'__ast self, visitor: &mut __V, extra: Self::Extra) -> ::std::ops::ControlFlow<__V::Break> {
+                visitor.#visit_function_name(self, extra)
             }
         }
 
         gen impl<__V> crate::MutVisitable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn visit(&mut self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                visitor.#visit_function_name(self)
+            type Extra = ();
+
+            fn visit(&mut self, visitor: &mut __V, extra: Self::Extra) -> ::std::ops::ControlFlow<__V::Break> {
+                visitor.#visit_function_name(self, extra)
             }
         }
     })
@@ -126,19 +134,21 @@ pub(super) fn walkable_direct_derive(
     });
 
     let ref_visit = s.each(|bind| {
-        quote! { crate::visit::Visitable::visit(#bind, __visitor)? }
+        quote! { crate::visit::Visitable::visit(#bind, __visitor, extra)? }
     });
 
     s.bind_with(|_| synstructure::BindStyle::RefMut);
     let mut_visit = s.each(|bind| {
-        quote! { crate::visit::MutVisitable::visit(#bind, __visitor)? }
+        quote! { crate::visit::MutVisitable::visit(#bind, __visitor, extra)? }
     });
 
     s.gen_impl(quote! {
         gen impl<'__ast, __V> crate::visit::Walkable<'__ast, __V> for @Self
             where __V: crate::visit::Visitor<'__ast>,
         {
-            fn walk_ref(&'__ast self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            type Extra = ();
+
+            fn walk_ref(&'__ast self, __visitor: &mut __V, extra: Self::Extra) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #ref_visit }
 
                 std::ops::ControlFlow::Continue(())
@@ -148,7 +158,9 @@ pub(super) fn walkable_direct_derive(
         gen impl<__V> crate::visit::MutWalkable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            type Extra = ();
+
+            fn walk_mut(&mut self, __visitor: &mut __V, extra: Self::Extra) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #mut_visit }
 
                 std::ops::ControlFlow::Continue(())
@@ -158,16 +170,20 @@ pub(super) fn walkable_direct_derive(
         gen impl<'__ast, __V> crate::Visitable<'__ast, __V> for @Self
             where __V: crate::visit::Visitor<'__ast>,
         {
-            fn visit(&'__ast self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                self.walk_ref(visitor)
+            type Extra = ();
+
+            fn visit(&'__ast self, visitor: &mut __V, extra: Self::Extra) -> ::std::ops::ControlFlow<__V::Break> {
+                self.walk_ref(visitor, extra)
             }
         }
 
         gen impl<__V> crate::MutVisitable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn visit(&mut self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                self.walk_mut(visitor)
+            type Extra = ();
+
+            fn visit(&mut self, visitor: &mut __V, extra: Self::Extra) -> ::std::ops::ControlFlow<__V::Break> {
+                self.walk_mut(visitor, extra)
             }
         }
     })

@@ -12,4 +12,5 @@ module M {
     active component C2 {}
 
     active component C2 {}
+
 }

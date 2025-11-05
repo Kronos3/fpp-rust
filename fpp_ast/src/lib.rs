@@ -17,6 +17,17 @@ pub trait AstNode: fpp_core::Spanned + Sized {
 
 pub type TranslationUnit = Vec<ModuleMember>;
 
+pub enum QualIdentKind {
+    Component,
+    ComponentInstance,
+    Constant,
+    Port,
+    Topology,
+    Interface,
+    Type,
+    StateMachine
+}
+
 #[ast]
 #[derive(Debug, VisitorWalkable)]
 pub struct LitString {
