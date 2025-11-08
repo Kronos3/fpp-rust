@@ -226,8 +226,8 @@
                             "Special port instance specifier",
                         ],
                     },
-                    SpecImport {
-                        sym: Ident {
+                    SpecInterfaceImport {
+                        interface: Ident {
                             data: "J",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:31:13,
@@ -1494,8 +1494,8 @@
                             "Internal port specifier",
                         ],
                     },
-                    SpecImport {
-                        sym: Ident {
+                    SpecInterfaceImport {
+                        interface: Ident {
                             data: "I",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:112:13,

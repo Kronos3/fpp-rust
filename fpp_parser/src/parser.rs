@@ -278,7 +278,7 @@ impl<'a> Parser<'a> {
                     Ok(ComponentMember::SpecTlmChannel(self.spec_tlm_channel()?))
                 }
             }
-            Keyword(Import) => Ok(ComponentMember::SpecImportInterface(
+            Keyword(Import) => Ok(ComponentMember::SpecInterfaceImport(
                 self.spec_import_interface()?,
             )),
             _ => Err(self.cursor.err_expected_one_of(
@@ -909,7 +909,7 @@ impl<'a> Parser<'a> {
 
     fn interface_member(&mut self) -> ParseResult<InterfaceMember> {
         match self.peek(0) {
-            Keyword(Import) => Ok(InterfaceMember::SpecImport(self.spec_import_interface()?)),
+            Keyword(Import) => Ok(InterfaceMember::SpecInterfaceImport(self.spec_import_interface()?)),
             _ => Ok(InterfaceMember::SpecPortInstance(
                 self.spec_port_instance()?,
             )),
@@ -1385,12 +1385,12 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn spec_import_interface(&mut self) -> ParseResult<SpecImport> {
+    fn spec_import_interface(&mut self) -> ParseResult<SpecInterfaceImport> {
         let first = self.consume_keyword(Import)?;
-        let sym = self.qual_ident()?;
-        Ok(SpecImport {
+        let interface = self.qual_ident()?;
+        Ok(SpecInterfaceImport {
             node_id: self.node(first.span()),
-            sym,
+            interface,
         })
     }
 

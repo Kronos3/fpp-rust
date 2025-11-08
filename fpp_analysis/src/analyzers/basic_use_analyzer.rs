@@ -1,6 +1,6 @@
 use crate::analyzers::analyzer::Analyzer;
-use crate::analyzers::nested_analyzer::NestedAnalyzer;
-use crate::semantics::QualifiedName;
+use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
+use crate::semantics::{ImpliedUse, QualifiedName};
 use crate::Analysis;
 use fpp_ast::*;
 use std::ops::{ControlFlow, Deref};
@@ -12,7 +12,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn component_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -20,7 +20,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn interface_instance_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -28,7 +28,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn constant_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast Expr,
+        node: &Expr,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -36,7 +36,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn port_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -44,7 +44,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn interface_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -52,7 +52,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn type_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -60,7 +60,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn state_machine_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &'ast QualIdent,
+        node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 }
@@ -72,7 +72,7 @@ pub struct BasicUseAnalyzer<'ast, V: UseAnalysisPass<'ast>> {
 impl<'ast, V: UseAnalysisPass<'ast>> BasicUseAnalyzer<'ast, V> {
     pub fn new() -> BasicUseAnalyzer<'ast, V> {
         BasicUseAnalyzer {
-            super_: NestedAnalyzer::new(),
+            super_: NestedAnalyzer::new(NestedAnalyzerMode::DEEP),
         }
     }
 }
@@ -125,11 +125,66 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
                 visitor.state_machine_use(a, &si.state_machine, (&si.state_machine).into())?;
                 si.walk_ref(a, visitor)
             }
+            Node::SpecConnectionGraph(cg) => {
+                match &cg.kind {
+                    SpecConnectionGraphKind::Pattern { targets, .. } => {
+                        for target in targets {
+                            visitor.interface_instance_use(a, &target, target.into())?;
+                        }
+                    }
+                    _ => (),
+                }
+
+                self.super_.visit(visitor, a, node)
+            }
+            Node::SpecGeneralPortInstance(pi) => {
+                match &pi.port {
+                    None => ControlFlow::Continue(()),
+                    Some(pqi) => visitor.port_use(a, pqi, pqi.into()),
+                }?;
+
+                self.super_.visit(visitor, a, node)
+            }
+            Node::SpecSpecialPortInstance(pi) => {
+                let name = (match pi.kind {
+                    SpecialPortInstanceKind::CommandRecv => "Cmd",
+                    SpecialPortInstanceKind::CommandReg => "CmdReg",
+                    SpecialPortInstanceKind::CommandResp => "CmdResponse",
+                    SpecialPortInstanceKind::Event => "Log",
+                    SpecialPortInstanceKind::ParamGet => "PrmGet",
+                    SpecialPortInstanceKind::ParamSet => "PrmSet",
+                    SpecialPortInstanceKind::ProductGet => "DpGet",
+                    SpecialPortInstanceKind::ProductRecv => "DpResponse",
+                    SpecialPortInstanceKind::ProductRequest => "DpRequest",
+                    SpecialPortInstanceKind::ProductSend => "DpSend",
+                    SpecialPortInstanceKind::Telemetry => "Tlm",
+                    SpecialPortInstanceKind::TextEvent => "LogText",
+                    SpecialPortInstanceKind::TimeGet => "Time",
+                })
+                .to_string();
+
+                let port_qi = ImpliedUse::new(vec!["Fw".to_string(), name].into(), pi.node_id)
+                    .as_qual_ident();
+                visitor.port_use(a, &port_qi, (&port_qi).into())?;
+                self.super_.visit(visitor, a, node)
+            }
+            Node::PortInstanceIdentifier(pii) => visitor.interface_instance_use(
+                a,
+                &pii.interface_instance,
+                (&pii.interface_instance).into(),
+            ),
             Node::TlmChannelIdentifier(ci) => visitor.interface_instance_use(
                 a,
                 &ci.component_instance,
                 (&ci.component_instance).into(),
             ),
+            Node::SpecInterfaceImport(i) => {
+                visitor.interface_use(a, &i.interface, (&i.interface).into())
+            }
+            Node::TypeName(tn) => match &tn.kind {
+                TypeNameKind::QualIdent(qi) => visitor.type_use(a, qi, qi.into()),
+                _ => ControlFlow::Continue(()),
+            },
             _ => self.super_.visit(visitor, a, node),
         }
     }

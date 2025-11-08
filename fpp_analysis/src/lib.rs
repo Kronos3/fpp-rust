@@ -27,6 +27,9 @@ pub mod semantics {
     mod name;
     pub use name::*;
 
+    mod implied_use;
+    pub use implied_use::*;
+
     mod scope;
     pub use scope::*;
 

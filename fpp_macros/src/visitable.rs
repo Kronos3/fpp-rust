@@ -184,7 +184,7 @@ pub(super) fn walkable_direct_ref_derive(
     s.bind_with(|_| synstructure::BindStyle::Move);
     let ref_visit = s.each(|bind| {
         let span = bind.ast().span();
-        quote_spanned! { span => crate::visit::Visitable::visit(#bind, a, __visitor)? }
+        quote_spanned! { span => crate::visit::Walkable::walk_ref(#bind, a, __visitor)? }
 
     });
 

@@ -34,7 +34,7 @@ pub enum Node<'a> {
     SpecContainer(&'a SpecContainer),
     SpecEvent(&'a SpecEvent),
     SpecGeneralPortInstance(&'a SpecGeneralPortInstance),
-    SpecImport(&'a SpecImport),
+    SpecInterfaceImport(&'a SpecInterfaceImport),
     SpecInclude(&'a SpecInclude),
     SpecInit(&'a SpecInit),
     SpecInitialTransition(&'a SpecInitialTransition),
@@ -63,7 +63,6 @@ pub enum Node<'a> {
     Qualified(&'a Qualified),
     StructMember(&'a StructMember),
     TypeName(&'a TypeName),
-    TypeNameKind(&'a TypeNameKind),
     /* Inner AST nodes */
     Connection(&'a Connection),
     DoExpr(&'a DoExpr),

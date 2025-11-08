@@ -2,7 +2,9 @@ use crate::errors::SemanticResult;
 use crate::semantics::generic_name_symbol_map::GenericNameSymbolMap;
 use crate::semantics::SymbolInterface;
 use fpp_util::EnumMap;
+use std::cell::RefCell;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy)]
 pub struct GenericScope<
@@ -16,12 +18,12 @@ impl<'ast, NG, S: SymbolInterface<'ast>, M: EnumMap<NG, GenericNameSymbolMap<'as
     GenericScope<'ast, NG, S, M>
 {
     /// Construct a new scope
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self {
             0: M::new(|_| GenericNameSymbolMap::new()),
             1: Default::default(),
             2: Default::default(),
-        }
+        }))
     }
 
     /// Look up a symbol in this scope

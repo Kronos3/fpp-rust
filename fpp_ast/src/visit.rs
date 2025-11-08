@@ -55,15 +55,17 @@ macro_rules! visit_signatures_mut {
 /// use fpp_ast::{DefComponent, DefModule, Visitor, Walkable};
 ///
 /// struct ComponentPass {}
+/// struct State {}
 /// impl<'ast> Visitor<'ast> for ComponentPass {
 ///     type Break = ();
+///     type State = State;
 ///
-///     fn visit_def_component(&mut self, def: &'ast DefComponent, extra: ()) -> ControlFlow<Self::Break> {
-///         def.walk_ref(self, extra)
+///     fn visit_def_component(&self, a: &mut State, def: &'ast DefComponent) -> ControlFlow<Self::Break> {
+///         def.walk_ref(a, self)
 ///     }
 ///
-///     fn visit_def_module(&mut self, def: &'ast DefModule, extra: ()) -> ControlFlow<Self::Break> {
-///         def.walk_ref(self, extra)
+///     fn visit_def_module(&self, a: &mut State, def: &'ast DefModule) -> ControlFlow<Self::Break> {
+///         def.walk_ref(a, self)
 ///     }
 /// }
 /// ```
@@ -80,17 +82,19 @@ macro_rules! visit_signatures_mut {
 /// Here is an example of a deep traversal:
 /// ```
 /// use std::ops::ControlFlow;
-/// use fpp_ast::{Expr, Visitor, Walkable};
+/// use fpp_ast::{Expr, Visitor, Walkable, Node, MoveWalkable};
 ///
 /// struct ExprPass {}
+/// struct State {}
 /// impl<'ast> Visitor<'ast> for ExprPass {
 ///     type Break = ();
+///     type State = State;
 ///
-///     fn visit<V: Walkable<'ast, Self>>(&mut self, node: &'ast V) -> ControlFlow<Self::Break> {
-///         node.walk_ref(self, extra)
+///     fn visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+///         node.walk(a, self)
 ///     }
 ///
-///     fn visit_expr(&mut self, node: &'ast Expr, extra: ()) -> ControlFlow<Self::Break> {
+///     fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
 ///         // Run on all the expressions in the entire AST
 ///         ControlFlow::Continue(())
 ///     }
@@ -135,7 +139,7 @@ pub trait Visitor<'ast>: Sized {
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),
-        (SpecImport, visit_spec_import),
+        (SpecInterfaceImport, visit_spec_interface_import),
         (SpecInclude, visit_spec_include),
         (SpecInit, visit_spec_init),
         (SpecInitialTransition, visit_spec_initial_transition),
@@ -164,7 +168,6 @@ pub trait Visitor<'ast>: Sized {
         (Qualified, visit_qualified),
         (StructMember, visit_struct_member),
         (TypeName, visit_type_name),
-        (TypeNameKind, visit_type_name_kind),
         /* Inner AST nodes */
         (Connection, visit_connection),
         (DoExpr, visit_do_expr),
@@ -225,7 +228,7 @@ pub trait MutVisitor: Sized {
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),
-        (SpecImport, visit_spec_import),
+        (SpecInterfaceImport, visit_spec_interface_import),
         (SpecInclude, visit_spec_include),
         (SpecInit, visit_spec_init),
         (SpecInitialTransition, visit_spec_initial_transition),

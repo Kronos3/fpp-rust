@@ -88,6 +88,16 @@ impl<'ast> CheckUses<'ast> {
     }
 }
 
+impl<'ast> Visitor<'ast> for CheckUses<'ast> {
+    type Break = ();
+    type State = Analysis<'ast>;
+
+    // Walk all nodes deeply and collect up scope where relevant
+    fn visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        self.super_.visit(self, a, node)
+    }
+}
+
 impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
     fn component_use(
         &self,
@@ -166,15 +176,5 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
         let _ = name;
         self.visit_qual_ident(a, NameGroup::StateMachine, node);
         ControlFlow::Continue(())
-    }
-}
-
-impl<'ast> Visitor<'ast> for CheckUses<'ast> {
-    type Break = ();
-    type State = Analysis<'ast>;
-
-    // Walk all nodes deeply and collect up scope where relevant
-    fn visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
-        self.super_.visit(self, a, node)
     }
 }

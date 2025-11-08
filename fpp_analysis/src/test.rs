@@ -49,18 +49,12 @@ fn run_test(file_path: &str) {
     }
 }
 
-macro_rules! check_tests {
-    ($($name:ident: $path:expr,)*) => {
-    $(
-        #[test]
-        fn $name () {
-            run_test($path)
-        }
-    )*
-    };
+#[test]
+fn duplicate_symbols_single () {
+    run_test("duplicate-symbols-single")
 }
 
-check_tests!(
-    duplicate_symbols_single: "duplicate-symbols-single",
-    duplicate_symbols_multi: "duplicate-symbols-multi",
-);
+#[test]
+fn duplicate_symbols_multi () {
+    run_test("duplicate-symbols-multi")
+}

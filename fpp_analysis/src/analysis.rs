@@ -23,7 +23,7 @@ impl<'a> Analysis<'a> {
             symbol_scope_map: Default::default(),
             use_def_map: Default::default(),
             parent_symbol: None,
-            nested_scope: NestedScope::new(Rc::new(RefCell::new(Scope::new()))),
+            nested_scope: NestedScope::new(Scope::new()),
         }
     }
 }

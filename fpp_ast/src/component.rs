@@ -23,7 +23,7 @@ pub enum ComponentMember {
     SpecRecord(SpecRecord),
     SpecStateMachineInstance(SpecStateMachineInstance),
     SpecTlmChannel(SpecTlmChannel),
-    SpecImportInterface(SpecImport),
+    SpecInterfaceImport(SpecInterfaceImport),
 }
 
 #[derive(Debug)]

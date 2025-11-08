@@ -28,14 +28,14 @@ fn run_test(file_path: &str) {
         // Parse the source
         format!("{:#?}", parse(src, |p| p.module_members()))
     })
-        .expect("compiler_error");
+    .expect("compiler_error");
 
     let output = if diagnostics_str.is_empty() {
         ast
     } else {
         String::from_utf8(diagnostics_str).expect("failed to convert error message to string")
     }
-        .replace(path.to_str().unwrap(), "[ local path prefix ]");
+    .replace(path.to_str().unwrap(), "[ local path prefix ]");
 
     match env::var("FPP_UPDATE_REF") {
         Ok(_) => {
@@ -50,36 +50,102 @@ fn run_test(file_path: &str) {
     }
 }
 
-macro_rules! parser_tests {
-    ($($name:ident: $path:expr,)*) => {
-    $(
-        #[test]
-        fn $name () {
-            run_test($path)
-        }
-    )*
-    };
+#[test]
+fn comments() {
+    run_test("comments")
 }
 
-parser_tests!(
-    comments: "comments",
-    cycle_1: "cycle-1",
-    cycle_2: "cycle-2",
-    cycle_3: "cycle-3",
-    embedded_tab: "embedded-tab",
-    empty: "empty",
-    escaped_strings: "escaped-strings",
-    illegal_character: "illegal-character",
-    include_component: "include-component",
-    include_constant_1: "include-constant-1",
-    include_missing_file: "include-missing-file",
-    include_module: "include-module",
-    include_parse_error: "include-parse-error",
-    include_subdir: "include-subdir",
-    include_topology: "include-topology",
-    parse_error: "parse-error",
-    state_machine: "state-machine",
-    syntax: "syntax",
-    syntax_kwd_names: "syntax-kwd-names",
-    topology_ports: "topology-ports",
-);
+#[test]
+fn cycle_1() {
+    run_test("cycle-1")
+}
+
+#[test]
+fn cycle_2() {
+    run_test("cycle-2")
+}
+
+#[test]
+fn cycle_3() {
+    run_test("cycle-3")
+}
+
+#[test]
+fn embedded_tab() {
+    run_test("embedded-tab")
+}
+
+#[test]
+fn empty() {
+    run_test("empty")
+}
+
+#[test]
+fn escaped_strings() {
+    run_test("escaped-strings")
+}
+
+#[test]
+fn illegal_character() {
+    run_test("illegal-character")
+}
+
+#[test]
+fn include_component() {
+    run_test("include-component")
+}
+
+#[test]
+fn include_constant_1() {
+    run_test("include-constant-1")
+}
+
+#[test]
+fn include_missing_file() {
+    run_test("include-missing-file")
+}
+
+#[test]
+fn include_module() {
+    run_test("include-module")
+}
+
+#[test]
+fn include_parse_error() {
+    run_test("include-parse-error")
+}
+
+#[test]
+fn include_subdir() {
+    run_test("include-subdir")
+}
+
+#[test]
+fn include_topology() {
+    run_test("include-topology")
+}
+
+#[test]
+fn parse_error() {
+    run_test("parse-error")
+}
+
+#[test]
+fn state_machine() {
+    run_test("state-machine")
+}
+
+#[test]
+fn syntax() {
+    run_test("syntax")
+}
+
+#[test]
+fn syntax_kwd_names() {
+    run_test("syntax-kwd-names")
+}
+
+#[test]
+fn topology_ports() {
+    run_test("topology-ports")
+}

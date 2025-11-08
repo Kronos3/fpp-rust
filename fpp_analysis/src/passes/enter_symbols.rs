@@ -3,9 +3,7 @@ use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{NameGroup, Scope, Symbol, SymbolInterface};
 use fpp_ast::*;
 use fpp_core::Spanned;
-use std::cell::RefCell;
 use std::ops::ControlFlow;
-use std::rc::Rc;
 
 pub(crate) struct EnterSymbols {}
 
@@ -109,10 +107,15 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         })()
         .unwrap_or_else(|err| err.emit());
 
+        let scope = Scope::new();
+        a.symbol_scope_map.insert(sym, scope.clone());
+        a.nested_scope.push(scope);
+
         let save_paren = a.parent_symbol;
         a.parent_symbol = Some(sym);
         let res = def.walk_ref(a, self);
         a.parent_symbol = save_paren;
+        a.nested_scope.pop();
 
         res
     }
@@ -141,10 +144,15 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         })()
         .unwrap_or_else(|err| err.emit());
 
+        let scope = Scope::new();
+        a.symbol_scope_map.insert(sym, scope.clone());
+        a.nested_scope.push(scope);
+
         let save_paren = a.parent_symbol;
         a.parent_symbol = Some(sym);
         let res = def.walk_ref(a, self);
         a.parent_symbol = save_paren;
+        a.nested_scope.pop();
 
         res
     }
@@ -211,7 +219,6 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
                 // We did not find a symbol with the same name at the current level.
                 // Create a new module symbol now.
                 let sym = Symbol::Module(def);
-                let scope = Scope::new();
 
                 for ng in NameGroup::all() {
                     a.nested_scope
@@ -221,10 +228,11 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
                         .expect("failed to add module to name group");
                 }
 
-                (sym, Rc::new(RefCell::new(scope)))
+                (sym, Scope::new())
             }
         };
 
+        a.symbol_scope_map.insert(sym, scope.clone());
         a.nested_scope.push(scope);
 
         let save_paren = a.parent_symbol;

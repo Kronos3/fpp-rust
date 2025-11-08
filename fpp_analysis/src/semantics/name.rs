@@ -1,14 +1,23 @@
+use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter, Write};
 
 pub struct QualifiedName {
-    qualifier: Vec<String>,
+    qualifier: VecDeque<String>,
     base: String,
+}
+
+impl QualifiedName {
+    pub fn to_ident_list(&self) -> VecDeque<String> {
+        let mut out = self.qualifier.clone();
+        out.push_back(self.base.clone());
+        out
+    }
 }
 
 impl From<String> for QualifiedName {
     fn from(value: String) -> Self {
         QualifiedName {
-            qualifier: vec![],
+            qualifier: VecDeque::new(),
             base: value,
         }
     }
@@ -22,7 +31,7 @@ impl From<Vec<String>> for QualifiedName {
         value.reverse();
         QualifiedName {
             base,
-            qualifier: value,
+            qualifier: value.into(),
         }
     }
 }
@@ -35,7 +44,8 @@ impl From<&fpp_ast::QualIdent> for QualifiedName {
 
 impl Debug for QualifiedName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.qualifier.join("."))?;
+        let v: Vec<String> = self.qualifier.clone().into();
+        f.write_str(&v.join("."))?;
         f.write_char('.')?;
         f.write_str(&self.base)
     }

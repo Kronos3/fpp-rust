@@ -63,7 +63,7 @@ pub enum IntegerType {
     I64,
 }
 
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, DirectWalkable)]
 pub enum TypeNameKind {
     #[visitable(ignore)]
     Bool(),
@@ -360,7 +360,7 @@ pub enum SpecPortInstance {
 #[derive(AstAnnotated, DirectWalkable)]
 pub enum InterfaceMember {
     SpecPortInstance(SpecPortInstance),
-    SpecImport(SpecImport),
+    SpecInterfaceImport(SpecInterfaceImport),
 }
 
 /** Interface definition */
@@ -409,7 +409,7 @@ pub struct SpecInclude {
 /** Import specifier */
 #[ast]
 #[derive(AstAnnotated, VisitorWalkable)]
-pub struct SpecImport {
+pub struct SpecInterfaceImport {
     #[visitable(ignore)]
-    pub sym: QualIdent,
+    pub interface: QualIdent,
 }
