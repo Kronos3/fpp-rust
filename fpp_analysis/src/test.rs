@@ -28,7 +28,7 @@ fn run_test(file_path: &str) {
 
         let mut a = crate::Analysis::new();
 
-        crate::passes::check_semantics(&mut a, &ast);
+        let _ = crate::passes::check_semantics(&mut a, &ast);
     })
     .expect("compiler_error");
 

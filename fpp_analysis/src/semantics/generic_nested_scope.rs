@@ -16,20 +16,19 @@ pub struct GenericNestedScope<
 impl<'a, NG: Copy, S: SymbolInterface<'a>, M: EnumMap<NG, GenericNameSymbolMap<'a, S>>>
     GenericNestedScope<'a, NG, S, M>
 {
-    pub fn empty() -> Self {
+    pub fn new(global_scope: Rc<RefCell<GenericScope<'a, NG, S, M>>>) -> Self {
         Self {
-            0: vec![Rc::new(RefCell::new(GenericScope::new()))],
+            0: vec![global_scope],
         }
     }
 
     /// Push a new scope onto the stack
-    pub fn push(&self, scope: Rc<RefCell<GenericScope<'a, NG, S, M>>>) -> Self {
-        let mut out = Self {
-            0: self.0.clone(),
-        };
+    pub fn push(&mut self, scope: Rc<RefCell<GenericScope<'a, NG, S, M>>>) {
+        self.0.push(scope);
+    }
 
-        out.0.push(scope);
-        out
+    pub fn pop(&mut self) {
+        self.0.pop();
     }
 
     /// Look up a symbol in all the scopes nested in this scope

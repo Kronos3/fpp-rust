@@ -1,8 +1,8 @@
 mod annotated;
 mod enum_map;
 mod node;
-mod visitable;
 mod util;
+mod visitable;
 
 use crate::annotated::{annotated_enum, annotated_struct};
 use crate::enum_map::enum_map;
@@ -152,6 +152,12 @@ decl_derive!(
     /// For `Visitable`:
     /// The type's [Walkable] implementation will be run
     visitable::walkable_direct_derive
+);
+
+decl_derive!(
+    [DirectRefWalkable, attributes(visitable)] =>
+    /// Same as [DirectWalkable] except it only generates
+    visitable::walkable_direct_ref_derive
 );
 
 /// Count the number of variants in an enum and emit a `SIZE` constant in the impl

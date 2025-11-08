@@ -1,10 +1,12 @@
 pub mod component;
+pub mod node;
 pub mod state_machine;
 pub mod topology;
 pub mod visit;
 
 pub use component::*;
 use fpp_core::Annotated;
+pub use node::*;
 pub use state_machine::*;
 pub use topology::*;
 pub use visit::*;
@@ -25,7 +27,7 @@ pub enum QualIdentKind {
     Topology,
     Interface,
     Type,
-    StateMachine
+    StateMachine,
 }
 
 #[ast]
@@ -305,7 +307,6 @@ pub enum SpecLocKind {
     Constant,
     Port,
     StateMachine,
-    Topology,
     Type,
     Interface,
 }

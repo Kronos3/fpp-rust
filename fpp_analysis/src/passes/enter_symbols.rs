@@ -1,42 +1,41 @@
 use crate::analysis::Analysis;
 use crate::errors::{SemanticError, SemanticResult};
-use crate::semantics::{NameGroups, Scope, Symbol, SymbolInterface};
+use crate::semantics::{NameGroup, Scope, Symbol, SymbolInterface};
 use fpp_ast::*;
 use fpp_core::Spanned;
 use std::cell::RefCell;
 use std::ops::ControlFlow;
 use std::rc::Rc;
 
-pub(crate) struct EnterSymbols<'a> {
-    a: &'a mut Analysis<'a>,
-}
+pub(crate) struct EnterSymbols {}
 
-impl<'a> EnterSymbols<'a> {
-    pub fn run<'analysis>(a: &'analysis mut Analysis<'a>, ast: &'a TranslationUnit)
-    where
-        'analysis: 'a,
-    {
-        let mut pass = Self { a };
-        let _ = ast.walk_ref(&mut pass, ());
+impl<'ast> EnterSymbols {
+    pub fn new() -> EnterSymbols {
+        Self {}
     }
 
-    fn update_parent_symbol_map(&mut self, sym: Symbol<'a>) {
-        match self.a.parent_symbol {
+    fn update_parent_symbol_map(&self, a: &mut Analysis<'ast>, sym: Symbol<'ast>) {
+        match a.parent_symbol {
             None => {}
             Some(parent) => {
-                self.a.parent_symbol_map.insert(sym, parent);
+                a.parent_symbol_map.insert(sym, parent);
             }
         }
     }
 
     /// Enter a symbol into its own name group
-    fn enter_symbol(&mut self, sym: Symbol<'a>, ng: NameGroups) -> SemanticResult {
-        let res = self.a.nested_scope.current_mut().borrow_mut().put(ng, sym);
+    fn enter_symbol(
+        &self,
+        a: &mut Analysis<'ast>,
+        sym: Symbol<'ast>,
+        ng: NameGroup,
+    ) -> SemanticResult {
+        let res = a.nested_scope.current_mut().borrow_mut().put(ng, sym);
         match res {
             Ok(_) => {
                 // We successfully added the symbol to the scope
                 // Update the parent symbol map
-                self.update_parent_symbol_map(sym);
+                self.update_parent_symbol_map(a, sym);
             }
             _ => {}
         }
@@ -45,107 +44,144 @@ impl<'a> EnterSymbols<'a> {
     }
 }
 
-impl<'ast> Visitor<'ast> for EnterSymbols<'ast> {
+impl<'ast> Visitor<'ast> for EnterSymbols {
     type Break = ();
+    type State = Analysis<'ast>;
 
-    fn visit_def_abs_type(&mut self, def: &'ast DefAbsType, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::AbsType(def), NameGroups::Type)
+    fn visit_def_abs_type(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefAbsType,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::AbsType(def), NameGroup::Type)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_alias_type(&mut self, def: &'ast DefAliasType, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::AliasType(def), NameGroups::Type)
+    fn visit_def_alias_type(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefAliasType,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::AliasType(def), NameGroup::Type)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_array(&mut self, def: &'ast DefArray, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::Array(def), NameGroups::Type)
+    fn visit_def_array(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefArray,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Array(def), NameGroup::Type)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
     fn visit_def_component_instance(
-        &mut self,
+        &self,
+        a: &mut Analysis<'ast>,
         def: &'ast DefComponentInstance,
-        _: ()
     ) -> ControlFlow<Self::Break> {
         self.enter_symbol(
+            a,
             Symbol::ComponentInstance(def),
-            NameGroups::PortInterfaceInstance,
+            NameGroup::PortInterfaceInstance,
         )
         .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_component(&mut self, def: &'ast DefComponent, _: ()) -> ControlFlow<Self::Break> {
+    fn visit_def_component(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefComponent,
+    ) -> ControlFlow<Self::Break> {
         let sym = Symbol::Component(def);
 
         (|| -> SemanticResult {
-            self.enter_symbol(sym, NameGroups::Component)?;
-            self.enter_symbol(sym, NameGroups::StateMachine)?;
-            self.enter_symbol(sym, NameGroups::Type)?;
-            self.enter_symbol(sym, NameGroups::Value)?;
+            self.enter_symbol(a, sym, NameGroup::Component)?;
+            self.enter_symbol(a, sym, NameGroup::StateMachine)?;
+            self.enter_symbol(a, sym, NameGroup::Type)?;
+            self.enter_symbol(a, sym, NameGroup::Value)?;
 
             Ok(())
         })()
         .unwrap_or_else(|err| err.emit());
 
-        let save_paren = self.a.parent_symbol;
-        self.a.parent_symbol = Some(sym);
-        let res = def.walk_ref(self, ());
-        self.a.parent_symbol = save_paren;
+        let save_paren = a.parent_symbol;
+        a.parent_symbol = Some(sym);
+        let res = def.walk_ref(a, self);
+        a.parent_symbol = save_paren;
 
         res
     }
 
-    fn visit_def_constant(&mut self, def: &'ast DefConstant, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::Constant(def), NameGroups::Value)
+    fn visit_def_constant(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefConstant,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Constant(def), NameGroup::Value)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_enum(&mut self, def: &'ast DefEnum, _: ()) -> ControlFlow<Self::Break> {
+    fn visit_def_enum(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefEnum,
+    ) -> ControlFlow<Self::Break> {
         let sym = Symbol::Enum(def);
 
         (|| -> SemanticResult {
-            self.enter_symbol(sym, NameGroups::Type)?;
-            self.enter_symbol(sym, NameGroups::Value)?;
+            self.enter_symbol(a, sym, NameGroup::Type)?;
+            self.enter_symbol(a, sym, NameGroup::Value)?;
             Ok(())
         })()
         .unwrap_or_else(|err| err.emit());
 
-        let save_paren = self.a.parent_symbol;
-        self.a.parent_symbol = Some(sym);
-        let res = def.walk_ref(self, ());
-        self.a.parent_symbol = save_paren;
+        let save_paren = a.parent_symbol;
+        a.parent_symbol = Some(sym);
+        let res = def.walk_ref(a, self);
+        a.parent_symbol = save_paren;
 
         res
     }
 
-    fn visit_def_enum_constant(&mut self, def: &'ast DefEnumConstant, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::EnumConstant(def), NameGroups::Value)
+    fn visit_def_enum_constant(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefEnumConstant,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::EnumConstant(def), NameGroup::Value)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_interface(&mut self, def: &'ast DefInterface, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::Interface(def), NameGroups::PortInterface)
+    fn visit_def_interface(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefInterface,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Interface(def), NameGroup::PortInterface)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_module(&mut self, def: &'ast DefModule, _: ()) -> ControlFlow<Self::Break> {
+    fn visit_def_module(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefModule,
+    ) -> ControlFlow<Self::Break> {
         // Modules exist in all name groups and overlaps should not be detected as an error
         // We first need to check if a scope that this module will create already exists
         // If so we can just open that scope without adding a new one
-        let existing_symbol = self
-            .a
+        let existing_symbol = a
             .nested_scope
             .current()
             .borrow()
-            .get(NameGroups::Value, &def.name.data);
+            .get(NameGroup::Value, &def.name.data);
 
         let (sym, scope) = match existing_symbol {
             Some(other @ Symbol::Module(_)) => {
@@ -153,8 +189,7 @@ impl<'ast> Visitor<'ast> for EnterSymbols<'ast> {
                 // Re-open the scope.
                 (
                     other,
-                    self.a
-                        .symbol_scope_map
+                    a.symbol_scope_map
                         .get(&other)
                         .expect("could not find scope for existing symbol")
                         .clone(),
@@ -178,9 +213,8 @@ impl<'ast> Visitor<'ast> for EnterSymbols<'ast> {
                 let sym = Symbol::Module(def);
                 let scope = Scope::new();
 
-                for ng in NameGroups::all() {
-                    self.a
-                        .nested_scope
+                for ng in NameGroup::all() {
+                    a.nested_scope
                         .current_mut()
                         .borrow_mut()
                         .put(ng, sym)
@@ -191,30 +225,44 @@ impl<'ast> Visitor<'ast> for EnterSymbols<'ast> {
             }
         };
 
-        self.a.nested_scope = self.a.nested_scope.push(scope);
+        a.nested_scope.push(scope);
 
-        let save_paren = self.a.parent_symbol;
-        self.a.parent_symbol = Some(sym);
-        let res = def.walk_ref(self, ());
-        self.a.parent_symbol = save_paren;
+        let save_paren = a.parent_symbol;
+        a.parent_symbol = Some(sym);
+        let res = def.walk_ref(a, self);
+        a.parent_symbol = save_paren;
+
+        a.nested_scope.pop();
 
         res
     }
 
-    fn visit_def_state_machine(&mut self, def: &'ast DefStateMachine, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::StateMachine(def), NameGroups::StateMachine)
+    fn visit_def_state_machine(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefStateMachine,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::StateMachine(def), NameGroup::StateMachine)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_struct(&mut self, def: &'ast DefStruct, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::Struct(def), NameGroups::Type)
+    fn visit_def_struct(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefStruct,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Struct(def), NameGroup::Type)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }
 
-    fn visit_def_topology(&mut self, def: &'ast DefTopology, _: ()) -> ControlFlow<Self::Break> {
-        self.enter_symbol(Symbol::Topology(def), NameGroups::PortInterfaceInstance)
+    fn visit_def_topology(
+        &self,
+        a: &mut Analysis<'ast>,
+        def: &'ast DefTopology,
+    ) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Topology(def), NameGroup::PortInterfaceInstance)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }

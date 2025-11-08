@@ -12,17 +12,13 @@ fn compiler_main() -> String {
 
     let mut a = fpp_analysis::Analysis::new();
 
-    fpp_analysis::passes::check_semantics(
-        &mut a,
-        &ast,
-    );
+    let _ = fpp_analysis::passes::check_semantics(&mut a, &ast);
 
     format!("{:#?}", ast)
 }
 
 fn main() {
-    let mut ctx =
-        fpp_core::CompilerContext::new(fpp_errors::ConsoleEmitter::color());
+    let mut ctx = fpp_core::CompilerContext::new(fpp_errors::ConsoleEmitter::color());
     let out = fpp_core::run(&mut ctx, compiler_main).expect("Failed to run compiler");
 
     if ctx.has_errors() {

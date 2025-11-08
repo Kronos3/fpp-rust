@@ -4,8 +4,10 @@ mod errors;
 pub use analysis::*;
 
 pub mod analyzers {
-    mod basic_use_analyzer;
-    mod use_analyzer;
+    pub(crate) mod analyzer;
+    pub(crate) mod basic_use_analyzer;
+    pub(crate) mod nested_analyzer;
+    pub(crate) mod use_analyzer;
 }
 
 pub mod passes {
@@ -21,6 +23,9 @@ pub mod passes {
 pub mod semantics {
     mod symbol;
     pub use symbol::*;
+
+    mod name;
+    pub use name::*;
 
     mod scope;
     pub use scope::*;
