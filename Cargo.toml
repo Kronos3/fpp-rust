@@ -10,6 +10,17 @@ members = [
     "fpp_util"
 ]
 
+# Exclude fpp_macros from test suite
+default-members = [
+    "fpp",
+    "fpp_analysis",
+    "fpp_ast",
+    "fpp_core",
+    "fpp_errors",
+    "fpp_parser",
+    "fpp_util"
+]
+
 resolver = "2"
 
 [patch.crates-io]

@@ -86,7 +86,7 @@ pub fn ast(_attrs: TokenStream, input: TokenStream) -> TokenStream {
 /// ```
 ///
 /// For enums:
-/// ```ignore
+/// ```
 /// use fpp_macros::ast_node;
 ///
 /// #[ast]
