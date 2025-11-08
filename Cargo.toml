@@ -14,3 +14,7 @@ resolver = "2"
 
 [patch.crates-io]
 fpp = { path = "fpp" }
+
+[profile.release]
+strip = "debuginfo"
+lto = true
