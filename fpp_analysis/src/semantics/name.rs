@@ -24,21 +24,53 @@ impl From<String> for QualifiedName {
 }
 
 impl From<Vec<String>> for QualifiedName {
-    fn from(mut value: Vec<String>) -> Self {
+    fn from(value: Vec<String>) -> Self {
+        let inter: VecDeque<String> = value.into();
+        inter.into()
+    }
+}
+
+impl From<VecDeque<String>> for QualifiedName {
+    fn from(mut value: VecDeque<String>) -> Self {
         let base = value
-            .pop()
+            .pop_back()
             .expect("qualified name must have at least one token");
-        value.reverse();
         QualifiedName {
             base,
-            qualifier: value.into(),
+            qualifier: value,
         }
     }
 }
 
 impl From<&fpp_ast::QualIdent> for QualifiedName {
     fn from(value: &fpp_ast::QualIdent) -> Self {
-        todo!()
+        fn to_qualifier(value: &fpp_ast::QualIdent, mut q: VecDeque<String>) -> VecDeque<String> {
+            match value {
+                fpp_ast::QualIdent::Unqualified(ident) => {
+                    q.push_front(ident.data.clone());
+                    q
+                }
+                fpp_ast::QualIdent::Qualified(fpp_ast::Qualified {
+                    qualifier, name, ..
+                }) => {
+                    q.push_back(name.data.clone());
+                    to_qualifier(qualifier, q)
+                }
+            }
+        }
+
+        match value {
+            fpp_ast::QualIdent::Qualified(fpp_ast::Qualified {
+                qualifier, name, ..
+            }) => Self {
+                qualifier: to_qualifier(qualifier, VecDeque::new()),
+                base: name.data.clone(),
+            },
+            fpp_ast::QualIdent::Unqualified(name) => Self {
+                qualifier: VecDeque::new(),
+                base: name.data.clone(),
+            },
+        }
     }
 }
 

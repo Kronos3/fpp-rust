@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use std::ops::ControlFlow;
 
 pub enum NestedAnalyzerMode {
-    SHALLOW,
+    _SHALLOW,
     DEEP,
 }
 
@@ -55,7 +55,7 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> Analyzer<'ast, V> for Neste
             }
             Node::DefModule(def) => self.walk_symbol(visitor, a, Symbol::Module(def), node),
             _ => match self.mode {
-                NestedAnalyzerMode::SHALLOW => ControlFlow::Continue(()),
+                NestedAnalyzerMode::_SHALLOW => ControlFlow::Continue(()),
                 NestedAnalyzerMode::DEEP => node.walk(a, visitor),
             },
         }

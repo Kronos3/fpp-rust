@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::semantics::{ImpliedUse, QualifiedName};
@@ -93,21 +94,21 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
             }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
-                    fn name_opt(e: &Expr, mut qualifier: Vec<String>) -> Option<QualifiedName> {
+                    fn name_opt(e: &Expr, mut qualifier: VecDeque<String>) -> Option<QualifiedName> {
                         match &e.kind {
                             ExprKind::Ident(id) => {
-                                qualifier.push(id.clone());
+                                qualifier.push_front(id.clone());
                                 Some(qualifier.into())
                             }
                             ExprKind::Dot { e: e1, id } => {
-                                qualifier.push(id.data.clone());
+                                qualifier.push_back(id.data.clone());
                                 name_opt(e1.deref(), qualifier)
                             }
                             _ => None,
                         }
                     }
 
-                    match name_opt(&e, vec![]) {
+                    match name_opt(&e, VecDeque::new()) {
                         // Assume the entire qualified identifier is a use
                         Some(use_) => visitor.constant_use(a, e, use_),
                         // This is some other type of dot expression (not a qual ident)
