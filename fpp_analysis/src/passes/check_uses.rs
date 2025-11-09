@@ -3,7 +3,7 @@ use crate::analyzers::basic_use_analyzer::{BasicUseAnalyzer, UseAnalysisPass};
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::{NameGroup, QualifiedName, Symbol, SymbolInterface};
 use crate::Analysis;
-use fpp_ast::{AstNode, Expr, Ident, Node, QualIdent, Visitor};
+use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, QualIdent, Visitable, Visitor};
 use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};
 
@@ -43,6 +43,7 @@ impl<'ast> CheckUses<'ast> {
 
         match scope.get(ng, &name.data) {
             None => Err(SemanticError::UndefinedSymbol {
+                ng,
                 name: name.data.clone(),
                 loc: name.span(),
             }),
@@ -62,6 +63,7 @@ impl<'ast> CheckUses<'ast> {
         match &node {
             QualIdent::Unqualified(name) => match a.nested_scope.get(ng, &name.data) {
                 None => Err(SemanticError::UndefinedSymbol {
+                    ng,
                     name: name.data.clone(),
                     loc: name.span(),
                 }),
@@ -124,13 +126,65 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
     fn constant_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &Expr,
-        name: QualifiedName,
+        node: &'ast Expr,
+        _: QualifiedName,
     ) -> ControlFlow<Self::Break> {
-        let _ = name;
-        let _ = a;
-        let _ = node;
-        // self.visit_qual_ident(a, NameGroup::Value, node);
+        match &node.kind {
+            ExprKind::Dot { e, id } => {
+                // Visit the left side of the dot recursively
+                e.visit(a, self)?;
+
+                // Find the symbol referred to by the left side (if-any)
+                let symbol = match a.use_def_map.get(&e.id()) {
+                    // Left-hand side is not a symbol
+                    // There is no resolution on the dot expression
+                    None => None,
+                    // Left side is a constant, we are selecting a member of this constant
+                    // we are not creating another use.
+                    Some(Symbol::Constant(_)) => None,
+
+                    // The left side is some symbol other than a constant (a qualifier),
+                    // look up this symbol and add it to the use-def entries
+                    Some(qual) => {
+                        let scope = a.symbol_scope_map.get(qual).unwrap().borrow();
+                        match scope.get(NameGroup::Value, &id.data) {
+                            None => {
+                                SemanticError::UndefinedSymbol {
+                                    ng: NameGroup::Value,
+                                    name: id.data.clone(),
+                                    loc: id.span(),
+                                }
+                                .emit();
+                                None
+                            }
+                            Some(sym) => Some(sym),
+                        }
+                    }
+                };
+
+                match symbol {
+                    None => {}
+                    Some(symbol) => {
+                        a.use_def_map.insert(node.id(), symbol);
+                    }
+                }
+            }
+            ExprKind::Ident(id) => match a.nested_scope.get(NameGroup::Value, id) {
+                None => {
+                    SemanticError::UndefinedSymbol {
+                        ng: NameGroup::Value,
+                        name: id.clone(),
+                        loc: node.span(),
+                    }
+                    .emit();
+                }
+                Some(symbol) => {
+                    a.use_def_map.insert(node.id(), symbol);
+                }
+            },
+            _ => panic!("constant use should be qualified identifier"),
+        }
+
         ControlFlow::Continue(())
     }
 

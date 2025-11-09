@@ -1,9 +1,9 @@
-use std::collections::VecDeque;
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::semantics::{ImpliedUse, QualifiedName};
 use crate::Analysis;
 use fpp_ast::*;
+use std::collections::VecDeque;
 use std::ops::{ControlFlow, Deref};
 
 /// An extension of the standard [Visitor] trait that allows analyzing uses of symbols
@@ -29,7 +29,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     fn constant_use(
         &self,
         a: &mut Analysis<'ast>,
-        node: &Expr,
+        node: &'ast Expr,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break>;
 
@@ -94,7 +94,10 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
             }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
-                    fn name_opt(e: &Expr, mut qualifier: VecDeque<String>) -> Option<QualifiedName> {
+                    fn name_opt(
+                        e: &Expr,
+                        mut qualifier: VecDeque<String>,
+                    ) -> Option<QualifiedName> {
                         match &e.kind {
                             ExprKind::Ident(id) => {
                                 qualifier.push_front(id.clone());

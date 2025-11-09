@@ -42,4 +42,9 @@ pub mod semantics {
 }
 
 #[cfg(test)]
-mod test;
+mod test {
+    mod lib;
+    mod invalid_symbols {
+        mod test;
+    }
+}

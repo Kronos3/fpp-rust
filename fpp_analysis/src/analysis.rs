@@ -15,7 +15,7 @@ pub struct Analysis<'ast> {
     /** The current nested scope for symbol lookup */
     pub nested_scope: NestedScope<'ast>,
     /** The set of files included when parsing input */
-    pub included_file_set: HashSet<fpp_core::SourceFile>
+    pub included_file_set: HashSet<fpp_core::SourceFile>,
 }
 
 impl<'a> Analysis<'a> {

@@ -1,3 +1,4 @@
+use crate::semantics::NameGroup;
 use fpp_core::{Diagnostic, Level, Span};
 
 #[derive(Debug)]
@@ -11,6 +12,7 @@ pub enum SemanticError {
         prev_loc: Span,
     },
     UndefinedSymbol {
+        ng: NameGroup,
         name: String,
         loc: Span,
     },
@@ -40,8 +42,9 @@ impl Into<Diagnostic> for SemanticError {
             } => Diagnostic::new(Level::Error, "duplicate symbol definition")
                 .span_annotation(loc, format!("redefinition of symbol {}", name))
                 .span_note(prev_loc, "previous definition is here"),
-            SemanticError::UndefinedSymbol { name, loc } => {
-                Diagnostic::new(Level::Error, "undefined symbol").span_annotation(loc, name)
+            SemanticError::UndefinedSymbol { ng, name, loc } => {
+                Diagnostic::new(Level::Error, "undefined symbol")
+                    .span_annotation(loc, format!("Cannot find {} symbol `{}` in scope", ng, name))
             }
             SemanticError::InvalidSymbol {
                 symbol_name,

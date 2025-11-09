@@ -52,10 +52,15 @@ impl SourceFileData {
     }
 
     pub fn position(&self, offset: BytePos) -> Position {
-        let line = self
-            .lines
-            .binary_search(&offset)
-            .unwrap_or_else(|line_insert| line_insert - 1);
+        let line = match self.lines.binary_search(&offset) {
+            // End of the line, it's actually on the line before
+            Ok(line_idx) => match line_idx {
+                0 => 0,
+                _ => line_idx - 1,
+            }
+            // Somewhere in the middle of the last
+            Err(line_insertion_point) => line_insertion_point - 1
+        };
         let line_offset = *self.lines.get(line).unwrap();
 
         Position {
@@ -129,7 +134,7 @@ impl SourceFileData {
             line_offset: first_line,
             file_path: match &self.path {
                 None => "<stdin>",
-                Some(path) => &path
+                Some(path) => &path,
             },
             file_content: &self.content[first..last],
             include_spans,
