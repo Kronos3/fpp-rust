@@ -4,10 +4,7 @@ use crate::analyzers::use_analyzer::UseAnalyzer;
 use crate::errors::SemanticError;
 use crate::semantics::{QualifiedName, Symbol, SymbolInterface, UseDefMatching};
 use crate::Analysis;
-use fpp_ast::{
-    AstNode, DefAliasType, DefArray, DefConstant, DefEnum, DefEnumConstant, DefInterface,
-    DefStruct, DefTopology, Expr, Node, QualIdent, Visitable, Visitor, Walkable,
-};
+use fpp_ast::*;
 use fpp_core::Spanned;
 use std::ops::ControlFlow;
 
