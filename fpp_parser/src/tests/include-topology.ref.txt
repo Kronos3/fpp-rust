@@ -8,18 +8,24 @@
             },
         },
         members: [
-            SpecInclude {
-                file: LitString {
-                    data: "instance.fppi",
+            SpecInstance {
+                instance: Ident {
+                    data: "x",
                     node_id: Span {
-                        start: [ local path prefix ]/include-topology.fpp:3:12,
-                        end: [ local path prefix ]/include-topology.fpp:4:1,
+                        start: [ local path prefix ]/instance.fppi:2:11,
+                        end: [ local path prefix ]/instance.fppi:3:1,
                     },
                 },
                 node_id: Span {
-                    start: [ local path prefix ]/include-topology.fpp:3:4,
-                    end: [ local path prefix ]/include-topology.fpp:4:1,
+                    start: [ local path prefix ]/instance.fppi:2:2,
+                    end: [ local path prefix ]/instance.fppi:3:1,
                 },
+                pre_annotation: [
+                    "Included instance",
+                ],
+                post_annotation: [
+                    "Included instance",
+                ],
             },
         ],
         implements: [],

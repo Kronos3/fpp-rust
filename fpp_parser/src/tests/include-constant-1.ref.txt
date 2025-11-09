@@ -1,5 +1,68 @@
- --> [ local path prefix ]/include-constant-1.fpp:3:9
-  |
-3 | include "include-constant-2.fppi"
-  |         ^^^^^^^^^^^^^^^^^^^^^^^^^ No such file or directory (os error 2)
-
+[
+    DefConstant {
+        name: Ident {
+            data: "x",
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-1.fpp:1:10,
+                end: [ local path prefix ]/include-constant-1.fpp:1:11,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "1",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-1.fpp:1:14,
+                end: [ local path prefix ]/include-constant-1.fpp:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-constant-1.fpp:1:1,
+            end: [ local path prefix ]/include-constant-1.fpp:2:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "y",
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-2.fppi:1:10,
+                end: [ local path prefix ]/include-constant-2.fppi:1:11,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "2",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-2.fppi:1:14,
+                end: [ local path prefix ]/include-constant-2.fppi:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-constant-2.fppi:1:1,
+            end: [ local path prefix ]/include-constant-2.fppi:2:1,
+        },
+    },
+    DefConstant {
+        name: Ident {
+            data: "z",
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-3.fppi:1:10,
+                end: [ local path prefix ]/include-constant-3.fppi:1:11,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "3",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/include-constant-3.fppi:1:14,
+                end: [ local path prefix ]/include-constant-3.fppi:2:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/include-constant-3.fppi:1:1,
+            end: [ local path prefix ]/include-constant-3.fppi:2:1,
+        },
+    },
+]

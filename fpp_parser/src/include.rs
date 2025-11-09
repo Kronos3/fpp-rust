@@ -1,6 +1,6 @@
 use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
-use fpp_ast::{ComponentMember, DefComponent, DefModule, ModuleMember, MutVisitable, MutVisitor, SpecInclude, TransUnit};
+use fpp_ast::{ComponentMember, DefComponent, DefModule, DefTopology, ModuleMember, MutVisitable, MutVisitor, SpecInclude, SpecTlmPacket, SpecTlmPacketSet, TlmPacketMember, TlmPacketSetMember, TopologyMember, TransUnit};
 use fpp_core::{SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
@@ -100,7 +100,7 @@ impl ResolveSpecInclude {
     fn component_member(
         &self,
         a: &mut HashSet<SourceFile>,
-        member: ComponentMember,
+        mut member: ComponentMember,
         out: &mut Vec<ComponentMember>,
     ) {
         match &member {
@@ -111,7 +111,33 @@ impl ResolveSpecInclude {
                 Self::component_member,
                 out,
             ),
-            _ => out.push(member),
+            _ => {
+                let _ = member.visit(a, self);
+                out.push(member)
+            }
+        }
+    }
+
+    fn topology_member(
+        &self,
+        a: &mut HashSet<SourceFile>,
+        mut member: TopologyMember,
+        out: &mut Vec<TopologyMember>,
+    ) {
+        match &mut member {
+            TopologyMember::SpecInclude(spec_include) => {
+                self.resolve_spec_include(
+                    a,
+                    spec_include,
+                    |p| p.topology_members(),
+                    Self::topology_member,
+                    out,
+                );
+            }
+            _ => {
+                let _ = member.visit(a, self);
+                out.push(member)
+            }
         }
     }
 
@@ -131,11 +157,56 @@ impl ResolveSpecInclude {
                     out,
                 );
             }
-            ModuleMember::DefComponent(def) => {
-                let _ = def.visit(a, self);
+            _ => {
+                let _ = member.visit(a, self);
                 out.push(member)
             }
-            _ => out.push(member),
+        }
+    }
+
+    fn tlm_packet_member(
+        &self,
+        a: &mut HashSet<SourceFile>,
+        mut member: TlmPacketMember,
+        out: &mut Vec<TlmPacketMember>,
+    ) {
+        match &mut member {
+            TlmPacketMember::SpecInclude(spec_include) => {
+                self.resolve_spec_include(
+                    a,
+                    spec_include,
+                    |p| p.tlm_packet_members(),
+                    Self::tlm_packet_member,
+                    out,
+                );
+            }
+            _ => {
+                let _ = member.visit(a, self);
+                out.push(member)
+            }
+        }
+    }
+
+    fn tlm_packet_set_member(
+        &self,
+        a: &mut HashSet<SourceFile>,
+        mut member: TlmPacketSetMember,
+        out: &mut Vec<TlmPacketSetMember>,
+    ) {
+        match &mut member {
+            TlmPacketSetMember::SpecInclude(spec_include) => {
+                self.resolve_spec_include(
+                    a,
+                    spec_include,
+                    |p| p.tlm_packet_set_members(),
+                    Self::tlm_packet_set_member,
+                    out,
+                );
+            }
+            _ => {
+                let _ = member.visit(a, self);
+                out.push(member)
+            }
         }
     }
 }
@@ -157,10 +228,10 @@ impl MutVisitor for ResolveSpecInclude {
         ControlFlow::Continue(())
     }
 
-    fn visit_trans_unit(
+    fn visit_def_module(
         &self,
         a: &mut Self::State,
-        node: &mut TransUnit,
+        node: &mut DefModule,
     ) -> ControlFlow<Self::Break> {
         let old_members = std::mem::replace(&mut node.members, vec![]);
         for member in old_members.into_iter() {
@@ -170,10 +241,49 @@ impl MutVisitor for ResolveSpecInclude {
         ControlFlow::Continue(())
     }
 
-    fn visit_def_module(
+    fn visit_def_topology(
         &self,
         a: &mut Self::State,
-        node: &mut DefModule,
+        node: &mut DefTopology,
+    ) -> ControlFlow<Self::Break> {
+        let old_members = std::mem::replace(&mut node.members, vec![]);
+        for member in old_members.into_iter() {
+            self.topology_member(a, member, &mut node.members)
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_tlm_packet(
+        &self,
+        a: &mut Self::State,
+        node: &mut SpecTlmPacket,
+    ) -> ControlFlow<Self::Break> {
+        let old_members = std::mem::replace(&mut node.members, vec![]);
+        for member in old_members.into_iter() {
+            self.tlm_packet_member(a, member, &mut node.members)
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_tlm_packet_set(
+        &self,
+        a: &mut Self::State,
+        node: &mut SpecTlmPacketSet,
+    ) -> ControlFlow<Self::Break> {
+        let old_members = std::mem::replace(&mut node.members, vec![]);
+        for member in old_members.into_iter() {
+            self.tlm_packet_set_member(a, member, &mut node.members)
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_trans_unit(
+        &self,
+        a: &mut Self::State,
+        node: &mut TransUnit,
     ) -> ControlFlow<Self::Break> {
         let old_members = std::mem::replace(&mut node.members, vec![]);
         for member in old_members.into_iter() {
