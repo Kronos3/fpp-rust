@@ -3,14 +3,9 @@
 1 | constant a = b
   | ^^^^^^^^^^^^^^ encountered symbol use-definition cycle
   |
- ::: [ local path prefix ]/cycles/constant_1.fpp:3:14
+ ::: [ local path prefix ]/cycles/constant_1.fpp:2:10
   |
-3 | constant c = a
-  |              - used here
-  |
- ::: [ local path prefix ]/cycles/constant_1.fpp:1:10
-  |
-1 | constant a = b
+2 | constant b = c
   |          - defined here
   |
  ::: [ local path prefix ]/cycles/constant_1.fpp:2:14
@@ -23,13 +18,8 @@
 3 | constant c = a
   |          - defined here
   |
- ::: [ local path prefix ]/cycles/constant_1.fpp:1:14
+ ::: [ local path prefix ]/cycles/constant_1.fpp:3:14
   |
-1 | constant a = b
+3 | constant c = a
   |              - used here
-  |
- ::: [ local path prefix ]/cycles/constant_1.fpp:2:10
-  |
-2 | constant b = c
-  |          - defined here
 

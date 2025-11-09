@@ -68,7 +68,6 @@ impl<'ast> CheckUseDefCycles<'ast> {
                 cycle: a
                     .use_def_matching_list
                     .iter()
-                    .rev()
                     .map(|m| m.into())
                     .collect(),
             }
