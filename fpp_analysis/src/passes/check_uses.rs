@@ -43,7 +43,7 @@ impl<'ast> CheckUses<'ast> {
 
         match scope.get(ng, &name.data) {
             None => Err(SemanticError::UndefinedSymbol {
-                ng,
+                ng: ng.to_string(),
                 name: name.data.clone(),
                 loc: name.span(),
             }),
@@ -63,7 +63,7 @@ impl<'ast> CheckUses<'ast> {
         match &node {
             QualIdent::Unqualified(name) => match a.nested_scope.get(ng, &name.data) {
                 None => Err(SemanticError::UndefinedSymbol {
-                    ng,
+                    ng: ng.to_string(),
                     name: name.data.clone(),
                     loc: name.span(),
                 }),
@@ -150,7 +150,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
                         match scope.get(NameGroup::Value, &id.data) {
                             None => {
                                 SemanticError::UndefinedSymbol {
-                                    ng: NameGroup::Value,
+                                    ng: NameGroup::Value.to_string(),
                                     name: id.data.clone(),
                                     loc: id.span(),
                                 }
@@ -172,7 +172,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
             ExprKind::Ident(id) => match a.nested_scope.get(NameGroup::Value, id) {
                 None => {
                     SemanticError::UndefinedSymbol {
-                        ng: NameGroup::Value,
+                        ng: NameGroup::Value.to_string(),
                         name: id.clone(),
                         loc: node.span(),
                     }
