@@ -1,6 +1,7 @@
 use fpp_core::SourceFile;
 use std::path::PathBuf;
 use std::{env, fs};
+use pretty_assertions::{assert_eq};
 
 pub(crate) fn run_test(file_path: &str) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -42,7 +43,7 @@ pub(crate) fn run_test(file_path: &str) {
         Err(_) => {
             // Read and compare against the ref file
             let ref_txt = fs::read_to_string(ref_file).expect("failed to read ref.txt");
-            assert_eq!(output, ref_txt)
+            assert_eq!(ref_txt, output)
         }
     }
 }

@@ -44,7 +44,7 @@ impl Into<Diagnostic> for SemanticError {
                 .span_note(prev_loc, "previous definition is here"),
             SemanticError::UndefinedSymbol { ng, name, loc } => {
                 Diagnostic::new(Level::Error, "undefined symbol")
-                    .span_annotation(loc, format!("Cannot find {} symbol `{}` in scope", ng, name))
+                    .span_annotation(loc, format!("cannot find {} `{}` in scope", ng, name))
             }
             SemanticError::InvalidSymbol {
                 symbol_name,
