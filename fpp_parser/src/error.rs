@@ -72,7 +72,7 @@ impl Into<Diagnostic> for ParseError {
             ParseError::IncludeCycle { span, include_path } => {
                 let diag = Diagnostic::spanned(span, Level::Error, "include cycle detected");
                 include_path.into_iter().fold(diag, |diag, path| {
-                    diag.annotation(format! {"included from {}", path})
+                    diag.note(format! {"included from {}", path})
                 })
             }
         }
