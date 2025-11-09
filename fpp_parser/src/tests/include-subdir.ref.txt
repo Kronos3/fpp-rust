@@ -1,5 +1,30 @@
- --> [ local path prefix ]/include-subdir.fpp:1:9
-  |
-1 | include "subdir/constant.fppi"
-  |         ^^^^^^^^^^^^^^^^^^^^^^ No such file or directory (os error 2)
-
+[
+    DefConstant {
+        name: Ident {
+            data: "x",
+            node_id: Span {
+                start: [ local path prefix ]/subdir/constant.fppi:2:11,
+                end: [ local path prefix ]/subdir/constant.fppi:2:12,
+            },
+        },
+        value: Expr {
+            kind: LiteralInt(
+                "0",
+            ),
+            node_id: Span {
+                start: [ local path prefix ]/subdir/constant.fppi:2:15,
+                end: [ local path prefix ]/subdir/constant.fppi:3:1,
+            },
+        },
+        node_id: Span {
+            start: [ local path prefix ]/subdir/constant.fppi:2:2,
+            end: [ local path prefix ]/subdir/constant.fppi:3:1,
+        },
+        pre_annotation: [
+            "Included constant",
+        ],
+        post_annotation: [
+            "Included constant",
+        ],
+    },
+]

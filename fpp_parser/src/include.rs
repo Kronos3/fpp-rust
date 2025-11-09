@@ -1,8 +1,6 @@
 use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
-use fpp_ast::{
-    ComponentMember, DefComponent, DefModule, ModuleMember, MutVisitor, SpecInclude, TransUnit,
-};
+use fpp_ast::{ComponentMember, DefComponent, DefModule, ModuleMember, MutVisitable, MutVisitor, SpecInclude, TransUnit};
 use fpp_core::{SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
@@ -60,10 +58,11 @@ impl ResolveSpecInclude {
     }
 
     fn resolve_spec_include<T>(
+        &self,
         a: &mut HashSet<SourceFile>,
-        spec_include: SpecInclude,
+        spec_include: &SpecInclude,
         parser: fn(&mut Parser) -> Vec<T>,
-        transformer: fn(&mut HashSet<SourceFile>, T, &mut Vec<T>),
+        transformer: fn(&ResolveSpecInclude, &mut HashSet<SourceFile>, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
         let file = match spec_include
@@ -94,17 +93,18 @@ impl ResolveSpecInclude {
         a.insert(file);
         let members = parse(file, parser, Some(spec_include.span()));
         for member in members {
-            transformer(a, member, out);
+            transformer(self, a, member, out);
         }
     }
 
     fn component_member(
+        &self,
         a: &mut HashSet<SourceFile>,
         member: ComponentMember,
         out: &mut Vec<ComponentMember>,
     ) {
-        match member {
-            ComponentMember::SpecInclude(spec_include) => Self::resolve_spec_include(
+        match &member {
+            ComponentMember::SpecInclude(spec_include) => self.resolve_spec_include(
                 a,
                 spec_include,
                 |p| p.component_members(),
@@ -116,19 +116,24 @@ impl ResolveSpecInclude {
     }
 
     fn module_member(
+        &self,
         a: &mut HashSet<SourceFile>,
-        member: ModuleMember,
+        mut member: ModuleMember,
         out: &mut Vec<ModuleMember>,
     ) {
-        match member {
+        match &mut member {
             ModuleMember::SpecInclude(spec_include) => {
-                Self::resolve_spec_include(
+                self.resolve_spec_include(
                     a,
                     spec_include,
                     |p| p.module_members(),
                     Self::module_member,
                     out,
                 );
+            }
+            ModuleMember::DefComponent(def) => {
+                let _ = def.visit(a, self);
+                out.push(member)
             }
             _ => out.push(member),
         }
@@ -146,7 +151,7 @@ impl MutVisitor for ResolveSpecInclude {
     ) -> ControlFlow<Self::Break> {
         let old_members = std::mem::replace(&mut node.members, vec![]);
         for member in old_members.into_iter() {
-            Self::component_member(a, member, &mut node.members)
+            self.component_member(a, member, &mut node.members)
         }
 
         ControlFlow::Continue(())
@@ -159,7 +164,7 @@ impl MutVisitor for ResolveSpecInclude {
     ) -> ControlFlow<Self::Break> {
         let old_members = std::mem::replace(&mut node.members, vec![]);
         for member in old_members.into_iter() {
-            Self::module_member(a, member, &mut node.members)
+            self.module_member(a, member, &mut node.members)
         }
 
         ControlFlow::Continue(())
@@ -172,7 +177,7 @@ impl MutVisitor for ResolveSpecInclude {
     ) -> ControlFlow<Self::Break> {
         let old_members = std::mem::replace(&mut node.members, vec![]);
         for member in old_members.into_iter() {
-            Self::module_member(a, member, &mut node.members)
+            self.module_member(a, member, &mut node.members)
         }
 
         ControlFlow::Continue(())
