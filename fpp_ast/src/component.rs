@@ -1,7 +1,5 @@
 use crate::*;
 
-use fpp_macros::ast;
-
 #[ast]
 #[derive(AstAnnotated, DirectWalkable)]
 pub enum ComponentMember {

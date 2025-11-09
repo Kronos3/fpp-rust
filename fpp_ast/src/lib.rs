@@ -4,15 +4,16 @@ pub mod state_machine;
 pub mod topology;
 pub mod visit;
 
-pub use component::*;
+use std::fmt::{Debug, Formatter};
+
 use fpp_core::Annotated;
+use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
+
+pub use component::*;
 pub use node::*;
 pub use state_machine::*;
-use std::fmt::{Debug, Formatter};
 pub use topology::*;
 pub use visit::*;
-
-use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
 
 pub trait AstNode: fpp_core::Spanned + Sized {
     fn id(&self) -> fpp_core::Node;
