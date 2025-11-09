@@ -95,7 +95,7 @@ impl<'ast> Visitor<'ast> for CheckUses<'ast> {
     type State = Analysis<'ast>;
 
     // Walk all nodes deeply and collect up scope where relevant
-    fn visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 }

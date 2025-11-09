@@ -8,7 +8,7 @@ macro_rules! visit_signature {
             a: &mut Self::State,
             node: &'ast crate::$ty,
         ) -> ControlFlow<Self::Break> {
-            self.visit(a, Node::$ty(node))
+            self.super_visit(a, Node::$ty(node))
         }
     };
 }
@@ -16,7 +16,7 @@ macro_rules! visit_signature {
 macro_rules! visit_signature_mut {
     ($ty:ident, $visitor:ident) => {
         fn $visitor(&self, a: &mut Self::State, node: &mut crate::$ty) -> ControlFlow<Self::Break> {
-            self.visit(a, node)
+            self.super_visit_mut(a, node)
         }
     };
 }
@@ -94,7 +94,7 @@ macro_rules! visit_signatures_mut {
 ///     type Break = ();
 ///     type State = State;
 ///
-///     fn visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+///     fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
 ///         node.walk(a, self)
 ///     }
 ///
@@ -110,7 +110,7 @@ pub trait Visitor<'ast>: Sized {
 
     /// The default node visiting before.
     /// By default, this will just continue without visiting the children of `node`
-    fn visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
         let _ = node;
         let _ = a;
         ControlFlow::Continue(())
@@ -202,7 +202,7 @@ pub trait MutVisitor: Sized {
 
     /// The default node visiting before.
     /// By default, this will just continue without visiting the children of `node`
-    fn visit<V: MutWalkable<Self>>(
+    fn super_visit_mut<V: MutWalkable<Self>>(
         &self,
         a: &mut Self::State,
         node: &V,

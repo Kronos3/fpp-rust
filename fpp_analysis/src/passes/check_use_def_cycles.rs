@@ -93,7 +93,7 @@ impl<'ast> Visitor<'ast> for CheckUseDefCycles<'ast> {
     type Break = ();
     type State = Analysis<'ast>;
 
-    fn visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 
