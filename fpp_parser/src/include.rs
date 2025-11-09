@@ -1,10 +1,6 @@
 use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
-use fpp_ast::{
-    ComponentMember, DefComponent, DefModule, DefTopology, ModuleMember, MutVisitable, MutVisitor,
-    SpecInclude, SpecTlmPacket, SpecTlmPacketSet, TlmPacketMember, TlmPacketSetMember,
-    TopologyMember, TransUnit,
-};
+use fpp_ast::*;
 use fpp_core::{Position, SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
