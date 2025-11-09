@@ -1,5 +1,5 @@
 use crate::token::TokenKind;
-use fpp_core::{Diagnostic, Level, Span};
+use fpp_core::{Diagnostic, Level, Position, Span};
 use std::fmt::Formatter;
 
 #[derive(Debug)]
@@ -24,7 +24,7 @@ pub(crate) enum ParseError {
 
     IncludeCycle {
         span: Span,
-        include_path: Vec<String>,
+        include_cycle: Vec<Position>,
     },
 }
 
@@ -69,10 +69,10 @@ impl Into<Diagnostic> for ParseError {
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
             }
-            ParseError::IncludeCycle { span, include_path } => {
+            ParseError::IncludeCycle { span, include_cycle } => {
                 let diag = Diagnostic::spanned(span, Level::Error, "include cycle detected");
-                include_path.into_iter().fold(diag, |diag, path| {
-                    diag.note(format! {"included from {}", path})
+                include_cycle.into_iter().fold(diag, |diag, pos| {
+                    diag.note(format! {"included from {}", pos})
                 })
             }
         }

@@ -3,7 +3,7 @@ use crate::diagnostic::Level;
 use crate::file::SourceFile;
 use crate::interface::with;
 use crate::{BytePos, Spanned};
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Clone, Copy)]
 pub struct Span {
@@ -82,15 +82,6 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn start(source_file: SourceFile) -> Position {
-        Position {
-            pos: 0,
-            line: 0,
-            column: 0,
-            source_file,
-        }
-    }
-
     pub fn pos(&self) -> BytePos {
         self.pos
     }
@@ -103,6 +94,17 @@ impl Position {
     /// Get the zero indexed column number at this position in the source file
     pub fn column(&self) -> u32 {
         self.column
+    }
+}
+
+impl Display for Position {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{}:{}:{}",
+            self.source_file,
+            self.line + 1,
+            self.column + 1
+        ))
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
 use fpp_ast::{ComponentMember, DefComponent, DefModule, DefTopology, ModuleMember, MutVisitable, MutVisitor, SpecInclude, SpecTlmPacket, SpecTlmPacketSet, TlmPacketMember, TlmPacketSetMember, TopologyMember, TransUnit};
-use fpp_core::{SourceFile, Span, Spanned};
+use fpp_core::{Position, SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
 
@@ -16,7 +16,7 @@ impl ResolveSpecInclude {
         including_span: Span,
         including_path: String,
         loc_opt: Option<Span>,
-        mut visited_paths: Vec<String>,
+        mut visited_paths: Vec<Position>,
     ) -> ParseResult<()> {
         match loc_opt {
             None => Ok(()),
@@ -25,11 +25,11 @@ impl ResolveSpecInclude {
                 match path {
                     None => Ok(()),
                     Some(path) => {
-                        visited_paths.push(path.to_string());
+                        visited_paths.push(loc.start());
                         if path == including_path {
                             Err(ParseError::IncludeCycle {
                                 span: including_span,
-                                include_path: visited_paths.iter().map(|p| p.to_string()).collect(),
+                                include_cycle: visited_paths,
                             })
                         } else {
                             Self::check_loc_for_cycle(
@@ -52,7 +52,7 @@ impl ResolveSpecInclude {
                 including_span,
                 including_path.clone(),
                 Some(including_span),
-                vec![including_path],
+                vec![],
             ),
         }
     }
