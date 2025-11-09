@@ -30,7 +30,7 @@ fn run_test(file_path: &str) {
         // Parse the source
         let mut ast = parse(src, |p| p.trans_unit(), None);
         let mut source_files = HashSet::new();
-        let _ = ResolveSpecInclude {}.visit_trans_unit(&mut source_files, &mut ast);
+        let _ = ResolveSpecInclude::new().visit_trans_unit(&mut source_files, &mut ast);
         format!("{:#?}", ast)
     })
     .expect("compiler_error");
