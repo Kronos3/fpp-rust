@@ -52,6 +52,10 @@ pub mod semantics {
 mod test {
     mod lib;
 
+    mod defs {
+        mod test;
+    }
+
     mod cycles {
         mod test;
     }

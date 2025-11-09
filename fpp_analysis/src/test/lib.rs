@@ -47,13 +47,3 @@ pub(crate) fn run_test(file_path: &str) {
         }
     }
 }
-
-#[test]
-fn duplicate_symbols_single() {
-    run_test("duplicate-symbols-single")
-}
-
-#[test]
-fn duplicate_symbols_multi() {
-    run_test("duplicate-symbols-multi")
-}
