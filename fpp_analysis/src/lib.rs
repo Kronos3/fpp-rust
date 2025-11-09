@@ -16,8 +16,12 @@ pub mod passes {
 
     mod enter_symbols;
     pub use enter_symbols::*;
+
     mod check_uses;
     pub use check_uses::*;
+
+    mod check_use_def_cycles;
+    pub use check_use_def_cycles::*;
 }
 
 pub mod semantics {
@@ -36,6 +40,9 @@ pub mod semantics {
     mod name_groups;
     pub use name_groups::*;
 
+    mod use_def_matching;
+    pub use use_def_matching::*;
+
     mod generic_name_symbol_map;
     mod generic_nested_scope;
     mod generic_scope;
@@ -44,6 +51,11 @@ pub mod semantics {
 #[cfg(test)]
 mod test {
     mod lib;
+
+    mod cycles {
+        mod test;
+    }
+
     mod invalid_symbols {
         mod test;
     }

@@ -2,6 +2,12 @@ use crate::semantics::NameGroup;
 use fpp_core::{Diagnostic, Level, Span};
 
 #[derive(Debug)]
+pub struct SymbolUse {
+    pub def_loc: Span,
+    pub use_loc: Span,
+}
+
+#[derive(Debug)]
 pub enum SemanticError {
     RedefinedSymbol {
         /// Name of the symbol being redefined
@@ -21,6 +27,10 @@ pub enum SemanticError {
         msg: String,
         loc: Span,
         def_loc: Span,
+    },
+    UseDefCycle {
+        loc: Span,
+        cycle: Vec<SymbolUse>,
     },
 }
 
@@ -53,6 +63,13 @@ impl Into<Diagnostic> for SemanticError {
                 def_loc,
             } => Diagnostic::spanned(loc, Level::Error, msg)
                 .span_note(def_loc, format!("{} defined here", symbol_name)),
+            SemanticError::UseDefCycle { loc, cycle } => cycle.iter().fold(
+                Diagnostic::spanned(loc, Level::Error, "encountered symbol use-definition cycle"),
+                |out, suse| {
+                    out.span_note(suse.use_loc, "used here")
+                        .span_note(suse.def_loc, "defined here")
+                },
+            ),
         }
     }
 }

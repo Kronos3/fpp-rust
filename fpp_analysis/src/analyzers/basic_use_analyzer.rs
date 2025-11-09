@@ -15,7 +15,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of an interface instance (topology def or component instance def) */
     fn interface_instance_use(
@@ -23,7 +28,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of a constant definition or enumerated constant definition */
     fn constant_use(
@@ -31,7 +41,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &'ast Expr,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of a port definition */
     fn port_use(
@@ -39,7 +54,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of an interface definition */
     fn interface_use(
@@ -47,7 +67,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of a type definition */
     fn type_use(
@@ -55,7 +80,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 
     /** A use of a state machine definition*/
     fn state_machine_use(
@@ -63,7 +93,12 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
         a: &mut Analysis<'ast>,
         node: &QualIdent,
         name: QualifiedName,
-    ) -> ControlFlow<Self::Break>;
+    ) -> ControlFlow<Self::Break> {
+        let _ = a;
+        let _ = node;
+        let _ = name;
+        ControlFlow::Continue(())
+    }
 }
 
 pub struct BasicUseAnalyzer<'ast, V: UseAnalysisPass<'ast>> {
@@ -75,6 +110,24 @@ impl<'ast, V: UseAnalysisPass<'ast>> BasicUseAnalyzer<'ast, V> {
         BasicUseAnalyzer {
             super_: NestedAnalyzer::new(NestedAnalyzerMode::DEEP),
         }
+    }
+
+    pub(crate) fn expr_to_qualified_name(&self, e: &Expr) -> Option<QualifiedName> {
+        fn name_opt(e: &Expr, mut qualifier: VecDeque<String>) -> Option<QualifiedName> {
+            match &e.kind {
+                ExprKind::Ident(id) => {
+                    qualifier.push_front(id.clone());
+                    Some(qualifier.into())
+                }
+                ExprKind::Dot { e: e1, id } => {
+                    qualifier.push_back(id.data.clone());
+                    name_opt(e1.deref(), qualifier)
+                }
+                _ => None,
+            }
+        }
+
+        name_opt(e, VecDeque::new())
     }
 }
 
@@ -94,24 +147,7 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
             }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
-                    fn name_opt(
-                        e: &Expr,
-                        mut qualifier: VecDeque<String>,
-                    ) -> Option<QualifiedName> {
-                        match &e.kind {
-                            ExprKind::Ident(id) => {
-                                qualifier.push_front(id.clone());
-                                Some(qualifier.into())
-                            }
-                            ExprKind::Dot { e: e1, id } => {
-                                qualifier.push_back(id.data.clone());
-                                name_opt(e1.deref(), qualifier)
-                            }
-                            _ => None,
-                        }
-                    }
-
-                    match name_opt(&e, VecDeque::new()) {
+                    match self.expr_to_qualified_name(&e) {
                         // Assume the entire qualified identifier is a use
                         Some(use_) => visitor.constant_use(a, e, use_),
                         // This is some other type of dot expression (not a qual ident)

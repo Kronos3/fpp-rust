@@ -1,4 +1,4 @@
-use crate::semantics::{NestedScope, Scope, Symbol};
+use crate::semantics::{NestedScope, Scope, Symbol, UseDefMatching};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -10,6 +10,14 @@ pub struct Analysis<'ast> {
     pub symbol_scope_map: HashMap<Symbol<'ast>, Rc<RefCell<Scope<'ast>>>>,
     /** The mapping from uses (by node ID) to their definitions */
     pub use_def_map: HashMap<fpp_core::Node, Symbol<'ast>>,
+    /** The list of use-def matchings on the current use-def path.
+     *  Used during cycle analysis. */
+    pub use_def_matching_list: Vec<UseDefMatching<'ast>>,
+    /** The set of symbols visited so far */
+    pub visited_symbol_set: HashSet<Symbol<'ast>>,
+    /** The set of symbols on the current use-def path.
+     *  Used during cycle analysis. */
+    pub use_def_symbol_set: HashSet<Symbol<'ast>>,
     /** The current parent symbol */
     pub parent_symbol: Option<Symbol<'ast>>,
     /** The current nested scope for symbol lookup */
@@ -24,6 +32,9 @@ impl<'a> Analysis<'a> {
             parent_symbol_map: Default::default(),
             symbol_scope_map: Default::default(),
             use_def_map: Default::default(),
+            use_def_matching_list: vec![],
+            visited_symbol_set: Default::default(),
+            use_def_symbol_set: Default::default(),
             parent_symbol: None,
             nested_scope: NestedScope::new(Scope::new()),
             included_file_set: Default::default(),
