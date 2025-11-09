@@ -1,4 +1,4 @@
-use fpp_core::{Node};
+use fpp_core::Node;
 
 pub trait SymbolInterface<'ast>: Clone {
     fn node(&self) -> Node;

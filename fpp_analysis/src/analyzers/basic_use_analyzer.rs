@@ -83,14 +83,14 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
         match node {
             Node::DefComponentInstance(ci) => {
                 visitor.component_use(a, &ci.component, (&ci.component).into())?;
-                ci.walk_ref(a, visitor)
+                ci.walk(a, visitor)
             }
             Node::DefTopology(t) => {
                 for i in &t.implements {
                     visitor.interface_instance_use(a, i, i.into())?;
                 }
 
-                t.walk_ref(a, visitor)
+                t.walk(a, visitor)
             }
             Node::Expr(e) => match &e.kind {
                 ExprKind::Dot { e: e1, .. } => {
@@ -127,7 +127,7 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
             }
             Node::SpecStateMachineInstance(si) => {
                 visitor.state_machine_use(a, &si.state_machine, (&si.state_machine).into())?;
-                si.walk_ref(a, visitor)
+                si.walk(a, visitor)
             }
             Node::SpecConnectionGraph(cg) => {
                 match &cg.kind {

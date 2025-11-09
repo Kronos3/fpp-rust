@@ -47,7 +47,7 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> Analyzer<'ast, V> for Neste
 
                 let sym_scope = a.symbol_scope_map.get(&Symbol::Enum(def)).unwrap().clone();
                 a.nested_scope.push(sym_scope);
-                let out = def.constants.walk_ref(a, visitor);
+                let out = def.constants.walk(a, visitor);
                 a.nested_scope.pop();
                 out?;
 

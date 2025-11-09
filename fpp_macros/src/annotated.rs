@@ -21,7 +21,7 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                             node_id_field,
                             "node_id member is not fpp_core::Node",
                         )
-                            .to_compile_error();
+                        .to_compile_error();
                         return err.into();
                     }
                 }
@@ -30,7 +30,7 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                         input,
                         "`annotated` must be placed after `ast_node`",
                     )
-                        .to_compile_error();
+                    .to_compile_error();
                     return err.into();
                 }
             }
@@ -57,7 +57,7 @@ pub(crate) fn annotated_struct(input: &ItemStruct) -> TokenStream {
                 input,
                 "#[ast_node] only supports structs with named fields (braced structs).",
             )
-                .to_compile_error();
+            .to_compile_error();
             return err.into();
         }
     };
@@ -111,7 +111,7 @@ pub(crate) fn annotated_enum(input: &ItemEnum) -> TokenStream {
                         var_ident
                     ),
                 )
-                    .to_compile_error();
+                .to_compile_error();
                 return err.into();
             }
         }

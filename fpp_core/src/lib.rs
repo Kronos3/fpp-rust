@@ -1,10 +1,10 @@
 mod context;
 mod diagnostic;
-mod file;
-mod span;
-mod node;
-mod interface;
 mod error;
+mod file;
+mod interface;
+mod node;
+mod span;
 
 pub use context::*;
 pub use diagnostic::*;

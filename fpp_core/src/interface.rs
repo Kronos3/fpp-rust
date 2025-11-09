@@ -1,4 +1,4 @@
-use crate::context::{CompilerContext};
+use crate::context::CompilerContext;
 use crate::error::Error;
 use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
 use std::cell::{Cell, Ref, RefCell};

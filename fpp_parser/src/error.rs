@@ -69,7 +69,10 @@ impl Into<Diagnostic> for ParseError {
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
             }
-            ParseError::IncludeCycle { span, include_cycle } => {
+            ParseError::IncludeCycle {
+                span,
+                include_cycle,
+            } => {
                 let diag = Diagnostic::spanned(span, Level::Error, "include cycle detected");
                 include_cycle.into_iter().fold(diag, |diag, pos| {
                     diag.note(format! {"included from {}", pos})

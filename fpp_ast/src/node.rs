@@ -1,10 +1,10 @@
-use fpp_macros::DirectRefWalkable;
 use crate::*;
+use fpp_macros::DirectRefWalkable;
 
 /// This enum is a super variant of all the types of nodes in the AST
 /// This allows implementing highly generic visitors that can just match
 /// recursively on any node in the AST.
-/// 
+///
 /// This allows for composing together "analyzers" which look at various
 /// parts of the AST and build .
 #[derive(Debug, Clone, Copy, DirectRefWalkable)]

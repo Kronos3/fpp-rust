@@ -46,8 +46,12 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
     type Break = ();
     type State = Analysis<'ast>;
 
-    fn visit_trans_unit(&self, a: &mut Self::State, node: &'ast TransUnit) -> ControlFlow<Self::Break> {
-        node.walk_ref(a, self)
+    fn visit_trans_unit(
+        &self,
+        a: &mut Self::State,
+        node: &'ast TransUnit,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
     }
 
     fn visit_def_abs_type(
@@ -117,7 +121,7 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
 
         let save_paren = a.parent_symbol;
         a.parent_symbol = Some(sym);
-        let res = def.walk_ref(a, self);
+        let res = def.walk(a, self);
         a.parent_symbol = save_paren;
         a.nested_scope.pop();
 
@@ -154,7 +158,7 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
 
         let save_paren = a.parent_symbol;
         a.parent_symbol = Some(sym);
-        let res = def.walk_ref(a, self);
+        let res = def.walk(a, self);
         a.parent_symbol = save_paren;
         a.nested_scope.pop();
 
@@ -241,7 +245,7 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
 
         let save_paren = a.parent_symbol;
         a.parent_symbol = Some(sym);
-        let res = def.walk_ref(a, self);
+        let res = def.walk(a, self);
         a.parent_symbol = save_paren;
 
         a.nested_scope.pop();

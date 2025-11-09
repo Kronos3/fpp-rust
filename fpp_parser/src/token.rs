@@ -220,7 +220,7 @@ impl Token {
         file: SourceFile,
         start: BytePos,
         length: BytePos,
-        include_span: Option<Span>
+        include_span: Option<Span>,
     ) -> Token {
         Token {
             kind,

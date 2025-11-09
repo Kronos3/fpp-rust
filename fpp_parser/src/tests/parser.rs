@@ -1,10 +1,10 @@
 use crate::{parse, ResolveSpecInclude};
 use fpp_ast::MutVisitor;
 use fpp_core::SourceFile;
+use pretty_assertions::assert_eq;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::{env, fs};
-use pretty_assertions::{assert_eq};
 
 fn run_test(file_path: &str) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

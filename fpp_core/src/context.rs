@@ -57,9 +57,9 @@ impl SourceFileData {
             Ok(line_idx) => match line_idx {
                 0 => 0,
                 _ => line_idx - 1,
-            }
+            },
             // Somewhere in the middle of the last
-            Err(line_insertion_point) => line_insertion_point - 1
+            Err(line_insertion_point) => line_insertion_point - 1,
         };
         let line_offset = *self.lines.get(line).unwrap();
 

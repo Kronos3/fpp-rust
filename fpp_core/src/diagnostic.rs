@@ -18,7 +18,7 @@ pub enum Level {
 #[derive(Clone, Debug)]
 pub enum DiagnosticMessageKind {
     Primary,
-    Note
+    Note,
 }
 
 #[derive(Clone, Debug)]
@@ -40,7 +40,7 @@ pub struct Diagnostic {
 macro_rules! diagnostic_child_methods {
     ($spanned:ident, $regular:ident, $kind:expr) => {
         #[doc = concat!("Adds a new child diagnostics message to `self` with the [`",
-                        stringify!($kind), "`] level, and the given `span` and `message`.")]
+                                stringify!($kind), "`] level, and the given `span` and `message`.")]
         pub fn $spanned<S, T>(mut self, span: S, message: T) -> Diagnostic
         where
             S: Spanned,
@@ -55,12 +55,12 @@ macro_rules! diagnostic_child_methods {
         }
 
         #[doc = concat!("Adds a new child diagnostic message to `self` with the [`",
-                        stringify!($kind), "`] level, and the given `message`.")]
+                                stringify!($kind), "`] level, and the given `message`.")]
         pub fn $regular<T: Into<String>>(mut self, message: T) -> Diagnostic {
             self.children.push(DiagnosticMessage {
                 kind: $kind,
                 message: message.into(),
-                span: None
+                span: None,
             });
             self
         }
