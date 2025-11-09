@@ -57,12 +57,12 @@
             ),
             node_id: Span {
                 start: [ local path prefix ]/comments.fpp:9:4,
-                end: [ local path prefix ]/comments.fpp:10:1,
+                end: [ local path prefix ]/comments.fpp:9:5,
             },
         },
         node_id: Span {
             start: [ local path prefix ]/comments.fpp:8:2,
-            end: [ local path prefix ]/comments.fpp:10:1,
+            end: [ local path prefix ]/comments.fpp:9:5,
         },
     },
     DefConstant {
@@ -79,12 +79,12 @@
             ),
             node_id: Span {
                 start: [ local path prefix ]/comments.fpp:13:4,
-                end: [ local path prefix ]/comments.fpp:14:1,
+                end: [ local path prefix ]/comments.fpp:13:5,
             },
         },
         node_id: Span {
             start: [ local path prefix ]/comments.fpp:11:2,
-            end: [ local path prefix ]/comments.fpp:14:1,
+            end: [ local path prefix ]/comments.fpp:13:5,
         },
     },
     DefConstant {
@@ -101,12 +101,12 @@
             ),
             node_id: Span {
                 start: [ local path prefix ]/comments.fpp:17:15,
-                end: [ local path prefix ]/comments.fpp:18:1,
+                end: [ local path prefix ]/comments.fpp:17:16,
             },
         },
         node_id: Span {
             start: [ local path prefix ]/comments.fpp:17:2,
-            end: [ local path prefix ]/comments.fpp:18:1,
+            end: [ local path prefix ]/comments.fpp:17:16,
         },
         pre_annotation: [
             "Constant",

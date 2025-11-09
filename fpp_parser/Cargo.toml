@@ -10,3 +10,4 @@ fpp_ast = { path = "../fpp_ast" }
 
 [dev-dependencies]
 fpp_errors = { path = "../fpp_errors" }
+pretty_assertions = "1.4.1"

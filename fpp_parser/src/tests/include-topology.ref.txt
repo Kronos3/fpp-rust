@@ -13,12 +13,12 @@
                     data: "x",
                     node_id: Span {
                         start: [ local path prefix ]/instance.fppi:2:11,
-                        end: [ local path prefix ]/instance.fppi:3:1,
+                        end: [ local path prefix ]/instance.fppi:2:12,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/instance.fppi:2:2,
-                    end: [ local path prefix ]/instance.fppi:3:1,
+                    end: [ local path prefix ]/instance.fppi:2:12,
                 },
                 pre_annotation: [
                     "Included instance",
@@ -31,7 +31,7 @@
         implements: [],
         node_id: Span {
             start: [ local path prefix ]/include-topology.fpp:1:1,
-            end: [ local path prefix ]/include-topology.fpp:5:1,
+            end: [ local path prefix ]/include-topology.fpp:5:3,
         },
     },
 ]

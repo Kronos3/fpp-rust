@@ -2,7 +2,7 @@ use fpp_core::SourceFile;
 use std::path::PathBuf;
 use std::{env, fs};
 
-fn run_test(file_path: &str) {
+pub(crate) fn run_test(file_path: &str) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("src/test");
 

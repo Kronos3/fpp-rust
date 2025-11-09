@@ -362,19 +362,9 @@ impl<'a> Lexer<'a> {
                 // Check the next token
                 // Some tokens eat newlines and others don't
                 match self.first() {
-                    ')' => {
-                        self.bump();
-                        RightParen
-                    }
-                    ']' => {
-                        self.bump();
-                        RightSquare
-                    }
-                    '}' => {
-                        self.bump();
-                        RightCurly
-                    }
-
+                    ')' => Whitespace,
+                    ']' => Whitespace,
+                    '}' => Whitespace,
                     _ => Eol,
                 }
             }
@@ -449,7 +439,10 @@ impl<'a> Lexer<'a> {
                 LeftCurly
             }
 
-            '[' => LeftSquare,
+            '[' => {
+                self.eat_newlines();
+                LeftSquare
+            }
 
             ')' => RightParen,
             ']' => RightSquare,

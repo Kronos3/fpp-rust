@@ -13,12 +13,12 @@
                     data: "T",
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:5:9,
-                        end: [ local path prefix ]/syntax.fpp:6:1,
+                        end: [ local path prefix ]/syntax.fpp:5:10,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:5:4,
-                    end: [ local path prefix ]/syntax.fpp:6:1,
+                    end: [ local path prefix ]/syntax.fpp:5:10,
                 },
                 pre_annotation: [
                     "Abstract type definition",
@@ -41,18 +41,18 @@
                             data: "T",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:9:14,
-                                end: [ local path prefix ]/syntax.fpp:10:1,
+                                end: [ local path prefix ]/syntax.fpp:9:15,
                             },
                         },
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:9:14,
-                        end: [ local path prefix ]/syntax.fpp:10:1,
+                        end: [ local path prefix ]/syntax.fpp:9:15,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:9:4,
-                    end: [ local path prefix ]/syntax.fpp:10:1,
+                    end: [ local path prefix ]/syntax.fpp:9:15,
                 },
                 pre_annotation: [
                     "Type alias definition",
@@ -103,13 +103,13 @@
                         data: "{} counts",
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:13:40,
-                            end: [ local path prefix ]/syntax.fpp:14:1,
+                            end: [ local path prefix ]/syntax.fpp:13:51,
                         },
                     },
                 ),
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:13:4,
-                    end: [ local path prefix ]/syntax.fpp:14:1,
+                    end: [ local path prefix ]/syntax.fpp:13:51,
                 },
                 pre_annotation: [
                     "Array definition",
@@ -123,13 +123,13 @@
                     data: "SO",
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:17:18,
-                        end: [ local path prefix ]/syntax.fpp:18:1,
+                        end: [ local path prefix ]/syntax.fpp:17:20,
                     },
                 },
                 members: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:17:4,
-                    end: [ local path prefix ]/syntax.fpp:18:1,
+                    end: [ local path prefix ]/syntax.fpp:17:20,
                 },
                 pre_annotation: [
                     "State machine outside a component",
@@ -194,7 +194,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:23:6,
-                            end: [ local path prefix ]/syntax.fpp:24:1,
+                            end: [ local path prefix ]/syntax.fpp:23:51,
                         },
                         pre_annotation: [
                             "General port instance specifier",
@@ -210,14 +210,14 @@
                             data: "cmdIn",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:27:24,
-                                end: [ local path prefix ]/syntax.fpp:28:1,
+                                end: [ local path prefix ]/syntax.fpp:27:29,
                             },
                         },
                         priority: None,
                         queue_full: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:27:6,
-                            end: [ local path prefix ]/syntax.fpp:28:1,
+                            end: [ local path prefix ]/syntax.fpp:27:29,
                         },
                         pre_annotation: [
                             "Special port instance specifier",
@@ -231,12 +231,12 @@
                             data: "J",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:31:13,
-                                end: [ local path prefix ]/syntax.fpp:32:1,
+                                end: [ local path prefix ]/syntax.fpp:31:14,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:31:6,
-                            end: [ local path prefix ]/syntax.fpp:32:1,
+                            end: [ local path prefix ]/syntax.fpp:31:14,
                         },
                         pre_annotation: [
                             "Interface import specifier",
@@ -248,7 +248,7 @@
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:21:4,
-                    end: [ local path prefix ]/syntax.fpp:34:1,
+                    end: [ local path prefix ]/syntax.fpp:33:5,
                 },
                 pre_annotation: [
                     "Interface definition",
@@ -272,12 +272,12 @@
                             data: "T",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:39:11,
-                                end: [ local path prefix ]/syntax.fpp:40:1,
+                                end: [ local path prefix ]/syntax.fpp:39:12,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:39:6,
-                            end: [ local path prefix ]/syntax.fpp:40:1,
+                            end: [ local path prefix ]/syntax.fpp:39:12,
                         },
                     },
                     DefArray {
@@ -303,14 +303,14 @@
                             ),
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:40:20,
-                                end: [ local path prefix ]/syntax.fpp:41:1,
+                                end: [ local path prefix ]/syntax.fpp:40:23,
                             },
                         },
                         default: None,
                         format: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:40:6,
-                            end: [ local path prefix ]/syntax.fpp:41:1,
+                            end: [ local path prefix ]/syntax.fpp:40:23,
                         },
                     },
                     DefStruct {
@@ -408,7 +408,7 @@
                         default: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:41:6,
-                            end: [ local path prefix ]/syntax.fpp:42:1,
+                            end: [ local path prefix ]/syntax.fpp:41:48,
                         },
                     },
                     DefEnum {
@@ -471,13 +471,13 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:42:33,
-                                    end: [ local path prefix ]/syntax.fpp:43:1,
+                                    end: [ local path prefix ]/syntax.fpp:42:34,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:42:6,
-                            end: [ local path prefix ]/syntax.fpp:43:1,
+                            end: [ local path prefix ]/syntax.fpp:42:34,
                         },
                     },
                     SpecContainer {
@@ -506,13 +506,13 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:45:51,
-                                    end: [ local path prefix ]/syntax.fpp:46:1,
+                                    end: [ local path prefix ]/syntax.fpp:45:53,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:45:6,
-                            end: [ local path prefix ]/syntax.fpp:46:1,
+                            end: [ local path prefix ]/syntax.fpp:45:53,
                         },
                         pre_annotation: [
                             "Container specifier",
@@ -546,13 +546,13 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:49:37,
-                                    end: [ local path prefix ]/syntax.fpp:50:1,
+                                    end: [ local path prefix ]/syntax.fpp:49:41,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:49:6,
-                            end: [ local path prefix ]/syntax.fpp:50:1,
+                            end: [ local path prefix ]/syntax.fpp:49:41,
                         },
                         pre_annotation: [
                             "Record specifier",
@@ -645,7 +645,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:53:6,
-                            end: [ local path prefix ]/syntax.fpp:54:1,
+                            end: [ local path prefix ]/syntax.fpp:53:68,
                         },
                         pre_annotation: [
                             "Command specifier",
@@ -711,14 +711,14 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:57:74,
-                                    end: [ local path prefix ]/syntax.fpp:58:1,
+                                    end: [ local path prefix ]/syntax.fpp:57:78,
                                 },
                             },
                         ),
                         is_external: true,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:57:6,
-                            end: [ local path prefix ]/syntax.fpp:58:1,
+                            end: [ local path prefix ]/syntax.fpp:57:78,
                         },
                         pre_annotation: [
                             "Parameter specifier",
@@ -774,7 +774,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:61:6,
-                            end: [ local path prefix ]/syntax.fpp:62:1,
+                            end: [ local path prefix ]/syntax.fpp:61:51,
                         },
                         pre_annotation: [
                             "General port instance specifier",
@@ -790,14 +790,14 @@
                             data: "cmdIn",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:65:24,
-                                end: [ local path prefix ]/syntax.fpp:66:1,
+                                end: [ local path prefix ]/syntax.fpp:65:29,
                             },
                         },
                         priority: None,
                         queue_full: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:65:6,
-                            end: [ local path prefix ]/syntax.fpp:66:1,
+                            end: [ local path prefix ]/syntax.fpp:65:29,
                         },
                         pre_annotation: [
                             "Special port instance specifier",
@@ -834,7 +834,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:69:6,
-                            end: [ local path prefix ]/syntax.fpp:70:1,
+                            end: [ local path prefix ]/syntax.fpp:69:62,
                         },
                         pre_annotation: [
                             "Async product receive port",
@@ -848,13 +848,13 @@
                             data: "S",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:73:20,
-                                end: [ local path prefix ]/syntax.fpp:74:1,
+                                end: [ local path prefix ]/syntax.fpp:73:21,
                             },
                         },
                         members: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:73:6,
-                            end: [ local path prefix ]/syntax.fpp:74:1,
+                            end: [ local path prefix ]/syntax.fpp:73:21,
                         },
                         pre_annotation: [
                             "Internal Component State machine definition",
@@ -894,7 +894,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:77:6,
-                            end: [ local path prefix ]/syntax.fpp:78:1,
+                            end: [ local path prefix ]/syntax.fpp:77:51,
                         },
                         pre_annotation: [
                             "State machine instance 1",
@@ -915,14 +915,14 @@
                             data: "S",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:81:33,
-                                end: [ local path prefix ]/syntax.fpp:82:1,
+                                end: [ local path prefix ]/syntax.fpp:81:34,
                             },
                         },
                         priority: None,
                         queue_full: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:81:6,
-                            end: [ local path prefix ]/syntax.fpp:82:1,
+                            end: [ local path prefix ]/syntax.fpp:81:34,
                         },
                         pre_annotation: [
                             "State machine instance 2",
@@ -943,14 +943,14 @@
                             data: "SO",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:85:33,
-                                end: [ local path prefix ]/syntax.fpp:86:1,
+                                end: [ local path prefix ]/syntax.fpp:85:35,
                             },
                         },
                         priority: None,
                         queue_full: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:85:6,
-                            end: [ local path prefix ]/syntax.fpp:86:1,
+                            end: [ local path prefix ]/syntax.fpp:85:35,
                         },
                         pre_annotation: [
                             "State machine for outside definition",
@@ -984,7 +984,7 @@
                                 data: "P",
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:88:27,
-                                    end: [ local path prefix ]/syntax.fpp:89:1,
+                                    end: [ local path prefix ]/syntax.fpp:88:28,
                                 },
                             },
                         ),
@@ -992,7 +992,7 @@
                         queue_full: None,
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:88:6,
-                            end: [ local path prefix ]/syntax.fpp:89:1,
+                            end: [ local path prefix ]/syntax.fpp:88:28,
                         },
                     },
                     SpecPortMatching {
@@ -1007,12 +1007,12 @@
                             data: "p2",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:90:20,
-                                end: [ local path prefix ]/syntax.fpp:91:1,
+                                end: [ local path prefix ]/syntax.fpp:90:22,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:90:6,
-                            end: [ local path prefix ]/syntax.fpp:91:1,
+                            end: [ local path prefix ]/syntax.fpp:90:22,
                         },
                         pre_annotation: [
                             "Port matching specifier",
@@ -1163,7 +1163,7 @@
                         ],
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:94:6,
-                            end: [ local path prefix ]/syntax.fpp:97:1,
+                            end: [ local path prefix ]/syntax.fpp:96:45,
                         },
                         pre_annotation: [
                             "Telemetry channel specifier",
@@ -1255,19 +1255,19 @@
                                     ),
                                     node_id: Span {
                                         start: [ local path prefix ]/syntax.fpp:100:88,
-                                        end: [ local path prefix ]/syntax.fpp:101:1,
+                                        end: [ local path prefix ]/syntax.fpp:100:90,
                                     },
                                 },
                                 every: None,
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:100:79,
-                                    end: [ local path prefix ]/syntax.fpp:101:1,
+                                    end: [ local path prefix ]/syntax.fpp:100:90,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:100:6,
-                            end: [ local path prefix ]/syntax.fpp:101:1,
+                            end: [ local path prefix ]/syntax.fpp:100:90,
                         },
                         pre_annotation: [
                             "Event specifier",
@@ -1392,19 +1392,19 @@
                                         ),
                                         node_id: Span {
                                             start: [ local path prefix ]/syntax.fpp:104:99,
-                                            end: [ local path prefix ]/syntax.fpp:105:1,
+                                            end: [ local path prefix ]/syntax.fpp:104:111,
                                         },
                                     },
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:104:81,
-                                    end: [ local path prefix ]/syntax.fpp:105:1,
+                                    end: [ local path prefix ]/syntax.fpp:104:111,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:104:6,
-                            end: [ local path prefix ]/syntax.fpp:105:1,
+                            end: [ local path prefix ]/syntax.fpp:104:111,
                         },
                         pre_annotation: [
                             "Event specifier with throttle timeout",
@@ -1485,7 +1485,7 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:108:6,
-                            end: [ local path prefix ]/syntax.fpp:109:1,
+                            end: [ local path prefix ]/syntax.fpp:108:56,
                         },
                         pre_annotation: [
                             "Internal port specifier",
@@ -1499,12 +1499,12 @@
                             data: "I",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:112:13,
-                                end: [ local path prefix ]/syntax.fpp:113:1,
+                                end: [ local path prefix ]/syntax.fpp:112:14,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:112:6,
-                            end: [ local path prefix ]/syntax.fpp:113:1,
+                            end: [ local path prefix ]/syntax.fpp:112:14,
                         },
                         pre_annotation: [
                             "Interface import specifier",
@@ -1516,7 +1516,7 @@
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:37:4,
-                    end: [ local path prefix ]/syntax.fpp:115:1,
+                    end: [ local path prefix ]/syntax.fpp:114:5,
                 },
                 pre_annotation: [
                     "Component definition",
@@ -1546,7 +1546,7 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:118:28,
-                        end: [ local path prefix ]/syntax.fpp:119:1,
+                        end: [ local path prefix ]/syntax.fpp:118:33,
                     },
                 },
                 impl_type: None,
@@ -1558,7 +1558,7 @@
                 init_specs: [],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:118:4,
-                    end: [ local path prefix ]/syntax.fpp:119:1,
+                    end: [ local path prefix ]/syntax.fpp:118:33,
                 },
                 pre_annotation: [
                     "Simple component instance definition",
@@ -1668,12 +1668,12 @@
                             data: "\"\"\n    line 1\n      line 2\n    line 3\n    \"\"",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:124:25,
-                                end: [ local path prefix ]/syntax.fpp:129:1,
+                                end: [ local path prefix ]/syntax.fpp:128:9,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:124:6,
-                            end: [ local path prefix ]/syntax.fpp:129:1,
+                            end: [ local path prefix ]/syntax.fpp:128:9,
                         },
                         pre_annotation: [
                             "Init specifier",
@@ -1685,7 +1685,7 @@
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:122:4,
-                    end: [ local path prefix ]/syntax.fpp:131:1,
+                    end: [ local path prefix ]/syntax.fpp:130:5,
                 },
                 pre_annotation: [
                     "Component instance definition",
@@ -1708,12 +1708,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:134:17,
-                        end: [ local path prefix ]/syntax.fpp:135:1,
+                        end: [ local path prefix ]/syntax.fpp:134:18,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:134:4,
-                    end: [ local path prefix ]/syntax.fpp:135:1,
+                    end: [ local path prefix ]/syntax.fpp:134:18,
                 },
                 pre_annotation: [
                     "Constant definition",
@@ -1757,13 +1757,13 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:140:10,
-                                    end: [ local path prefix ]/syntax.fpp:141:1,
+                                    end: [ local path prefix ]/syntax.fpp:140:11,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:140:6,
-                            end: [ local path prefix ]/syntax.fpp:141:1,
+                            end: [ local path prefix ]/syntax.fpp:140:11,
                         },
                         pre_annotation: [
                             "X",
@@ -1787,13 +1787,13 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:143:10,
-                                    end: [ local path prefix ]/syntax.fpp:144:1,
+                                    end: [ local path prefix ]/syntax.fpp:143:11,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:143:6,
-                            end: [ local path prefix ]/syntax.fpp:144:1,
+                            end: [ local path prefix ]/syntax.fpp:143:11,
                         },
                         pre_annotation: [
                             "Y",
@@ -1806,7 +1806,7 @@
                 default: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:138:4,
-                    end: [ local path prefix ]/syntax.fpp:146:1,
+                    end: [ local path prefix ]/syntax.fpp:145:5,
                 },
                 pre_annotation: [
                     "Enum definition",
@@ -1838,18 +1838,18 @@
                             ),
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:151:19,
-                                end: [ local path prefix ]/syntax.fpp:152:1,
+                                end: [ local path prefix ]/syntax.fpp:151:20,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:151:6,
-                            end: [ local path prefix ]/syntax.fpp:152:1,
+                            end: [ local path prefix ]/syntax.fpp:151:20,
                         },
                     },
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:149:4,
-                    end: [ local path prefix ]/syntax.fpp:153:1,
+                    end: [ local path prefix ]/syntax.fpp:153:5,
                 },
                 pre_annotation: [
                     "Module definition",
@@ -1872,12 +1872,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/constant.fppi:2:15,
-                        end: [ local path prefix ]/constant.fppi:3:1,
+                        end: [ local path prefix ]/constant.fppi:2:16,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/constant.fppi:2:2,
-                    end: [ local path prefix ]/constant.fppi:3:1,
+                    end: [ local path prefix ]/constant.fppi:2:16,
                 },
                 pre_annotation: [
                     "Included constant",
@@ -1949,13 +1949,13 @@
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:161:30,
-                            end: [ local path prefix ]/syntax.fpp:162:1,
+                            end: [ local path prefix ]/syntax.fpp:161:33,
                         },
                     },
                 ),
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:161:4,
-                    end: [ local path prefix ]/syntax.fpp:162:1,
+                    end: [ local path prefix ]/syntax.fpp:161:33,
                 },
                 pre_annotation: [
                     "Port definition",
@@ -1996,13 +1996,13 @@
                                 data: "{} s",
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:167:20,
-                                    end: [ local path prefix ]/syntax.fpp:168:1,
+                                    end: [ local path prefix ]/syntax.fpp:167:26,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:167:6,
-                            end: [ local path prefix ]/syntax.fpp:168:1,
+                            end: [ local path prefix ]/syntax.fpp:167:26,
                         },
                         pre_annotation: [
                             "x",
@@ -2034,13 +2034,13 @@
                                 data: "{} m/s",
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:170:20,
-                                    end: [ local path prefix ]/syntax.fpp:171:1,
+                                    end: [ local path prefix ]/syntax.fpp:170:28,
                                 },
                             },
                         ),
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:170:6,
-                            end: [ local path prefix ]/syntax.fpp:171:1,
+                            end: [ local path prefix ]/syntax.fpp:170:28,
                         },
                         pre_annotation: [
                             "y",
@@ -2053,7 +2053,7 @@
                 default: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:165:4,
-                    end: [ local path prefix ]/syntax.fpp:173:1,
+                    end: [ local path prefix ]/syntax.fpp:172:5,
                 },
                 pre_annotation: [
                     "Struct definition",
@@ -2076,12 +2076,12 @@
                             data: "i1",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:179:15,
-                                end: [ local path prefix ]/syntax.fpp:180:1,
+                                end: [ local path prefix ]/syntax.fpp:179:17,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:179:6,
-                            end: [ local path prefix ]/syntax.fpp:180:1,
+                            end: [ local path prefix ]/syntax.fpp:179:17,
                         },
                         pre_annotation: [
                             "Public instance specifier",
@@ -2166,7 +2166,7 @@
                                     ),
                                     node_id: Span {
                                         start: [ local path prefix ]/syntax.fpp:184:8,
-                                        end: [ local path prefix ]/syntax.fpp:185:1,
+                                        end: [ local path prefix ]/syntax.fpp:184:26,
                                     },
                                 },
                                 Connection {
@@ -2235,7 +2235,7 @@
                                     ),
                                     node_id: Span {
                                         start: [ local path prefix ]/syntax.fpp:185:8,
-                                        end: [ local path prefix ]/syntax.fpp:186:1,
+                                        end: [ local path prefix ]/syntax.fpp:185:38,
                                     },
                                 },
                                 Connection {
@@ -2273,25 +2273,25 @@
                                             data: "p2",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:186:30,
-                                                end: [ local path prefix ]/syntax.fpp:187:1,
+                                                end: [ local path prefix ]/syntax.fpp:186:32,
                                             },
                                         },
                                         node_id: Span {
                                             start: [ local path prefix ]/syntax.fpp:186:27,
-                                            end: [ local path prefix ]/syntax.fpp:187:1,
+                                            end: [ local path prefix ]/syntax.fpp:186:32,
                                         },
                                     },
                                     to_index: None,
                                     node_id: Span {
                                         start: [ local path prefix ]/syntax.fpp:186:8,
-                                        end: [ local path prefix ]/syntax.fpp:187:1,
+                                        end: [ local path prefix ]/syntax.fpp:186:32,
                                     },
                                 },
                             ],
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:183:6,
-                            end: [ local path prefix ]/syntax.fpp:187:2,
+                            end: [ local path prefix ]/syntax.fpp:187:7,
                         },
                         pre_annotation: [
                             "Direct connection graph specifier",
@@ -2336,7 +2336,7 @@
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:191:6,
-                            end: [ local path prefix ]/syntax.fpp:192:1,
+                            end: [ local path prefix ]/syntax.fpp:191:52,
                         },
                         pre_annotation: [
                             "Graph pattern specifier",
@@ -2350,12 +2350,12 @@
                             data: "T1",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:195:13,
-                                end: [ local path prefix ]/syntax.fpp:196:1,
+                                end: [ local path prefix ]/syntax.fpp:195:15,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:195:6,
-                            end: [ local path prefix ]/syntax.fpp:196:1,
+                            end: [ local path prefix ]/syntax.fpp:195:15,
                         },
                         pre_annotation: [
                             "Topology instance specifier",
@@ -2414,12 +2414,12 @@
                                             data: "c1",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:203:13,
-                                                end: [ local path prefix ]/syntax.fpp:204:1,
+                                                end: [ local path prefix ]/syntax.fpp:203:15,
                                             },
                                         },
                                         node_id: Span {
                                             start: [ local path prefix ]/syntax.fpp:203:10,
-                                            end: [ local path prefix ]/syntax.fpp:204:1,
+                                            end: [ local path prefix ]/syntax.fpp:203:15,
                                         },
                                     },
                                     TlmChannelIdentifier {
@@ -2434,18 +2434,18 @@
                                             data: "c2",
                                             node_id: Span {
                                                 start: [ local path prefix ]/syntax.fpp:204:13,
-                                                end: [ local path prefix ]/syntax.fpp:205:1,
+                                                end: [ local path prefix ]/syntax.fpp:204:15,
                                             },
                                         },
                                         node_id: Span {
                                             start: [ local path prefix ]/syntax.fpp:204:10,
-                                            end: [ local path prefix ]/syntax.fpp:205:1,
+                                            end: [ local path prefix ]/syntax.fpp:204:15,
                                         },
                                     },
                                 ],
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:202:8,
-                                    end: [ local path prefix ]/syntax.fpp:205:2,
+                                    end: [ local path prefix ]/syntax.fpp:205:9,
                                 },
                                 pre_annotation: [
                                     "Telemetry packet",
@@ -2495,12 +2495,12 @@
                                             data: "c4",
                                             node_id: Span {
                                                 start: [ local path prefix ]/packet.fppi:3:7,
-                                                end: [ local path prefix ]/packet.fppi:4:1,
+                                                end: [ local path prefix ]/packet.fppi:3:9,
                                             },
                                         },
                                         node_id: Span {
                                             start: [ local path prefix ]/packet.fppi:3:4,
-                                            end: [ local path prefix ]/packet.fppi:4:1,
+                                            end: [ local path prefix ]/packet.fppi:3:9,
                                         },
                                     },
                                     TlmChannelIdentifier {
@@ -2515,18 +2515,18 @@
                                             data: "c5",
                                             node_id: Span {
                                                 start: [ local path prefix ]/channel.fppi:1:4,
-                                                end: [ local path prefix ]/channel.fppi:2:1,
+                                                end: [ local path prefix ]/channel.fppi:1:6,
                                             },
                                         },
                                         node_id: Span {
                                             start: [ local path prefix ]/channel.fppi:1:1,
-                                            end: [ local path prefix ]/channel.fppi:2:1,
+                                            end: [ local path prefix ]/channel.fppi:1:6,
                                         },
                                     },
                                 ],
                                 node_id: Span {
                                     start: [ local path prefix ]/packet.fppi:2:2,
-                                    end: [ local path prefix ]/packet.fppi:5:2,
+                                    end: [ local path prefix ]/packet.fppi:5:3,
                                 },
                                 pre_annotation: [
                                     "Included packet",
@@ -2549,18 +2549,18 @@
                                     data: "c3",
                                     node_id: Span {
                                         start: [ local path prefix ]/syntax.fpp:213:11,
-                                        end: [ local path prefix ]/syntax.fpp:214:1,
+                                        end: [ local path prefix ]/syntax.fpp:213:13,
                                     },
                                 },
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:213:8,
-                                    end: [ local path prefix ]/syntax.fpp:214:1,
+                                    end: [ local path prefix ]/syntax.fpp:213:13,
                                 },
                             },
                         ],
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:199:6,
-                            end: [ local path prefix ]/syntax.fpp:214:2,
+                            end: [ local path prefix ]/syntax.fpp:214:7,
                         },
                         pre_annotation: [
                             "Telemetry packet group",
@@ -2589,17 +2589,17 @@
                                 data: "a",
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:218:17,
-                                    end: [ local path prefix ]/syntax.fpp:219:1,
+                                    end: [ local path prefix ]/syntax.fpp:218:18,
                                 },
                             },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:218:15,
-                                end: [ local path prefix ]/syntax.fpp:219:1,
+                                end: [ local path prefix ]/syntax.fpp:218:18,
                             },
                         },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:218:6,
-                            end: [ local path prefix ]/syntax.fpp:219:1,
+                            end: [ local path prefix ]/syntax.fpp:218:18,
                         },
                         pre_annotation: [
                             "Topology port specifier",
@@ -2612,7 +2612,7 @@
                 implements: [],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:176:4,
-                    end: [ local path prefix ]/syntax.fpp:221:1,
+                    end: [ local path prefix ]/syntax.fpp:220:5,
                 },
                 pre_annotation: [
                     "Topology definition",
@@ -2641,7 +2641,7 @@
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:224:4,
-                    end: [ local path prefix ]/syntax.fpp:225:1,
+                    end: [ local path prefix ]/syntax.fpp:224:30,
                 },
                 pre_annotation: [
                     "Topology definition with one implements",
@@ -2677,7 +2677,7 @@
                 ],
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:228:4,
-                    end: [ local path prefix ]/syntax.fpp:229:1,
+                    end: [ local path prefix ]/syntax.fpp:228:33,
                 },
                 pre_annotation: [
                     "Topology definition with two implements",
@@ -2699,12 +2699,12 @@
                     data: "instances.fpp",
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:232:25,
-                        end: [ local path prefix ]/syntax.fpp:233:1,
+                        end: [ local path prefix ]/syntax.fpp:232:40,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:232:4,
-                    end: [ local path prefix ]/syntax.fpp:233:1,
+                    end: [ local path prefix ]/syntax.fpp:232:40,
                 },
                 pre_annotation: [
                     "Location specifier",
@@ -2716,7 +2716,7 @@
         ],
         node_id: Span {
             start: [ local path prefix ]/syntax.fpp:2:2,
-            end: [ local path prefix ]/syntax.fpp:236:1,
+            end: [ local path prefix ]/syntax.fpp:235:3,
         },
         pre_annotation: [
             "Definitions and specifiers",
@@ -2757,14 +2757,14 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:241:29,
-                        end: [ local path prefix ]/syntax.fpp:242:1,
+                        end: [ local path prefix ]/syntax.fpp:241:32,
                     },
                 },
                 default: None,
                 format: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:241:4,
-                    end: [ local path prefix ]/syntax.fpp:242:1,
+                    end: [ local path prefix ]/syntax.fpp:241:32,
                 },
             },
             DefArray {
@@ -2790,14 +2790,14 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:242:29,
-                        end: [ local path prefix ]/syntax.fpp:243:1,
+                        end: [ local path prefix ]/syntax.fpp:242:32,
                     },
                 },
                 default: None,
                 format: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:242:4,
-                    end: [ local path prefix ]/syntax.fpp:243:1,
+                    end: [ local path prefix ]/syntax.fpp:242:32,
                 },
             },
             DefArray {
@@ -2821,14 +2821,14 @@
                     kind: Bool,
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:243:30,
-                        end: [ local path prefix ]/syntax.fpp:244:1,
+                        end: [ local path prefix ]/syntax.fpp:243:34,
                     },
                 },
                 default: None,
                 format: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:243:4,
-                    end: [ local path prefix ]/syntax.fpp:244:1,
+                    end: [ local path prefix ]/syntax.fpp:243:34,
                 },
             },
             DefArray {
@@ -2857,21 +2857,21 @@
                                 ),
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:244:44,
-                                    end: [ local path prefix ]/syntax.fpp:245:1,
+                                    end: [ local path prefix ]/syntax.fpp:244:47,
                                 },
                             },
                         ),
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:244:32,
-                        end: [ local path prefix ]/syntax.fpp:245:1,
+                        end: [ local path prefix ]/syntax.fpp:244:47,
                     },
                 },
                 default: None,
                 format: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:244:4,
-                    end: [ local path prefix ]/syntax.fpp:245:1,
+                    end: [ local path prefix ]/syntax.fpp:244:47,
                 },
             },
             DefArray {
@@ -2911,38 +2911,38 @@
                                 },
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:245:29,
-                                    end: [ local path prefix ]/syntax.fpp:246:1,
+                                    end: [ local path prefix ]/syntax.fpp:245:34,
                                 },
                             },
                             name: Ident {
                                 data: "c",
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:245:33,
-                                    end: [ local path prefix ]/syntax.fpp:246:1,
+                                    end: [ local path prefix ]/syntax.fpp:245:34,
                                 },
                             },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:245:29,
-                                end: [ local path prefix ]/syntax.fpp:246:1,
+                                end: [ local path prefix ]/syntax.fpp:245:34,
                             },
                         },
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:245:29,
-                        end: [ local path prefix ]/syntax.fpp:246:1,
+                        end: [ local path prefix ]/syntax.fpp:245:34,
                     },
                 },
                 default: None,
                 format: None,
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:245:4,
-                    end: [ local path prefix ]/syntax.fpp:246:1,
+                    end: [ local path prefix ]/syntax.fpp:245:34,
                 },
             },
         ],
         node_id: Span {
             start: [ local path prefix ]/syntax.fpp:239:2,
-            end: [ local path prefix ]/syntax.fpp:247:1,
+            end: [ local path prefix ]/syntax.fpp:247:3,
         },
         pre_annotation: [
             "Type names",
@@ -3067,18 +3067,18 @@
                             ),
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:254:45,
-                                end: [ local path prefix ]/syntax.fpp:255:1,
+                                end: [ local path prefix ]/syntax.fpp:254:46,
                             },
                         },
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:254:24,
-                        end: [ local path prefix ]/syntax.fpp:255:1,
+                        end: [ local path prefix ]/syntax.fpp:254:46,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:254:4,
-                    end: [ local path prefix ]/syntax.fpp:255:1,
+                    end: [ local path prefix ]/syntax.fpp:254:46,
                 },
                 pre_annotation: [
                     "Arithmetic",
@@ -3129,12 +3129,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:258:24,
-                        end: [ local path prefix ]/syntax.fpp:259:1,
+                        end: [ local path prefix ]/syntax.fpp:258:35,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:258:4,
-                    end: [ local path prefix ]/syntax.fpp:259:1,
+                    end: [ local path prefix ]/syntax.fpp:258:35,
                 },
                 pre_annotation: [
                     "Array",
@@ -3202,12 +3202,12 @@
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:262:28,
-                        end: [ local path prefix ]/syntax.fpp:263:1,
+                        end: [ local path prefix ]/syntax.fpp:262:42,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:262:4,
-                    end: [ local path prefix ]/syntax.fpp:263:1,
+                    end: [ local path prefix ]/syntax.fpp:262:42,
                 },
                 pre_annotation: [
                     "Array Subscript",
@@ -3277,12 +3277,12 @@
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:266:28,
-                        end: [ local path prefix ]/syntax.fpp:267:1,
+                        end: [ local path prefix ]/syntax.fpp:266:36,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:266:4,
-                    end: [ local path prefix ]/syntax.fpp:267:1,
+                    end: [ local path prefix ]/syntax.fpp:266:36,
                 },
                 pre_annotation: [
                     "Array Subscript",
@@ -3401,12 +3401,12 @@
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:270:28,
-                        end: [ local path prefix ]/syntax.fpp:271:1,
+                        end: [ local path prefix ]/syntax.fpp:270:45,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:270:4,
-                    end: [ local path prefix ]/syntax.fpp:271:1,
+                    end: [ local path prefix ]/syntax.fpp:270:45,
                 },
                 pre_annotation: [
                     "Array Subscript with member selection",
@@ -3429,12 +3429,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:274:33,
-                        end: [ local path prefix ]/syntax.fpp:275:1,
+                        end: [ local path prefix ]/syntax.fpp:274:37,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:274:4,
-                    end: [ local path prefix ]/syntax.fpp:275:1,
+                    end: [ local path prefix ]/syntax.fpp:274:37,
                 },
                 pre_annotation: [
                     "Boolean literal",
@@ -3481,18 +3481,18 @@
                             data: "c",
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:278:26,
-                                end: [ local path prefix ]/syntax.fpp:279:1,
+                                end: [ local path prefix ]/syntax.fpp:278:27,
                             },
                         },
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:278:22,
-                        end: [ local path prefix ]/syntax.fpp:279:1,
+                        end: [ local path prefix ]/syntax.fpp:278:27,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:278:4,
-                    end: [ local path prefix ]/syntax.fpp:279:1,
+                    end: [ local path prefix ]/syntax.fpp:278:27,
                 },
                 pre_annotation: [
                     "Dot",
@@ -3515,12 +3515,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:282:28,
-                        end: [ local path prefix ]/syntax.fpp:283:1,
+                        end: [ local path prefix ]/syntax.fpp:282:34,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:282:4,
-                    end: [ local path prefix ]/syntax.fpp:283:1,
+                    end: [ local path prefix ]/syntax.fpp:282:34,
                 },
                 pre_annotation: [
                     "FP literal",
@@ -3543,12 +3543,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:286:24,
-                        end: [ local path prefix ]/syntax.fpp:287:1,
+                        end: [ local path prefix ]/syntax.fpp:286:25,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:286:4,
-                    end: [ local path prefix ]/syntax.fpp:287:1,
+                    end: [ local path prefix ]/syntax.fpp:286:25,
                 },
                 pre_annotation: [
                     "Identifier",
@@ -3571,12 +3571,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:290:29,
-                        end: [ local path prefix ]/syntax.fpp:291:1,
+                        end: [ local path prefix ]/syntax.fpp:290:33,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:290:4,
-                    end: [ local path prefix ]/syntax.fpp:291:1,
+                    end: [ local path prefix ]/syntax.fpp:290:33,
                 },
                 pre_annotation: [
                     "Int literal",
@@ -3637,18 +3637,18 @@
                             ),
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:294:34,
-                                end: [ local path prefix ]/syntax.fpp:295:1,
+                                end: [ local path prefix ]/syntax.fpp:294:35,
                             },
                         },
                     },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:294:24,
-                        end: [ local path prefix ]/syntax.fpp:295:1,
+                        end: [ local path prefix ]/syntax.fpp:294:35,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:294:4,
-                    end: [ local path prefix ]/syntax.fpp:295:1,
+                    end: [ local path prefix ]/syntax.fpp:294:35,
                 },
                 pre_annotation: [
                     "Paren",
@@ -3671,12 +3671,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:298:38,
-                        end: [ local path prefix ]/syntax.fpp:299:1,
+                        end: [ local path prefix ]/syntax.fpp:298:57,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:298:4,
-                    end: [ local path prefix ]/syntax.fpp:299:1,
+                    end: [ local path prefix ]/syntax.fpp:298:57,
                 },
                 pre_annotation: [
                     "String literal single",
@@ -3699,12 +3699,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:302:36,
-                        end: [ local path prefix ]/syntax.fpp:307:1,
+                        end: [ local path prefix ]/syntax.fpp:306:39,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:302:4,
-                    end: [ local path prefix ]/syntax.fpp:307:1,
+                    end: [ local path prefix ]/syntax.fpp:306:39,
                 },
                 pre_annotation: [
                     "String literal multi",
@@ -3794,12 +3794,12 @@
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:310:25,
-                        end: [ local path prefix ]/syntax.fpp:311:1,
+                        end: [ local path prefix ]/syntax.fpp:310:48,
                     },
                 },
                 node_id: Span {
                     start: [ local path prefix ]/syntax.fpp:310:4,
-                    end: [ local path prefix ]/syntax.fpp:311:1,
+                    end: [ local path prefix ]/syntax.fpp:310:48,
                 },
                 pre_annotation: [
                     "Struct",
@@ -3811,7 +3811,7 @@
         ],
         node_id: Span {
             start: [ local path prefix ]/syntax.fpp:251:2,
-            end: [ local path prefix ]/syntax.fpp:314:1,
+            end: [ local path prefix ]/syntax.fpp:313:3,
         },
         pre_annotation: [
             "Expressions",
