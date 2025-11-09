@@ -11,11 +11,15 @@ pub struct Cursor<'a> {
 }
 
 impl<'a> Cursor<'a> {
-    pub(crate) fn new(source_file: SourceFile, content: &'a str) -> Cursor<'a> {
+    pub(crate) fn new(
+        source_file: SourceFile,
+        content: &'a str,
+        include_span: Option<Span>,
+    ) -> Cursor<'a> {
         Cursor {
-            lexer: Lexer::new(source_file, content),
+            lexer: Lexer::new(source_file, content, include_span),
             token_queue: Default::default(),
-            last_consumed_span: Span::new(source_file, 1, 0),
+            last_consumed_span: Span::new(source_file, 1, 0, None),
         }
     }
 

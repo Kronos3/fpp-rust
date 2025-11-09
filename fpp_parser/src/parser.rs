@@ -8,6 +8,7 @@ use fpp_core::{SourceFile, Spanned};
 
 pub struct Parser<'a> {
     cursor: Cursor<'a>,
+    include_span: Option<fpp_core::Span>,
 }
 
 enum ElementParsingResult<T> {
@@ -17,11 +18,16 @@ enum ElementParsingResult<T> {
     None,
 }
 
-pub fn parse<T>(source_file: SourceFile, entry: fn(&mut Parser) -> T) -> T {
+pub fn parse<T>(
+    source_file: SourceFile,
+    entry: fn(&mut Parser) -> T,
+    include_span: Option<fpp_core::Span>,
+) -> T {
     // We need our own copy of the source text since it needs to be long-lived
     let content = source_file.read().as_ref().to_string();
     let mut parser = Parser {
-        cursor: Cursor::new(source_file, content.as_ref()),
+        cursor: Cursor::new(source_file, content.as_ref(), include_span),
+        include_span,
     };
 
     entry(&mut parser)
@@ -52,6 +58,7 @@ impl<'a> Parser<'a> {
             first_token.file(),
             first_token.start().pos(),
             last_token_span.end().pos() - first_token.start().pos(),
+            self.include_span,
         ))
     }
 
@@ -169,7 +176,7 @@ impl<'a> Parser<'a> {
         let name = self.ident()?;
 
         self.consume(LeftCurly)?;
-        let members = self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly);
+        let members = self.component_members();
         self.consume(RightCurly)?;
 
         Ok(DefComponent {
@@ -178,6 +185,20 @@ impl<'a> Parser<'a> {
             name,
             members,
         })
+    }
+
+    pub fn trans_unit(&mut self) -> TransUnit {
+        let first = self.cursor.last_token_span();
+        let members = self.module_members();
+
+        TransUnit {
+            node_id: self.node(first),
+            members,
+        }
+    }
+
+    pub fn component_members(&mut self) -> Vec<ComponentMember> {
+        self.annotated_element_sequence(&Parser::component_member, Semi, RightCurly)
     }
 
     fn component_kind(&mut self) -> ParseResult<(ComponentKind, Token)> {
@@ -909,7 +930,9 @@ impl<'a> Parser<'a> {
 
     fn interface_member(&mut self) -> ParseResult<InterfaceMember> {
         match self.peek(0) {
-            Keyword(Import) => Ok(InterfaceMember::SpecInterfaceImport(self.spec_import_interface()?)),
+            Keyword(Import) => Ok(InterfaceMember::SpecInterfaceImport(
+                self.spec_import_interface()?,
+            )),
             _ => Ok(InterfaceMember::SpecPortInstance(
                 self.spec_port_instance()?,
             )),

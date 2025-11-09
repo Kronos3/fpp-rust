@@ -21,6 +21,11 @@ pub(crate) enum ParseError {
     UnexpectedEof {
         last: Span,
     },
+
+    IncludeCycle {
+        span: Span,
+        include_path: Vec<String>,
+    },
 }
 
 struct TokenList(Vec<TokenKind>);
@@ -63,6 +68,12 @@ impl Into<Diagnostic> for ParseError {
                 .note(format!("got {}", got)),
             ParseError::UnexpectedEof { last } => {
                 Diagnostic::spanned(last, Level::Error, "unexpected end of input")
+            }
+            ParseError::IncludeCycle { span, include_path } => {
+                let diag = Diagnostic::spanned(span, Level::Error, "include cycle detected");
+                include_path.into_iter().fold(diag, |diag, path| {
+                    diag.annotation(format! {"included from {}", path})
+                })
             }
         }
     }

@@ -1,5 +1,5 @@
-use annotate_snippets::{AnnotationKind, Element, Group, Snippet};
-use fpp_core::{DiagnosticData, DiagnosticMessageKind, Level};
+use annotate_snippets::{Annotation, AnnotationKind, Element, Group, Snippet};
+use fpp_core::{DiagnosticData, DiagnosticDataSnippet, DiagnosticMessageKind, Level};
 
 fn diagnostic_level<'a>(level: Level) -> annotate_snippets::Level<'a> {
     match level {
@@ -9,6 +9,25 @@ fn diagnostic_level<'a>(level: Level) -> annotate_snippets::Level<'a> {
         Level::Help => annotate_snippets::Level::HELP,
         _ => annotate_snippets::Level::INFO,
     }
+}
+
+fn diagnostic_snippet_to_annotation<'a>(
+    message: String,
+    kind: AnnotationKind,
+    snippet: &DiagnosticDataSnippet,
+) -> Annotation<'a> {
+    let mut annotation = kind.span(snippet.start..snippet.end).label(message);
+
+    for include_loc in &snippet.include_spans {
+        annotation = annotation.label(format!(
+            "included from {}:{}:{}",
+            include_loc.file_path,
+            include_loc.line + 1,
+            include_loc.column + 1
+        ))
+    }
+
+    annotation
 }
 
 pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) -> Group<'a> {
@@ -24,11 +43,11 @@ pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) ->
                     snippet.line_offset
                 })
                 .path(snippet.file_path)
-                .annotation(
-                    AnnotationKind::Primary
-                        .span(snippet.start..snippet.end)
-                        .label(diagnostic.message.message.clone()),
-                ),
+                .annotation(diagnostic_snippet_to_annotation(
+                    diagnostic.message.message.clone(),
+                    AnnotationKind::Primary,
+                    snippet,
+                )),
         ),
     })
     .elements(diagnostic.children.iter().map(|child| {
@@ -47,14 +66,14 @@ pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) ->
                     snippet.line_offset
                 })
                 .path(snippet.file_path)
-                .annotation(
+                .annotation(diagnostic_snippet_to_annotation(
+                    child.message.clone(),
                     match child.kind {
                         DiagnosticMessageKind::Primary => AnnotationKind::Primary,
                         DiagnosticMessageKind::Note => AnnotationKind::Context,
-                    }
-                    .span(snippet.start..snippet.end)
-                    .label(child.message.clone()),
-                )
+                    },
+                    snippet,
+                ))
                 .into(),
         }
     }))

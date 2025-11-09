@@ -4,7 +4,7 @@ use std::{env, fs};
 
 fn run_test(file_path: &str) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("src/tests");
+    path.push("src/test");
 
     let mut fpp_file = path.clone();
     fpp_file.push(file_path);
@@ -24,11 +24,9 @@ fn run_test(file_path: &str) {
             Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
         };
 
-        let ast = fpp_parser::parse(src, |p| p.module_members());
-
+        let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);
         let mut a = crate::Analysis::new();
-
-        let _ = crate::passes::check_semantics(&mut a, &ast);
+        let _ = crate::passes::check_semantics(&mut a, &mut ast);
     })
     .expect("compiler_error");
 
@@ -50,11 +48,11 @@ fn run_test(file_path: &str) {
 }
 
 #[test]
-fn duplicate_symbols_single () {
+fn duplicate_symbols_single() {
     run_test("duplicate-symbols-single")
 }
 
 #[test]
-fn duplicate_symbols_multi () {
+fn duplicate_symbols_multi() {
     run_test("duplicate-symbols-multi")
 }

@@ -7,7 +7,7 @@ use fpp_ast::{AstNode, Expr, Ident, Node, QualIdent, Visitor};
 use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};
 
-pub(crate) struct CheckUses<'ast> {
+pub struct CheckUses<'ast> {
     super_: BasicUseAnalyzer<'ast, Self>,
 }
 

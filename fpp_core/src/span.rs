@@ -33,8 +33,13 @@ macro_rules! diagnostic_method {
 }
 
 impl Span {
-    pub fn new(file: SourceFile, start: BytePos, length: BytePos) -> Span {
-        with(|w| w.span_add(file, start, length))
+    pub fn new(
+        file: SourceFile,
+        start: BytePos,
+        length: BytePos,
+        include_span: Option<Span>,
+    ) -> Span {
+        with(|w| w.span_add(file, start, length, include_span))
     }
 
     /// Gets the start position of the span
@@ -50,6 +55,11 @@ impl Span {
     /// The path to the source file in which this span occurs, for display purposes.
     pub fn file(&self) -> SourceFile {
         with(|w| w.span_file(self))
+    }
+
+    /// Span of the include specifier that brought this span in
+    pub fn including_span(&self) -> Option<Span> {
+        with(|w| w.span_include_span(self))
     }
 
     diagnostic_method!(error, Level::Error);

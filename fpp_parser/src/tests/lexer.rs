@@ -19,7 +19,7 @@ fn lex(content: &str) -> Vec<Token> {
         fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
     fpp_core::run(&mut ctx, || {
         let file = SourceFile::from(content);
-        let mut cursor = Cursor::new(file, content);
+        let mut cursor = Cursor::new(file, content, None);
 
         let mut out = vec![];
         loop {
@@ -33,7 +33,7 @@ fn lex(content: &str) -> Vec<Token> {
 
         out
     })
-        .expect("compiler error")
+    .expect("compiler error")
 }
 
 fn assert_token_eq(token: &Token, kind: TokenKind, text: &str) {

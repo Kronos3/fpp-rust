@@ -8,6 +8,7 @@ pub use component::*;
 use fpp_core::Annotated;
 pub use node::*;
 pub use state_machine::*;
+use std::fmt::{Debug, Formatter};
 pub use topology::*;
 pub use visit::*;
 
@@ -17,7 +18,17 @@ pub trait AstNode: fpp_core::Spanned + Sized {
     fn id(&self) -> fpp_core::Node;
 }
 
-pub type TranslationUnit = Vec<ModuleMember>;
+#[ast]
+#[derive(VisitorWalkable)]
+pub struct TransUnit {
+    pub members: Vec<ModuleMember>,
+}
+
+impl Debug for TransUnit {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_list().entries(self.members.iter()).finish()
+    }
+}
 
 pub enum QualIdentKind {
     Component,

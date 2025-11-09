@@ -1,10 +1,13 @@
+mod cursor;
+mod error;
+mod include;
 mod lexer;
 mod parser;
 mod token;
-mod error;
-mod cursor;
 
+pub use include::ResolveSpecInclude;
 pub use parser::parse;
+pub use parser::Parser;
 
 #[cfg(test)]
 mod tests {

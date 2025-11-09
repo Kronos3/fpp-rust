@@ -1,15 +1,10 @@
-[
-    SpecInclude {
-        file: LitString {
-            data: "cycle-3.fpp",
-            node_id: Span {
-                start: [ local path prefix ]/cycle-2.fpp:1:9,
-                end: [ local path prefix ]/cycle-2.fpp:2:1,
-            },
-        },
-        node_id: Span {
-            start: [ local path prefix ]/cycle-2.fpp:1:1,
-            end: [ local path prefix ]/cycle-2.fpp:2:1,
-        },
-    },
-]
+ --> [ local path prefix ]/cycle-1.fpp:1:1
+  |
+1 | include "cycle-2.fpp"
+  | ^^^^^^^^^^^^^^^^^^^^^ included from [ local path prefix ]/cycle-2.fpp:1:1
+  |
+  = error: included from [ local path prefix ]/cycle-2.fpp
+  = error: included from [ local path prefix ]/cycle-1.fpp
+  = error: included from [ local path prefix ]/cycle-3.fpp
+  = error: included from [ local path prefix ]/cycle-2.fpp
+

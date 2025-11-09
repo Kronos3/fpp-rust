@@ -220,10 +220,11 @@ impl Token {
         file: SourceFile,
         start: BytePos,
         length: BytePos,
+        include_span: Option<Span>
     ) -> Token {
         Token {
             kind,
-            span: Span::new(file, start, length),
+            span: Span::new(file, start, length, include_span),
             text,
         }
     }

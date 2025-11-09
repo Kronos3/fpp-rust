@@ -2,26 +2,28 @@ use crate::diagnostic::DiagnosticMessage;
 use crate::error::Error;
 use crate::file::SourceFile;
 use crate::span::Span;
-use crate::{BytePos, Diagnostic, Level, DiagnosticMessageKind, Node, Position};
+use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 
+#[derive(Clone)]
 pub(crate) struct SpanData {
     pub file: SourceFile,
     pub start: BytePos,
     pub length: BytePos,
+    pub include_span: Option<Span>,
 }
 
 pub(crate) struct SourceFileData {
     pub handle: usize,
-    pub path: String,
+    pub path: Option<String>,
     pub content: String,
     pub lines: Vec<BytePos>,
 }
 
 impl SourceFileData {
-    fn new(handle: usize, path: String, content: String) -> SourceFileData {
+    fn new(handle: usize, path: Option<String>, content: String) -> SourceFileData {
         // Compute the newline position
         let lines = {
             let mut out = vec![0];
@@ -42,6 +44,13 @@ impl SourceFileData {
         }
     }
 
+    pub fn path(&self) -> Option<String> {
+        match &self.path {
+            None => None,
+            Some(path) => Some(path.clone()),
+        }
+    }
+
     pub fn position(&self, offset: BytePos) -> Position {
         let line = self
             .lines
@@ -59,19 +68,29 @@ impl SourceFileData {
         }
     }
 
-    pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet<'_> {
+    pub fn include_loc(&self, span: &SpanData) -> DiagnosticDataIncludeLocation {
+        let pos = self.position(span.start);
+
+        DiagnosticDataIncludeLocation {
+            line: pos.line,
+            column: pos.column,
+            file_path: self.path().unwrap_or_else(|| "<stdin>".to_string()),
+        }
+    }
+
+    pub fn snippet<E: DiagnosticEmitter>(
+        &self,
+        ctx: &CompilerContext<E>,
+        span: &SpanData,
+    ) -> DiagnosticDataSnippet<'_> {
         // Find the line start of the start/end
         let first_line = match self.lines.binary_search(&span.start) {
             // The span start is a newline
-            Ok(newline_idx) => {
-                match newline_idx {
-                    0 => 0,
-                    _ => newline_idx - 1
-                }
-            }
-            Err(insert_position) => {
-                insert_position - 1
-            }
+            Ok(newline_idx) => match newline_idx {
+                0 => 0,
+                _ => newline_idx - 1,
+            },
+            Err(insert_position) => insert_position - 1,
         };
 
         let last_line = self
@@ -85,12 +104,35 @@ impl SourceFileData {
             Some(last) => *last + 1,
         };
 
+        // Collect all the include locations
+        fn collect_include_locs<E: DiagnosticEmitter>(
+            ctx: &CompilerContext<E>,
+            loc: &Option<Span>,
+            out: &mut Vec<DiagnosticDataIncludeLocation>,
+        ) {
+            match loc {
+                None => {}
+                Some(loc) => {
+                    let loc_data = ctx.span_get(loc);
+                    out.push(ctx.file_get(&loc_data.file).include_loc(loc_data));
+                    collect_include_locs(ctx, &loc_data.include_span, out)
+                }
+            }
+        }
+
+        let mut include_spans = vec![];
+        collect_include_locs(ctx, &span.include_span, &mut include_spans);
+
         DiagnosticDataSnippet {
             start: span.start - first,
             end: span.start + span.length - first,
             line_offset: first_line,
-            file_path: &self.path,
+            file_path: match &self.path {
+                None => "<stdin>",
+                Some(path) => &path
+            },
             file_content: &self.content[first..last],
+            include_spans,
         }
     }
 }
@@ -102,12 +144,20 @@ pub(crate) struct NodeData {
 }
 
 #[derive(Debug)]
+pub struct DiagnosticDataIncludeLocation {
+    pub line: u32,
+    pub column: u32,
+    pub file_path: String,
+}
+
+#[derive(Debug)]
 pub struct DiagnosticDataSnippet<'a> {
     pub start: BytePos,
     pub end: BytePos,
     pub line_offset: usize,
     pub file_path: &'a str,
     pub file_content: &'a str,
+    pub include_spans: Vec<DiagnosticDataIncludeLocation>,
 }
 
 #[derive(Debug)]
@@ -152,24 +202,36 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     }
 
     pub(crate) fn file_open(&mut self, path: &str) -> Result<SourceFile, Error> {
+        let fs_path = std::path::Path::new(path).canonicalize()?;
+
         let handle = self.files.len();
-        let content = match fs::read_to_string(path) {
+        let content = match fs::read_to_string(&fs_path) {
             Ok(c) => c,
             Err(err) => return Err(Error(format!("failed to read file {}: {}", path, err))),
         };
 
-        self.files
-            .push(SourceFileData::new(handle, path.to_string(), content));
+        let path_str = match fs_path.to_str() {
+            None => {
+                return Err(Error(format!(
+                    "failed to convert path to string: {:?}",
+                    fs_path
+                )));
+            }
+            Some(p) => p,
+        };
+
+        self.files.push(SourceFileData::new(
+            handle,
+            Some(path_str.to_string()),
+            content,
+        ));
         Ok(SourceFile { handle })
     }
 
     pub(crate) fn file_from(&mut self, src: &str) -> SourceFile {
         let handle = self.files.len();
-        self.files.push(SourceFileData::new(
-            handle,
-            "input".to_string(),
-            src.to_string(),
-        ));
+        self.files
+            .push(SourceFileData::new(handle, None, src.to_string()));
 
         SourceFile { handle }
     }
@@ -188,12 +250,19 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         node_id
     }
 
-    pub(crate) fn span_add(&mut self, file: SourceFile, start: BytePos, length: BytePos) -> Span {
+    pub(crate) fn span_add(
+        &mut self,
+        file: SourceFile,
+        start: BytePos,
+        length: BytePos,
+        include_span: Option<Span>,
+    ) -> Span {
         let handle = self.spans.len();
         self.spans.push(SpanData {
             file,
             start,
             length,
+            include_span,
         });
 
         Span { handle }
@@ -239,7 +308,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             Some(span) => {
                 let span = self.span_get(&span);
                 let file = self.file_get(&span.file);
-                Some(file.snippet(span))
+                Some(file.snippet(self, span))
             }
         };
 

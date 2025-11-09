@@ -22,3 +22,9 @@ impl Display for Error {
         Display::fmt(&self.0, f)
     }
 }
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Error(value.to_string())
+    }
+}

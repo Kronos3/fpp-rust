@@ -1,15 +1,5 @@
-[
-    SpecInclude {
-        file: LitString {
-            data: "subdir/constant.fppi",
-            node_id: Span {
-                start: [ local path prefix ]/include-subdir.fpp:1:9,
-                end: [ local path prefix ]/include-subdir.fpp:2:1,
-            },
-        },
-        node_id: Span {
-            start: [ local path prefix ]/include-subdir.fpp:1:1,
-            end: [ local path prefix ]/include-subdir.fpp:2:1,
-        },
-    },
-]
+ --> [ local path prefix ]/include-subdir.fpp:1:9
+  |
+1 | include "subdir/constant.fppi"
+  |         ^^^^^^^^^^^^^^^^^^^^^^ No such file or directory (os error 2)
+

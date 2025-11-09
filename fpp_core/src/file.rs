@@ -22,13 +22,19 @@ impl<'a> AsRef<str> for SourceFileContent<'a> {
 
 impl Debug for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.path())
+        f.write_str(match &self.path() {
+            None => "<stdin>",
+            Some(path) => path,
+        })
     }
 }
 
 impl Display for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.path())
+        f.write_str(match &self.path() {
+            None => "<stdin>",
+            Some(path) => path,
+        })
     }
 }
 
@@ -37,7 +43,11 @@ impl SourceFile {
         with(|w| w.file_open(path))
     }
 
-    pub fn path(&self) -> String {
+    pub fn open_relative_path(&self, path: &str) -> Result<SourceFile, Error> {
+        with(|w| w.file_open_relative_path(self, path))
+    }
+
+    pub fn path(&self) -> Option<String> {
         with(|w| w.file_path(self))
     }
 

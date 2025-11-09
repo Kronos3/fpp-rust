@@ -1,6 +1,6 @@
 use crate::semantics::{NestedScope, Scope, Symbol};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 pub struct Analysis<'ast> {
@@ -14,6 +14,8 @@ pub struct Analysis<'ast> {
     pub parent_symbol: Option<Symbol<'ast>>,
     /** The current nested scope for symbol lookup */
     pub nested_scope: NestedScope<'ast>,
+    /** The set of files included when parsing input */
+    pub included_file_set: HashSet<fpp_core::SourceFile>
 }
 
 impl<'a> Analysis<'a> {
@@ -24,6 +26,7 @@ impl<'a> Analysis<'a> {
             use_def_map: Default::default(),
             parent_symbol: None,
             nested_scope: NestedScope::new(Scope::new()),
+            included_file_set: Default::default(),
         }
     }
 }

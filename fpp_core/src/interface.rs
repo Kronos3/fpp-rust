@@ -1,4 +1,4 @@
-use crate::context::CompilerContext;
+use crate::context::{CompilerContext};
 use crate::error::Error;
 use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
 use std::cell::{Cell, Ref, RefCell};
@@ -43,12 +43,43 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         self.ctx.borrow_mut().file_open(path)
     }
 
+    fn file_open_relative_path(&self, file: &SourceFile, path: &str) -> Result<SourceFile, Error> {
+        let mut ctx = self.ctx.borrow_mut();
+        let f = ctx.file_get(file);
+        match &f.path {
+            None => {
+                // File comes from stdin
+                // Open relative to the current working directory
+                ctx.file_open(path)
+            }
+            Some(file_path) => {
+                let parent_file_path = std::path::Path::new(&file_path).canonicalize()?;
+                match parent_file_path.parent() {
+                    None => Err(Error(format!(
+                        "Cannot resolve parent directory of {}",
+                        file_path
+                    ))),
+                    Some(parent_dir) => {
+                        let final_path = parent_dir.join(path);
+                        match final_path.as_path().to_str() {
+                            None => Err(Error(format!(
+                                "Failed to resolve path {} relative to {:?}",
+                                path, parent_dir
+                            ))),
+                            Some(file_path) => ctx.file_open(file_path),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn file_from(&self, content: &str) -> SourceFile {
         self.ctx.borrow_mut().file_from(content)
     }
 
-    fn file_path(&self, file: &SourceFile) -> String {
-        self.ctx.borrow().file_get(file).path.to_string()
+    fn file_path(&self, file: &SourceFile) -> Option<String> {
+        self.ctx.borrow().file_get(file).path()
     }
 
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String> {
@@ -66,8 +97,16 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         self.ctx.borrow().file_get(file).content.len()
     }
 
-    fn span_add(&self, file: SourceFile, start: BytePos, length: BytePos) -> Span {
-        self.ctx.borrow_mut().span_add(file, start, length)
+    fn span_add(
+        &self,
+        file: SourceFile,
+        start: BytePos,
+        length: BytePos,
+        include_span: Option<Span>,
+    ) -> Span {
+        self.ctx
+            .borrow_mut()
+            .span_add(file, start, length, include_span)
     }
 
     fn span_start(&self, s: &Span) -> Position {
@@ -88,6 +127,11 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         ctx.span_get(s).file
     }
 
+    fn span_include_span(&self, s: &Span) -> Option<Span> {
+        let ctx = self.ctx.borrow();
+        ctx.span_get(s).include_span.clone()
+    }
+
     fn diagnostic_emit(&self, diag: Diagnostic) {
         self.ctx.borrow_mut().diagnostic_emit(diag)
     }
@@ -103,17 +147,25 @@ pub(crate) trait CompilerInterface {
 
     /** Source file related functions */
     fn file_open(&self, path: &str) -> Result<SourceFile, Error>;
+    fn file_open_relative_path(&self, file: &SourceFile, path: &str) -> Result<SourceFile, Error>;
     fn file_from(&self, content: &str) -> SourceFile;
-    fn file_path(&self, file: &SourceFile) -> String;
+    fn file_path(&self, file: &SourceFile) -> Option<String>;
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
     fn file_lines(&self, file: &SourceFile) -> Ref<'_, Vec<BytePos>>;
     fn file_len(&self, file: &SourceFile) -> usize;
 
     /** Span related functions */
-    fn span_add(&self, file: SourceFile, start: BytePos, length: BytePos) -> Span;
+    fn span_add(
+        &self,
+        file: SourceFile,
+        start: BytePos,
+        length: BytePos,
+        include_span: Option<Span>,
+    ) -> Span;
     fn span_start(&self, s: &Span) -> Position;
     fn span_end(&self, s: &Span) -> Position;
     fn span_file(&self, s: &Span) -> SourceFile;
+    fn span_include_span(&self, s: &Span) -> Option<Span>;
 
     /** Diagnostic related functions */
     fn diagnostic_emit(&self, diag: Diagnostic);

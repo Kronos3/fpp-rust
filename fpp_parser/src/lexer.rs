@@ -18,6 +18,8 @@ pub struct Lexer<'a> {
 
     /// Iterator over chars. Slightly faster than a &str.
     chars: Chars<'a>,
+
+    include_span: Option<fpp_core::Span>,
 }
 
 const EOF_CHAR: char = '\0';
@@ -61,7 +63,11 @@ fn is_identifier_rest(c: char) -> bool {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(file: SourceFile, content: &'a str) -> Lexer<'a> {
+    pub fn new(
+        file: SourceFile,
+        content: &'a str,
+        include_span: Option<fpp_core::Span>,
+    ) -> Lexer<'a> {
         let chars = content.chars();
         Lexer {
             pos: 0,
@@ -73,6 +79,7 @@ impl<'a> Lexer<'a> {
             escaped_identifier: false,
             token_has_trailing_whitespace: false,
             token_end_before_whitespace: 0,
+            include_span,
         }
     }
 
@@ -239,7 +246,14 @@ impl<'a> Lexer<'a> {
                         _ => (None, kind),
                     };
 
-                    return Some(Token::new(real_kind, text, self.file, start, length));
+                    return Some(Token::new(
+                        real_kind,
+                        text,
+                        self.file,
+                        start,
+                        length,
+                        self.include_span,
+                    ));
                 }
             }
         }

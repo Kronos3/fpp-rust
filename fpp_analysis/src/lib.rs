@@ -15,9 +15,9 @@ pub mod passes {
     pub use check::*;
 
     mod enter_symbols;
-    pub(crate) use enter_symbols::*;
+    pub use enter_symbols::*;
     mod check_uses;
-    pub(crate) use check_uses::*;
+    pub use check_uses::*;
 }
 
 pub mod semantics {

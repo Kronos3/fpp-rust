@@ -5,7 +5,7 @@ use fpp_ast::*;
 use fpp_core::Spanned;
 use std::ops::ControlFlow;
 
-pub(crate) struct EnterSymbols {}
+pub struct EnterSymbols {}
 
 impl<'ast> EnterSymbols {
     pub fn new() -> EnterSymbols {
@@ -45,6 +45,10 @@ impl<'ast> EnterSymbols {
 impl<'ast> Visitor<'ast> for EnterSymbols {
     type Break = ();
     type State = Analysis<'ast>;
+
+    fn visit_trans_unit(&self, a: &mut Self::State, node: &'ast TransUnit) -> ControlFlow<Self::Break> {
+        node.walk_ref(a, self)
+    }
 
     fn visit_def_abs_type(
         &self,

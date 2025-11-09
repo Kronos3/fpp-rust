@@ -9,6 +9,8 @@ use crate::*;
 /// parts of the AST and build .
 #[derive(Debug, Clone, Copy, DirectRefWalkable)]
 pub enum Node<'a> {
+    TransUnit(&'a TransUnit),
+    /* Definitions */
     DefAbsType(&'a DefAbsType),
     DefAction(&'a DefAction),
     DefAliasType(&'a DefAliasType),

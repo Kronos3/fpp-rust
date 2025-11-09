@@ -1,5 +1,7 @@
-use crate::parse;
+use crate::{parse, ResolveSpecInclude};
+use fpp_ast::MutVisitor;
 use fpp_core::SourceFile;
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::{env, fs};
 
@@ -26,7 +28,10 @@ fn run_test(file_path: &str) {
         };
 
         // Parse the source
-        format!("{:#?}", parse(src, |p| p.module_members()))
+        let mut ast = parse(src, |p| p.trans_unit(), None);
+        let mut source_files = HashSet::new();
+        let _ = ResolveSpecInclude {}.visit_trans_unit(&mut source_files, &mut ast);
+        format!("{:#?}", ast)
     })
     .expect("compiler_error");
 

@@ -50,7 +50,7 @@ pub(super) fn walkable_visit_derive(
     s.bind_with(|_| synstructure::BindStyle::RefMut);
     let mut_visit = s.each(|bind| {
         let span = bind.ast().span();
-        quote_spanned! { span => crate::visit::MutVisitable::visit(#bind, __visitor)? }
+        quote_spanned! { span => crate::visit::MutVisitable::visit(#bind, a, __visitor)? }
     });
 
     s.gen_impl(quote! {
@@ -75,7 +75,7 @@ pub(super) fn walkable_visit_derive(
         gen impl<__V> crate::visit::MutWalkable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            fn walk_mut(&mut self, a: &mut __V::State, __visitor: &__V) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #mut_visit }
 
                 std::ops::ControlFlow::Continue(())
@@ -85,8 +85,8 @@ pub(super) fn walkable_visit_derive(
         gen impl<__V> crate::MutVisitable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn visit(&mut self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                visitor.#visit_function_name(self)
+            fn visit(&mut self, a: &mut __V::State, visitor: &__V) -> ::std::ops::ControlFlow<__V::Break> {
+                visitor.#visit_function_name(a, self)
             }
         }
     })
@@ -120,7 +120,7 @@ pub(super) fn walkable_direct_derive(mut s: synstructure::Structure<'_>) -> proc
     s.bind_with(|_| synstructure::BindStyle::RefMut);
     let mut_visit = s.each(|bind| {
         let span = bind.ast().span();
-        quote_spanned! { span => crate::visit::MutVisitable::visit(#bind, __visitor)? }
+        quote_spanned! { span => crate::visit::MutVisitable::visit(#bind, a, __visitor)? }
     });
 
     s.gen_impl(quote! {
@@ -144,7 +144,7 @@ pub(super) fn walkable_direct_derive(mut s: synstructure::Structure<'_>) -> proc
         gen impl<__V> crate::visit::MutWalkable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn walk_mut(&mut self, __visitor: &mut __V) -> std::ops::ControlFlow<__V::Break> {
+            fn walk_mut(&mut self, a: &mut __V::State, __visitor: &__V) -> std::ops::ControlFlow<__V::Break> {
                 match *self { #mut_visit }
                 std::ops::ControlFlow::Continue(())
             }
@@ -153,8 +153,8 @@ pub(super) fn walkable_direct_derive(mut s: synstructure::Structure<'_>) -> proc
         gen impl<__V> crate::MutVisitable<__V> for @Self
             where __V: crate::visit::MutVisitor,
         {
-            fn visit(&mut self, visitor: &mut __V) -> ::std::ops::ControlFlow<__V::Break> {
-                self.walk_mut(visitor)
+            fn visit(&mut self, a: &mut __V::State, visitor: &__V) -> ::std::ops::ControlFlow<__V::Break> {
+                self.walk_mut(a, visitor)
             }
         }
     })
