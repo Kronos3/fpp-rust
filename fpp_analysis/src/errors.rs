@@ -1,3 +1,4 @@
+use crate::semantics::TypeConversionError;
 use fpp_core::{Diagnostic, Level, Span};
 
 #[derive(Debug)]
@@ -39,6 +40,11 @@ pub enum SemanticError {
         name: String,
         loc: Span,
         prev_loc: Span,
+    },
+    TypeConversion {
+        loc: Span,
+        msg: String,
+        err: TypeConversionError,
     },
 }
 
@@ -92,6 +98,9 @@ impl Into<Diagnostic> for SemanticError {
                 format!("duplicate struct member `{}`", name),
             )
             .span_note(prev_loc, "previously defined here"),
+            SemanticError::TypeConversion { loc, msg, err } => {
+                err.annotate(Diagnostic::spanned(loc, Level::Error, msg))
+            }
         }
     }
 }

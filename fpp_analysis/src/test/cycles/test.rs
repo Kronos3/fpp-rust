@@ -1,18 +1,18 @@
 use crate::test::lib::run_test;
 
 #[test]
+fn struct_() {
+    run_test("cycles/struct")
+}
+
+#[test]
 fn alias() {
     run_test("cycles/alias")
 }
 
 #[test]
-fn array() {
-    run_test("cycles/array")
-}
-
-#[test]
-fn constant_1() {
-    run_test("cycles/constant_1")
+fn enum_constant() {
+    run_test("cycles/enum_constant")
 }
 
 #[test]
@@ -26,11 +26,11 @@ fn enum_() {
 }
 
 #[test]
-fn enum_constant() {
-    run_test("cycles/enum_constant")
+fn array() {
+    run_test("cycles/array")
 }
 
 #[test]
-fn struct_() {
-    run_test("cycles/struct")
+fn constant_1() {
+    run_test("cycles/constant_1")
 }

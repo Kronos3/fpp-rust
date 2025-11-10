@@ -1,0 +1,10 @@
+tests="
+array_index_negative
+array_index_out_of_bounds
+invalid_array_index_type
+invalid_array_type
+undef_1
+undef_2
+undef_3
+uses_ok
+"

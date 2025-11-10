@@ -1,5 +1,5 @@
 use crate::analysis::Analysis;
-use crate::passes::{CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols};
+use crate::passes::{CheckExprTypes, CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols};
 use fpp_ast::{MutVisitor, Visitor};
 use std::ops::ControlFlow;
 
@@ -12,6 +12,7 @@ pub fn check_semantics<'ast>(
     CheckUses::new().visit_trans_unit(a, ast)?;
     CheckUseDefCycles::new().visit_trans_unit(a, ast)?;
     CheckTypeUses::new().visit_trans_unit(a, ast)?;
+    CheckExprTypes::new().visit_trans_unit(a, ast)?;
 
     ControlFlow::Continue(())
 }
