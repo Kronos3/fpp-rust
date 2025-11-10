@@ -21,15 +21,24 @@ pub enum SemanticError {
         name: String,
         loc: Span,
     },
+    UseDefCycle {
+        loc: Span,
+        cycle: Vec<SymbolUse>,
+    },
     InvalidSymbol {
         symbol_name: String,
         msg: String,
         loc: Span,
         def_loc: Span,
     },
-    UseDefCycle {
+    InvalidType {
         loc: Span,
-        cycle: Vec<SymbolUse>,
+        msg: String,
+    },
+    DuplicateStructMember {
+        name: String,
+        loc: Span,
+        prev_loc: Span,
     },
 }
 
@@ -72,6 +81,17 @@ impl Into<Diagnostic> for SemanticError {
                         .span_note(suse.def_loc, "defined here"),
                 },
             ),
+            SemanticError::InvalidType { loc, msg } => Diagnostic::spanned(loc, Level::Error, msg),
+            SemanticError::DuplicateStructMember {
+                name,
+                loc,
+                prev_loc,
+            } => Diagnostic::spanned(
+                loc,
+                Level::Error,
+                format!("duplicate struct member `{}`", name),
+            )
+            .span_note(prev_loc, "previously defined here"),
         }
     }
 }

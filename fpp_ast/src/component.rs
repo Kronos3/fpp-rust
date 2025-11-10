@@ -1,7 +1,7 @@
 use crate::*;
 
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum ComponentMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -24,7 +24,7 @@ pub enum ComponentMember {
     SpecInterfaceImport(SpecInterfaceImport),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum InputPortKind {
     Async,
     Guarded,
@@ -32,7 +32,7 @@ pub enum InputPortKind {
 }
 
 /** Queue full behavior */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum QueueFull {
     Assert,
     Block,
@@ -41,7 +41,7 @@ pub enum QueueFull {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecCommand {
     #[visitable(ignore)]
     pub kind: InputPortKind,
@@ -54,14 +54,14 @@ pub struct SpecCommand {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecContainer {
     pub name: Ident,
     pub id: Option<Expr>,
     pub default_priority: Option<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum EventSeverity {
     ActivityHigh,
     ActivityLow,
@@ -73,14 +73,14 @@ pub enum EventSeverity {
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct EventThrottle {
     pub count: Expr,
     pub every: Option<Expr>,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecEvent {
     pub name: Ident,
     pub params: FormalParamList,
@@ -94,7 +94,7 @@ pub struct SpecEvent {
 
 /** Internal port specifier */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInternalPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -104,7 +104,7 @@ pub struct SpecInternalPort {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecParam {
     pub name: Ident,
     pub type_name: TypeName,
@@ -116,13 +116,13 @@ pub struct SpecParam {
     pub is_external: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum GeneralPortInstanceKind {
     Input(InputPortKind),
     Output,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SpecialPortInstanceKind {
     CommandRecv,
     CommandReg,
@@ -140,14 +140,14 @@ pub enum SpecialPortInstanceKind {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecPortMatching {
     pub port1: Ident,
     pub port2: Ident,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecRecord {
     pub name: Ident,
     pub record_type: TypeName,
@@ -157,7 +157,7 @@ pub struct SpecRecord {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecStateMachineInstance {
     pub name: Ident,
     pub state_machine: QualIdent,
@@ -166,13 +166,13 @@ pub struct SpecStateMachineInstance {
     pub queue_full: Option<QueueFull>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TlmChannelUpdate {
     Always,
     OnChange,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TlmChannelLimitKind {
     Red,
     Orange,
@@ -180,7 +180,7 @@ pub enum TlmChannelLimitKind {
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct TlmChannelLimit {
     #[visitable(ignore)]
     pub kind: TlmChannelLimitKind,
@@ -188,7 +188,7 @@ pub struct TlmChannelLimit {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmChannel {
     pub name: Ident,
     pub type_name: TypeName,

@@ -2233,47 +2233,47 @@ impl<'a> Parser<'a> {
         let kind = match self.peek(0) {
             Keyword(Bool) => {
                 self.next();
-                Ok(TypeNameKind::Bool())
+                Ok(TypeNameKind::Bool)
             }
             Keyword(I8) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::I8))
+                Ok(TypeNameKind::Integer(IntegerKind::I8))
             }
             Keyword(U8) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::U8))
+                Ok(TypeNameKind::Integer(IntegerKind::U8))
             }
             Keyword(I16) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::I16))
+                Ok(TypeNameKind::Integer(IntegerKind::I16))
             }
             Keyword(U16) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::U16))
+                Ok(TypeNameKind::Integer(IntegerKind::U16))
             }
             Keyword(I32) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::I32))
+                Ok(TypeNameKind::Integer(IntegerKind::I32))
             }
             Keyword(U32) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::U32))
+                Ok(TypeNameKind::Integer(IntegerKind::U32))
             }
             Keyword(I64) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::I64))
+                Ok(TypeNameKind::Integer(IntegerKind::I64))
             }
             Keyword(U64) => {
                 self.next();
-                Ok(TypeNameKind::Integer(IntegerType::U64))
+                Ok(TypeNameKind::Integer(IntegerKind::U64))
             }
             Keyword(F32) => {
                 self.next();
-                Ok(TypeNameKind::Floating(FloatType::F32))
+                Ok(TypeNameKind::Floating(FloatKind::F32))
             }
             Keyword(F64) => {
                 self.next();
-                Ok(TypeNameKind::Floating(FloatType::F64))
+                Ok(TypeNameKind::Floating(FloatKind::F64))
             }
             Keyword(String_) => {
                 self.next();

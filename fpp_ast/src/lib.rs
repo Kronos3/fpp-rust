@@ -43,7 +43,7 @@ pub enum QualIdentKind {
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct LitString {
     #[visitable(ignore)]
     pub data: String,
@@ -51,20 +51,20 @@ pub struct LitString {
 
 /** Identifier */
 #[ast]
-#[derive(Debug, VisitorWalkable, Clone)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct Ident {
     #[visitable(ignore)]
     pub data: String,
 }
 
-#[derive(Debug)]
-pub enum FloatType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatKind {
     F32,
     F64,
 }
 
-#[derive(Debug)]
-pub enum IntegerType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerKind {
     U8,
     I8,
     U16,
@@ -75,46 +75,46 @@ pub enum IntegerType {
     I64,
 }
 
-#[derive(Debug, DirectWalkable)]
+#[derive(Debug, Clone, DirectWalkable)]
 pub enum TypeNameKind {
     #[visitable(ignore)]
-    Bool(),
+    Bool,
     #[visitable(ignore)]
-    Floating(FloatType),
+    Floating(FloatKind),
     #[visitable(ignore)]
-    Integer(IntegerType),
+    Integer(IntegerKind),
     QualIdent(QualIdent),
     String(Option<Expr>),
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct TypeName {
     pub kind: TypeNameKind,
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct Qualified {
     pub qualifier: Box<QualIdent>,
     pub name: Ident,
 }
 
 #[ast]
-#[derive(VisitorWalkable)]
+#[derive(Clone, VisitorWalkable)]
 pub enum QualIdent {
     Unqualified(Ident),
     Qualified(Qualified),
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct StructMember {
     pub name: Ident,
     pub value: Expr,
 }
 
-#[derive(Debug, DirectWalkable)]
+#[derive(Debug, Clone, DirectWalkable)]
 pub enum ExprKind {
     Array(Vec<Expr>),
     ArraySubscript {
@@ -151,19 +151,19 @@ pub enum ExprKind {
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct Expr {
     pub kind: ExprKind,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum FormalParamKind {
     Ref,
     Value,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct FormalParam {
     #[visitable(ignore)]
     pub kind: FormalParamKind,
@@ -174,7 +174,7 @@ pub struct FormalParam {
 pub type FormalParamList = Vec<FormalParam>;
 
 /** Binary operation */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Binop {
     Add,
     Div,
@@ -182,21 +182,21 @@ pub enum Binop {
     Sub,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Unop {
     Minus,
 }
 
 /** Abstract type definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefAbsType {
     pub name: Ident,
 }
 
 /** Aliased type definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefAliasType {
     pub name: Ident,
     pub type_name: TypeName,
@@ -204,7 +204,7 @@ pub struct DefAliasType {
 
 /** Array definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefArray {
     pub name: Ident,
     pub size: Expr,
@@ -214,7 +214,7 @@ pub struct DefArray {
     pub format: Option<LitString>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ComponentKind {
     Active,
     Passive,
@@ -223,7 +223,7 @@ pub enum ComponentKind {
 
 /** Component definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefComponent {
     #[visitable(ignore)]
     pub kind: ComponentKind,
@@ -233,7 +233,7 @@ pub struct DefComponent {
 
 /** Component instance definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefComponentInstance {
     pub name: Ident,
     pub component: QualIdent,
@@ -251,7 +251,7 @@ pub struct DefComponentInstance {
 
 /** Init specifier */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInit {
     pub phase: Expr,
     #[visitable(ignore)]
@@ -260,7 +260,7 @@ pub struct SpecInit {
 
 /** Constant definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefConstant {
     pub name: Ident,
     pub value: Expr,
@@ -268,7 +268,7 @@ pub struct DefConstant {
 
 /** Enum definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefEnum {
     pub name: Ident,
     pub type_name: Option<TypeName>,
@@ -278,7 +278,7 @@ pub struct DefEnum {
 
 /** Enum constant definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefEnumConstant {
     pub name: Ident,
     pub value: Option<Expr>,
@@ -286,14 +286,14 @@ pub struct DefEnumConstant {
 
 /** Module definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefModule {
     pub name: Ident,
     pub members: Vec<ModuleMember>,
 }
 
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),
     DefAliasType(DefAliasType),
@@ -312,7 +312,7 @@ pub enum ModuleMember {
     SpecLoc(SpecLoc),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SpecLocKind {
     Component,
     Instance,
@@ -325,7 +325,7 @@ pub enum SpecLocKind {
 
 /** Location specifier */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecLoc {
     #[visitable(ignore)]
     pub kind: SpecLocKind,
@@ -335,7 +335,7 @@ pub struct SpecLoc {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecGeneralPortInstance {
     #[visitable(ignore)]
     pub kind: GeneralPortInstanceKind,
@@ -348,7 +348,7 @@ pub struct SpecGeneralPortInstance {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecSpecialPortInstance {
     #[visitable(ignore)]
     pub input_kind: Option<InputPortKind>,
@@ -361,7 +361,7 @@ pub struct SpecSpecialPortInstance {
 }
 
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum SpecPortInstance {
     General(SpecGeneralPortInstance),
     Special(SpecSpecialPortInstance),
@@ -369,7 +369,7 @@ pub enum SpecPortInstance {
 
 /** Interface member */
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum InterfaceMember {
     SpecPortInstance(SpecPortInstance),
     SpecInterfaceImport(SpecInterfaceImport),
@@ -377,14 +377,14 @@ pub enum InterfaceMember {
 
 /** Interface definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefInterface {
     pub name: Ident,
     pub members: Vec<InterfaceMember>,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct StructTypeMember {
     pub name: Ident,
     pub size: Option<Expr>,
@@ -395,7 +395,7 @@ pub struct StructTypeMember {
 
 /** Struct definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefStruct {
     pub name: Ident,
     pub members: Vec<StructTypeMember>,
@@ -403,7 +403,7 @@ pub struct DefStruct {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefPort {
     pub name: Ident,
     pub params: FormalParamList,
@@ -412,7 +412,7 @@ pub struct DefPort {
 
 /** Include specifier */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInclude {
     #[visitable(ignore)]
     pub file: LitString,
@@ -420,7 +420,7 @@ pub struct SpecInclude {
 
 /** Import specifier */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInterfaceImport {
     #[visitable(ignore)]
     pub interface: QualIdent,

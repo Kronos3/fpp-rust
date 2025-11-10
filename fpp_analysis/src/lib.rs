@@ -22,6 +22,9 @@ pub mod passes {
 
     mod check_use_def_cycles;
     pub use check_use_def_cycles::*;
+
+    mod check_type_uses;
+    pub use check_type_uses::*;
 }
 
 pub mod semantics {
@@ -42,6 +45,15 @@ pub mod semantics {
 
     mod use_def_matching;
     pub use use_def_matching::*;
+
+    mod types;
+    pub use types::*;
+
+    mod value;
+    pub use value::*;
+
+    mod format;
+    pub use format::*;
 
     mod generic_name_symbol_map;
     mod generic_nested_scope;

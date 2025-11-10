@@ -5,11 +5,11 @@ use fpp_core::{Position, SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
 
-pub struct ResolveSpecInclude {}
+pub struct ResolveIncludes {}
 
-impl ResolveSpecInclude {
-    pub fn new() -> ResolveSpecInclude {
-        ResolveSpecInclude {}
+impl ResolveIncludes {
+    pub fn new() -> ResolveIncludes {
+        ResolveIncludes {}
     }
 
     fn check_loc_for_cycle(
@@ -62,7 +62,7 @@ impl ResolveSpecInclude {
         a: &mut HashSet<SourceFile>,
         spec_include: &SpecInclude,
         parser: fn(&mut Parser) -> Vec<T>,
-        transformer: fn(&ResolveSpecInclude, &mut HashSet<SourceFile>, T, &mut Vec<T>),
+        transformer: fn(&ResolveIncludes, &mut HashSet<SourceFile>, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
         let file = match spec_include
@@ -211,7 +211,7 @@ impl ResolveSpecInclude {
     }
 }
 
-impl MutVisitor for ResolveSpecInclude {
+impl MutVisitor for ResolveIncludes {
     type Break = ();
     type State = HashSet<SourceFile>;
 

@@ -2,7 +2,7 @@ use crate::*;
 
 /** Topology definition */
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefTopology {
     pub name: Ident,
     pub members: Vec<TopologyMember>,
@@ -10,7 +10,7 @@ pub struct DefTopology {
 }
 
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum TopologyMember {
     SpecInstance(SpecInstance),
     SpecConnectionGraph(SpecConnectionGraph),
@@ -20,20 +20,20 @@ pub enum TopologyMember {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInstance {
     pub instance: QualIdent,
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct PortInstanceIdentifier {
     pub interface_instance: QualIdent,
     pub port_name: Ident,
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct Connection {
     #[visitable(ignore)]
     pub is_unmatched: bool,
@@ -43,7 +43,7 @@ pub struct Connection {
     pub to_index: Option<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ConnectionPatternKind {
     Command,
     Event,
@@ -54,7 +54,7 @@ pub enum ConnectionPatternKind {
     Time,
 }
 
-#[derive(Debug, DirectWalkable)]
+#[derive(Debug, Clone, DirectWalkable)]
 pub enum SpecConnectionGraphKind {
     Direct {
         name: Ident,
@@ -69,27 +69,27 @@ pub enum SpecConnectionGraphKind {
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecConnectionGraph {
     pub kind: SpecConnectionGraphKind,
 }
 
 #[ast]
-#[derive(Debug, VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct TlmChannelIdentifier {
     pub component_instance: QualIdent,
     pub channel_name: Ident,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTopPort {
     pub name: Ident,
     pub underlying_port: PortInstanceIdentifier,
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmPacketSet {
     pub name: Ident,
     pub members: Vec<TlmPacketSetMember>,
@@ -97,14 +97,14 @@ pub struct SpecTlmPacketSet {
 }
 
 #[ast]
-#[derive(AstAnnotated, DirectWalkable)]
+#[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum TlmPacketSetMember {
     SpecInclude(SpecInclude),
     SpecTlmPacket(SpecTlmPacket),
 }
 
 #[ast]
-#[derive(AstAnnotated, VisitorWalkable)]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmPacket {
     pub name: Ident,
     pub id: Option<Expr>,
@@ -113,7 +113,7 @@ pub struct SpecTlmPacket {
 }
 
 #[ast]
-#[derive(DirectWalkable)]
+#[derive(DirectWalkable, Clone)]
 pub enum TlmPacketMember {
     SpecInclude(SpecInclude),
     TlmChannelIdentifier(TlmChannelIdentifier),

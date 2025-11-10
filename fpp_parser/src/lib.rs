@@ -5,7 +5,7 @@ mod lexer;
 mod parser;
 mod token;
 
-pub use include::ResolveSpecInclude;
+pub use include::ResolveIncludes;
 pub use parser::parse;
 pub use parser::Parser;
 
