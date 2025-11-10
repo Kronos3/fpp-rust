@@ -17,6 +17,7 @@ pub enum Symbol<'ast> {
     EnumConstant(&'ast fpp_ast::DefEnumConstant),
     Interface(&'ast fpp_ast::DefInterface),
     Module(&'ast fpp_ast::DefModule),
+    Port(&'ast fpp_ast::DefPort),
     StateMachine(&'ast fpp_ast::DefStateMachine),
     Struct(&'ast fpp_ast::DefStruct),
     Topology(&'ast fpp_ast::DefTopology),
@@ -38,6 +39,7 @@ impl<'a> SymbolInterface<'a> for Symbol<'a> {
             Symbol::StateMachine(node) => node.node_id,
             Symbol::Struct(node) => node.node_id,
             Symbol::Topology(node) => node.node_id,
+            Symbol::Port(node) => node.node_id,
         }
     }
 
@@ -56,6 +58,7 @@ impl<'a> SymbolInterface<'a> for Symbol<'a> {
             Symbol::StateMachine(def) => &def.name,
             Symbol::Struct(def) => &def.name,
             Symbol::Topology(def) => &def.name,
+            Symbol::Port(def) => &def.name,
         }
     }
 }

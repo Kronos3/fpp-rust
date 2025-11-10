@@ -1,9 +1,11 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/redef/type.fpp:2.1
-type T
-^
-error: redefinition of symbol T
-previous definition is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/redef/type.fpp:1.1
-type T
-^
+error: duplicate symbol definition
+ --> [ local path prefix ]/redef/type.fpp:2:6
+  |
+2 | type T
+  |      ^ redefinition of symbol T
+  |
+ ::: [ local path prefix ]/redef/type.fpp:1:1
+  |
+1 | type T
+  | ------ previous definition is here
+

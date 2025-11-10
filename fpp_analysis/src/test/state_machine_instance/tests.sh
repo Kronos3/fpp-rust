@@ -1,9 +1,0 @@
-tests="
-bad_priority
-inside_active
-inside_passive
-ok
-outside_active
-outside_passive
-undef_state_machine
-"

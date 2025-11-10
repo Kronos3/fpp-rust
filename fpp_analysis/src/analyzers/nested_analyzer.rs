@@ -30,11 +30,15 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> NestedAnalyzer<'ast, V> {
         symbol: Symbol<'ast>,
         node: Node<'ast>,
     ) -> ControlFlow<V::Break> {
-        let sym_scope = a.symbol_scope_map.get(&symbol).unwrap().clone();
-        a.nested_scope.push(sym_scope);
-        let out = node.walk(a, visitor);
-        a.nested_scope.pop();
-        out
+        match a.symbol_scope_map.get(&symbol) {
+            None => ControlFlow::Continue(()),
+            Some(scope) => {
+                a.nested_scope.push(scope.clone());
+                let out = node.walk(a, visitor);
+                a.nested_scope.pop();
+                out
+            }
+        }
     }
 }
 

@@ -229,11 +229,10 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
                 let sym = Symbol::Module(def);
 
                 for ng in NameGroup::all() {
-                    a.nested_scope
-                        .current_mut()
-                        .borrow_mut()
-                        .put(ng, sym)
-                        .expect("failed to add module to name group");
+                    match a.nested_scope.current_mut().borrow_mut().put(ng, sym) {
+                        Ok(_) => {}
+                        Err(err) => err.emit(),
+                    }
                 }
 
                 (sym, Scope::new())
@@ -279,6 +278,12 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         def: &'ast DefTopology,
     ) -> ControlFlow<Self::Break> {
         self.enter_symbol(a, Symbol::Topology(def), NameGroup::PortInterfaceInstance)
+            .unwrap_or_else(|err| err.emit());
+        ControlFlow::Continue(())
+    }
+
+    fn visit_def_port(&self, a: &mut Self::State, def: &'ast DefPort) -> ControlFlow<Self::Break> {
+        self.enter_symbol(a, Symbol::Port(def), NameGroup::Port)
             .unwrap_or_else(|err| err.emit());
         ControlFlow::Continue(())
     }

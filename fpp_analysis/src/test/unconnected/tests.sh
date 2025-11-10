@@ -1,4 +1,0 @@
-tests="
-basic
-internal
-"

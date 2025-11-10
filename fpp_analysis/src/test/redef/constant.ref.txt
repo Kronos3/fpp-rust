@@ -1,9 +1,11 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/redef/constant.fpp:2.1
-constant x = 1
-^
-error: redefinition of symbol x
-previous definition is here:
-[ local path prefix ]/compiler/tools/fpp-check/test/redef/constant.fpp:1.1
-constant x = 0
-^
+error: duplicate symbol definition
+ --> [ local path prefix ]/redef/constant.fpp:2:10
+  |
+2 | constant x = 1
+  |          ^ redefinition of symbol x
+  |
+ ::: [ local path prefix ]/redef/constant.fpp:1:1
+  |
+1 | constant x = 0
+  | -------------- previous definition is here
+
