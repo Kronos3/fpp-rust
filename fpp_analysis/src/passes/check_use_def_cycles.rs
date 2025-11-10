@@ -23,7 +23,6 @@ impl<'ast> CheckUseDefCycles<'ast> {
         match symbol {
             Symbol::AliasType(node) => node.visit(a, self),
             Symbol::Array(node) => node.visit(a, self),
-            Symbol::Component(node) => node.visit(a, self),
             Symbol::Constant(node) => node.visit(a, self),
             Symbol::Enum(node) => node.visit(a, self),
             Symbol::EnumConstant(node) => node.visit(a, self),

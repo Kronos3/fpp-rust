@@ -34,3 +34,13 @@ fn array() {
 fn constant_1() {
     run_test("cycles/constant_1")
 }
+
+#[test]
+fn interface() {
+    run_test("cycles/interface")
+}
+
+#[test]
+fn topology() {
+    run_test("cycles/topology")
+}
