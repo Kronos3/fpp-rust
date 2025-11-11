@@ -171,7 +171,7 @@ pub trait Visitor<'ast>: Sized {
         (LitString, visit_lit_string),
         (QualIdent, visit_qual_ident),
         (Qualified, visit_qualified),
-        (StructMember, visit_struct_member),
+        (StructExprMember, visit_struct_expr_member),
         (TypeName, visit_type_name),
         /* Inner AST nodes */
         (Connection, visit_connection),
@@ -267,7 +267,7 @@ pub trait MutVisitor: Sized {
         (LitString, visit_lit_string),
         (QualIdent, visit_qual_ident),
         (Qualified, visit_qualified),
-        (StructMember, visit_struct_member),
+        (StructExprMember, visit_struct_expr_member),
         (TypeName, visit_type_name),
         (TypeNameKind, visit_type_name_kind),
         /* Inner AST nodes */

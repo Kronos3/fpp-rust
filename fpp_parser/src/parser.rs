@@ -2504,7 +2504,7 @@ impl<'a> Parser<'a> {
 
     fn struct_expr(&mut self) -> ParseResult<Expr> {
         let first = self.consume(LeftCurly)?;
-        let members = self.element_sequence(&Parser::struct_member, Comma, RightCurly);
+        let members = self.element_sequence(&Parser::struct_expr_member, Comma, RightCurly);
         self.consume(RightCurly)?;
 
         Ok(Expr {
@@ -2513,11 +2513,11 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn struct_member(&mut self) -> ParseResult<StructMember> {
+    fn struct_expr_member(&mut self) -> ParseResult<StructExprMember> {
         let name = self.ident()?;
         self.consume(Equals)?;
         let value = self.expr()?;
-        Ok(StructMember {
+        Ok(StructExprMember {
             node_id: self.node(name.span()),
             name,
             value,

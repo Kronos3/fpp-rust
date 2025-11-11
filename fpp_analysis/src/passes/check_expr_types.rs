@@ -2,14 +2,20 @@ use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::basic_use_analyzer::UseAnalysisPass;
 use crate::analyzers::use_analyzer::UseAnalyzer;
 use crate::errors::SemanticError;
-use crate::semantics::{QualifiedName, Symbol, SymbolInterface, Type, TypeConversionResult};
+use crate::semantics::{
+    AnonArrayType, AnonStructType, ArrayType, QualifiedName, StructType, Symbol, SymbolInterface,
+    Type, TypeConversionResult,
+};
 use crate::Analysis;
 use fpp_ast::{
-    DefAliasType, DefArray, DefConstant, DefEnum, DefEnumConstant, Expr, Node, Visitable, Visitor,
+    DefAliasType, DefArray, DefConstant, DefEnum, DefEnumConstant, DefStruct, Expr, ExprKind,
+    FloatKind, Node, Visitable, Visitor,
 };
 use fpp_core::Spanned;
 use std::cell::RefCell;
-use std::ops::ControlFlow;
+use std::collections::HashMap;
+use std::num::NonZeroU32;
+use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
 pub struct CheckExprTypes<'ast> {
@@ -155,7 +161,239 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
         // Just check that the type of the value expression is convertible to numeric
         // The enum type of the enum constant node is already in the type map
-        
+        match &node.value {
+            None => {}
+            Some(value) => self.check_type_is_numerical(a, value),
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_def_struct(
+        &self,
+        a: &mut Self::State,
+        node: &'ast DefStruct,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::DefStruct(node))?;
+        match (&node.default, a.type_map.get(&node.node_id)) {
+            (Some(default), Some(struct_type)) => {
+                match self.convert_type(a, default, struct_type) {
+                    Ok(_) => {}
+                    Err(err) => SemanticError::TypeConversion {
+                        loc: default.span(),
+                        msg: format!(
+                            "default value cannot be converted to {}",
+                            struct_type.borrow()
+                        ),
+                        err,
+                    }
+                    .emit(),
+                }
+            }
+            _ => {}
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::Expr(node))?;
+
+        match &node.kind {
+            ExprKind::Array(array) => {
+                let first_node = match array.first() {
+                    None => {
+                        SemanticError::EmptyArray { loc: node.span() }.emit();
+                        return ControlFlow::Continue(());
+                    }
+                    Some(first) => first,
+                };
+
+                let first_ty = match a.type_map.get(&first_node.node_id) {
+                    Some(first_ty) => first_ty.clone(),
+                    // Node doesn't have a type
+                    None => return ControlFlow::Continue(()),
+                };
+
+                let common = array.iter().fold(Ok(first_ty), |common, next| {
+                    match (common, a.type_map.get(&next.node_id)) {
+                        (Ok(common), Some(next_type)) => {
+                            match Type::common_type(&common, next_type) {
+                                None => Err(SemanticError::InvalidType {
+                                    loc: next.span(),
+                                    msg: format!(
+                                        "cannot find common type between {} and {}",
+                                        next_type.borrow(),
+                                        common.borrow()
+                                    ),
+                                }),
+                                Some(new_ty) => Ok(new_ty),
+                            }
+                        }
+                        (Ok(common), None) => {
+                            // Node does not have a type
+                            Ok(common)
+                        }
+                        (Err(err), _) => Err(err),
+                    }
+                });
+
+                match common {
+                    Ok(common) => {
+                        // A common type was found across all the elements
+                        // Assign the full expression to an array of the proper size
+                        a.type_map.insert(
+                            node.node_id,
+                            Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                                elt_type: common,
+                                size: Some(NonZeroU32::new(array.len() as u32).unwrap()),
+                            }))),
+                        );
+                    }
+                    Err(err) => err.emit(),
+                }
+            }
+            ExprKind::ArraySubscript { e1, e2 } => {
+                self.check_type_is_numerical(a, e2);
+
+                let arr_ty = match a.type_map.get(&e1.node_id) {
+                    None => return ControlFlow::Continue(()),
+                    Some(arr_ty) => Type::underlying_type(arr_ty),
+                };
+
+                let elt_ty = match arr_ty.borrow().deref() {
+                    Type::Array(ArrayType { anon_array, .. }) | Type::AnonArray(anon_array) => {
+                        anon_array.elt_type.clone()
+                    }
+                    ty => {
+                        SemanticError::InvalidType {
+                            loc: e1.span(),
+                            msg: format!("{} is not an array type", ty),
+                        }
+                        .emit();
+                        return ControlFlow::Continue(());
+                    }
+                };
+
+                a.type_map.insert(node.node_id, elt_ty);
+            }
+            ExprKind::Binop { left, right, .. } => {
+                let ty = match (
+                    a.type_map.get(&left.node_id),
+                    a.type_map.get(&right.node_id),
+                ) {
+                    (Some(lty), Some(rty)) => match Type::common_type(lty, rty) {
+                        None => {
+                            SemanticError::InvalidType {
+                                loc: node.span(),
+                                msg: format!(
+                                    "invalid binary operation between {} and {}",
+                                    lty.borrow(),
+                                    rty.borrow()
+                                ),
+                            }
+                            .emit();
+                            return ControlFlow::Continue(());
+                        }
+                        Some(ty) => ty,
+                    },
+                    _ => {
+                        // One of the sides of the binary operation does not have a type
+                        return ControlFlow::Continue(());
+                    }
+                };
+
+                // TODO(tumbar) Do I need to check if l/r are numeric?
+                a.type_map.insert(node.node_id, ty);
+            }
+            ExprKind::Dot { e, id } => {
+                if a.type_map.get(&node.node_id).is_some() {
+                    // Type for this entire dot expression is already resolved
+                    // This means it's actually a _use_ of some sort of symbol (constant/enum constant)
+                    // We can just use the type that was already resolved
+                    return ControlFlow::Continue(());
+                }
+
+                // This is some member selection of a struct/anon struct
+                let e_ty = match a.type_map.get(&e.node_id) {
+                    Some(e_ty) => Type::underlying_type(e_ty),
+                    None => return ControlFlow::Continue(()),
+                };
+
+                match e_ty.borrow().deref() {
+                    Type::AnonStruct(anon_struct)
+                    | Type::Struct(StructType { anon_struct, .. }) => {
+                        match anon_struct.members.get(&id.data) {
+                            None => SemanticError::InvalidType {
+                                loc: id.span(),
+                                msg: format!("{} has no member `{}`", e_ty.borrow(), id.data),
+                            }
+                            .emit(),
+                            Some(member_ty) => {
+                                a.type_map.insert(node.node_id, member_ty.clone());
+                            }
+                        }
+                    }
+                    ty => SemanticError::InvalidType {
+                        loc: e.span(),
+                        msg: format!("{} does not have members", ty),
+                    }
+                    .emit(),
+                }
+            }
+            ExprKind::Ident(_) => {} // already handled by constantUse
+            ExprKind::LiteralBool(_) => {
+                a.type_map
+                    .insert(node.node_id, Rc::new(RefCell::new(Type::Boolean)));
+            }
+            ExprKind::LiteralInt(_) => {
+                a.type_map
+                    .insert(node.node_id, Rc::new(RefCell::new(Type::Integer)));
+            }
+            ExprKind::LiteralFloat(_) => {
+                a.type_map.insert(
+                    node.node_id,
+                    Rc::new(RefCell::new(Type::Float(FloatKind::F64))),
+                );
+            }
+            ExprKind::LiteralString(_) => {
+                a.type_map
+                    .insert(node.node_id, Rc::new(RefCell::new(Type::String(None))));
+            }
+            ExprKind::Paren(e) => match a.type_map.get(&e.node_id) {
+                Some(ty) => {
+                    a.type_map.insert(node.node_id, ty.clone());
+                }
+                _ => {}
+            },
+            ExprKind::Struct(struct_expr) => {
+                let mut members_out = HashMap::new();
+                for member in struct_expr {
+                    match a.type_map.get(&member.value.node_id) {
+                        Some(member_ty) => {
+                            members_out.insert(member.name.data.clone(), member_ty.clone());
+                        }
+                        _ => return ControlFlow::Continue(()),
+                    }
+                }
+
+                a.type_map.insert(
+                    node.node_id,
+                    Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                        members: members_out,
+                    }))),
+                );
+            }
+            ExprKind::Unop { e, .. } => {
+                // TODO(tumbar) Do I need to check if e is numeric?
+                match a.type_map.get(&e.node_id) {
+                    Some(ty) => {
+                        a.type_map.insert(node.node_id, ty.clone());
+                    }
+                    _ => {}
+                }
+            }
+        }
 
         ControlFlow::Continue(())
     }

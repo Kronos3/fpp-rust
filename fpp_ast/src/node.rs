@@ -63,7 +63,7 @@ pub enum Node<'a> {
     LitString(&'a LitString),
     QualIdent(&'a QualIdent),
     Qualified(&'a Qualified),
-    StructMember(&'a StructMember),
+    StructExprMember(&'a StructExprMember),
     TypeName(&'a TypeName),
     /* Inner AST nodes */
     Connection(&'a Connection),

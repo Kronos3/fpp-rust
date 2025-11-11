@@ -46,6 +46,9 @@ pub enum SemanticError {
         msg: String,
         err: TypeConversionError,
     },
+    EmptyArray {
+        loc: Span,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -100,6 +103,9 @@ impl Into<Diagnostic> for SemanticError {
             .span_note(prev_loc, "previously defined here"),
             SemanticError::TypeConversion { loc, msg, err } => {
                 err.annotate(Diagnostic::spanned(loc, Level::Error, msg))
+            }
+            SemanticError::EmptyArray { loc } => {
+                Diagnostic::spanned(loc, Level::Error, "array expression may not be empty")
             }
         }
     }

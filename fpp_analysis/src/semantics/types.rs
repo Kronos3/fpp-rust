@@ -365,12 +365,242 @@ impl Type {
             (Type::Boolean, Type::Boolean) => true,
             (Type::String(None), Type::String(None)) => true,
             (Type::String(Some(_e1)), Type::String(Some(_e2))) => {
-                todo!("implement string size comparisons")
+                // todo!("implement string size comparisons")
+                false
             }
             _ => match (t1.def_node_id(), t1.def_node_id()) {
                 (Some(n1), Some(n2)) => n1 == n2,
                 _ => false,
             },
+        }
+    }
+
+    pub fn common_type(
+        t1_a: &Rc<RefCell<Type>>,
+        t2_a: &Rc<RefCell<Type>>,
+    ) -> Option<Rc<RefCell<Type>>> {
+        // Trivial case, types are the same
+        if Type::identical(&t1_a.borrow(), &t2_a.borrow()) {
+            return Some(t1_a.clone());
+        }
+
+        // Types share a common ancestor in the alias type hierarchy
+        if !t1_a.borrow().is_canonical() || !t2_a.borrow().is_canonical() {
+            fn lca(a: &Rc<RefCell<Type>>, b: &Rc<RefCell<Type>>) -> Option<Rc<RefCell<Type>>> {
+                fn get_ancestors(t: &Rc<RefCell<Type>>, out: &mut Vec<Rc<RefCell<Type>>>) {
+                    out.push(t.clone());
+                    match t.borrow().deref() {
+                        Type::AliasType(AliasType { alias_type, .. }) => {
+                            get_ancestors(alias_type, out)
+                        }
+                        _ => {
+                            // Reverse the ancestor list since `get_ancestors` returns
+                            // the ancestors with the oldest ancestor first.
+                            out.reverse();
+                        }
+                    }
+                }
+
+                let mut ancestors_of_a = vec![];
+                get_ancestors(a, &mut ancestors_of_a);
+
+                let mut ancestors_of_b = vec![];
+                get_ancestors(b, &mut ancestors_of_b);
+
+                // Traverse the ancestry of 'b' until we find a common ancestor with 'a'
+                match ancestors_of_b.iter().find(|b| {
+                    ancestors_of_a
+                        .iter()
+                        .find(|a| Type::identical(&a.borrow(), &b.borrow()))
+                        .is_some()
+                }) {
+                    Some(ty) => Some(ty.clone()),
+                    None => None,
+                }
+            }
+
+            match lca(t1_a, t2_a) {
+                Some(ty) => return Some(ty),
+                None => {}
+            }
+        }
+
+        // Do the rest of the operations on the underlying types since none of aliases
+        // in the parent chain matched
+        let t1_c = Type::underlying_type(t1_a);
+        let t2_c = Type::underlying_type(t2_a);
+
+        let t1 = t1_c.borrow();
+        let t2 = t2_c.borrow();
+
+        // Check for numeric common types
+        if t1.is_float() && t2.is_numeric() {
+            return Some(Rc::new(RefCell::new(Type::Float(FloatKind::F64))));
+        }
+        if t1.is_numeric() && t2.is_float() {
+            return Some(Rc::new(RefCell::new(Type::Float(FloatKind::F64))));
+        }
+        if t1.is_numeric() && t2.is_numeric() {
+            return Some(Rc::new(RefCell::new(Type::Integer)));
+        }
+
+        match (t1.deref(), t2.deref()) {
+            // String -> String
+            (Type::String(_), Type::String(_)) => Some(Rc::new(RefCell::new(Type::String(None)))),
+
+            // Strip off any enum wrappers over the representable type
+            (Type::Enum(EnumType { rep_type, .. }), _) => Self::common_type(
+                &Rc::new(RefCell::new(Type::PrimitiveInt(rep_type.clone()))),
+                &t2_c,
+            ),
+            (_, Type::Enum(EnumType { rep_type, .. })) => Self::common_type(
+                &t1_c,
+                &Rc::new(RefCell::new(Type::PrimitiveInt(rep_type.clone()))),
+            ),
+
+            // t1 + t2 are both array/anon array
+            (
+                Type::Array(ArrayType {
+                    anon_array: t1_arr, ..
+                })
+                | Type::AnonArray(t1_arr),
+                Type::Array(ArrayType {
+                    anon_array: t2_arr, ..
+                })
+                | Type::AnonArray(t2_arr),
+            ) => {
+                // Check if the sizes match
+                let size = match (t1_arr.size, t2_arr.size) {
+                    (Some(t1_size), Some(t2_size)) => {
+                        if t1_size == t2_size {
+                            Some(t1_size)
+                        } else {
+                            return None;
+                        }
+                    }
+                    _ => None,
+                };
+
+                let elt_type = Type::common_type(&t1_arr.elt_type, &t2_arr.elt_type)?;
+                Some(Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                    size,
+                    elt_type,
+                }))))
+            }
+
+            // An array and a non array. Try to promote the non-array to the array
+            (
+                other,
+                Type::Array(ArrayType {
+                    anon_array: arr, ..
+                })
+                | Type::AnonArray(arr),
+            )
+            | (
+                Type::Array(ArrayType {
+                    anon_array: arr, ..
+                })
+                | Type::AnonArray(arr),
+                other,
+            ) => {
+                if other.is_promotable_to_array() {
+                    // Treat the 'other' type as an element of the array
+                    let elt_type =
+                        Type::common_type(&Rc::new(RefCell::new(other.clone())), &arr.elt_type)?;
+
+                    // Promote the single element to an array keeping the same size
+                    Some(Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                        elt_type,
+                        size: arr.size,
+                    }))))
+                } else {
+                    None
+                }
+            }
+
+            // Struct -> Struct
+            (
+                Type::Struct(StructType {
+                    anon_struct: t1_struct,
+                    ..
+                })
+                | Type::AnonStruct(t1_struct),
+                Type::Struct(StructType {
+                    anon_struct: t2_struct,
+                    ..
+                })
+                | Type::AnonStruct(t2_struct),
+            ) => {
+                // For each member in t1 and t2:
+                // - If the member only exists in t1, bring it in unchanged
+                // - If the member only exists in t2, bring it in unchanged
+                // - If the member exists in _both_, find the common type of the member on both
+                //    - If there is no common type, return None
+                let mut out_members = HashMap::new();
+
+                for (name, t1_ty) in &t1_struct.members {
+                    match t2_struct.members.get(name) {
+                        None => {
+                            out_members.insert(name.clone(), t1_ty.clone());
+                        }
+                        Some(t2_ty) => {
+                            let member_common = Type::common_type(t1_ty, t2_ty)?;
+                            out_members.insert(name.clone(), member_common);
+                        }
+                    }
+                }
+
+                // Add the remaining members left over in t2
+                for (name, t2_ty) in &t2_struct.members {
+                    match t1_struct.members.get(name) {
+                        None => {
+                            out_members.insert(name.clone(), t2_ty.clone());
+                        }
+                        Some(_) => {}
+                    }
+                }
+
+                Some(Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                    members: out_members,
+                }))))
+            }
+
+            // A struct and a non struct. The non struct can fill every member in the struct
+            (
+                other,
+                Type::Struct(StructType {
+                    anon_struct: str, ..
+                })
+                | Type::AnonStruct(str),
+            )
+            | (
+                Type::Struct(StructType {
+                    anon_struct: str, ..
+                })
+                | Type::AnonStruct(str),
+                other,
+            ) => {
+                if other.is_promotable_to_struct() {
+                    // Build a new struct with the same members as the old one while trying
+                    // to find the common type between the single element and all the members
+                    let mut out_members = HashMap::new();
+                    let other_rc = Rc::new(RefCell::new(other.clone()));
+
+                    for (name, in_member_ty) in &str.members {
+                        let out_member_ty = Type::common_type(&other_rc, in_member_ty)?;
+                        out_members.insert(name.clone(), out_member_ty);
+                    }
+
+                    // Create a new struct with similar shape of the old struct
+                    Some(Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                        members: out_members,
+                    }))))
+                } else {
+                    None
+                }
+            }
+
+            _ => None,
         }
     }
 }

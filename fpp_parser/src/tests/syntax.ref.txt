@@ -1366,7 +1366,7 @@
                                     Expr {
                                         kind: Struct(
                                             [
-                                                StructMember {
+                                                StructExprMember {
                                                     name: Ident {
                                                         data: "seconds",
                                                         node_id: Span {
@@ -3724,7 +3724,7 @@
                 value: Expr {
                     kind: Struct(
                         [
-                            StructMember {
+                            StructExprMember {
                                 name: Ident {
                                     data: "a",
                                     node_id: Span {
@@ -3746,7 +3746,7 @@
                                     end: [ local path prefix ]/syntax.fpp:310:32,
                                 },
                             },
-                            StructMember {
+                            StructExprMember {
                                 name: Ident {
                                     data: "b",
                                     node_id: Span {
@@ -3768,7 +3768,7 @@
                                     end: [ local path prefix ]/syntax.fpp:310:39,
                                 },
                             },
-                            StructMember {
+                            StructExprMember {
                                 name: Ident {
                                     data: "c",
                                     node_id: Span {

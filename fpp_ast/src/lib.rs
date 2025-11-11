@@ -109,7 +109,7 @@ pub enum QualIdent {
 
 #[ast]
 #[derive(Debug, Clone, VisitorWalkable)]
-pub struct StructMember {
+pub struct StructExprMember {
     pub name: Ident,
     pub value: Expr,
 }
@@ -142,7 +142,7 @@ pub enum ExprKind {
     #[visitable(ignore)]
     LiteralString(String),
     Paren(Box<Expr>),
-    Struct(Vec<StructMember>),
+    Struct(Vec<StructExprMember>),
     Unop {
         #[visitable(ignore)]
         op: Unop,
