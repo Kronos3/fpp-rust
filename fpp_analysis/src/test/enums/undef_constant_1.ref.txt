@@ -1,5 +1,6 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/enum/undef_constant_1.fpp:1.14
-enum E { X = a }
-             ^
-error: undefined symbol a
+error: undefined symbol
+ --> [ local path prefix ]/enums/undef_constant_1.fpp:1:14
+  |
+1 | enum E { X = a }
+  |              ^ cannot find constant `a` in scope
+
