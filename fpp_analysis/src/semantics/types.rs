@@ -7,7 +7,6 @@ use fpp_core::Diagnostic;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Write};
-use std::num::NonZeroU32;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -54,11 +53,8 @@ impl Type {
             Type::AbsType(ty) => Some(Value::AbsType(ty.default_value.clone()?)),
             Type::Array(array) => Some(Value::Array(array.default.clone()?)),
             Type::AnonArray(arr) => Some(Value::AnonArray(AnonArrayValue {
-                elements: std::iter::repeat_n(
-                    arr.elt_type.borrow().default_value()?,
-                    arr.size?.get() as usize,
-                )
-                .collect(),
+                elements: std::iter::repeat_n(arr.elt_type.borrow().default_value()?, arr.size?)
+                    .collect(),
             })),
             Type::Enum(ty) => Some(Value::EnumConstant(ty.default.clone()?)),
             Type::Struct(def) => Some(Value::Struct(def.default.clone()?)),
@@ -283,7 +279,9 @@ impl Type {
                     Type::underlying_type(&to_arr.elt_type).borrow().deref(),
                 ) {
                     Ok(_) => Ok(()),
-                    Err(err) => Err(TypeConversionError::ArrayElement(Box::new(err))),
+                    Err(err) => Err(TypeConversionError::ArrayElementDuringPromotion(Box::new(
+                        err,
+                    ))),
                 }
             }
 
@@ -368,7 +366,7 @@ impl Type {
                 // todo!("implement string size comparisons")
                 false
             }
-            _ => match (t1.def_node_id(), t1.def_node_id()) {
+            _ => match (t1.def_node_id(), t2.def_node_id()) {
                 (Some(n1), Some(n2)) => n1 == n2,
                 _ => false,
             },
@@ -648,6 +646,7 @@ pub enum TypeConversionError {
         from: ArraySize,
         to: ArraySize,
     },
+    ArrayElementDuringPromotion(Box<TypeConversionError>),
     ArrayElement(Box<TypeConversionError>),
     NotPromotableToArray(Type),
     NotPromotableToStruct(Type),
@@ -669,7 +668,10 @@ impl TypeConversionError {
                 diagnostic.note(format!("array sizes do not match {} != {}", from, to))
             }
             TypeConversionError::ArrayElement(err) => {
-                err.annotate(diagnostic.note("array element type cannot be converted:"))
+                err.annotate(diagnostic.note("array element type cannot be converted"))
+            }
+            TypeConversionError::ArrayElementDuringPromotion(err) => {
+                err.annotate(diagnostic.note("single element could not be promoted to array"))
             }
             TypeConversionError::NotPromotableToArray(ty) => {
                 diagnostic.note(format!("{} cannot be promoted to array", ty))
@@ -680,9 +682,9 @@ impl TypeConversionError {
             TypeConversionError::MissingStructMember(name) => {
                 diagnostic.note(format!("struct missing member `{}`", name))
             }
-            TypeConversionError::StructMember { name, err } => err.annotate(diagnostic.note(
-                format!("struct member `{}` type cannot be converted:", name),
-            )),
+            TypeConversionError::StructMember { name, err } => err.annotate(
+                diagnostic.note(format!("struct member `{}` type cannot be converted", name)),
+            ),
             TypeConversionError::Mismatch { from, to } => {
                 diagnostic.note(format!("{} cannot be converted to {}", from, to))
             }
@@ -767,7 +769,7 @@ pub struct ArrayType {
     pub format: Option<Format>,
 }
 
-type ArraySize = NonZeroU32;
+type ArraySize = usize;
 
 /** An anonymous array type */
 #[derive(Debug, Clone)]

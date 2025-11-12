@@ -9,12 +9,14 @@ use crate::semantics::{
 use crate::Analysis;
 use fpp_ast::{
     DefAliasType, DefArray, DefConstant, DefEnum, DefEnumConstant, DefStruct, Expr, ExprKind,
-    FloatKind, Node, Visitable, Visitor,
+    FloatKind, IntegerKind, Node, SpecCommand, SpecContainer, SpecEvent, SpecGeneralPortInstance,
+    SpecInit, SpecInternalPort, SpecParam, SpecRecord, SpecSpecialPortInstance,
+    SpecStateMachineInstance, SpecTlmChannel, SpecTlmPacket, StructTypeMember, TypeName,
+    TypeNameKind, Visitable, Visitor,
 };
 use fpp_core::Spanned;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::num::NonZeroU32;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
@@ -56,6 +58,40 @@ impl<'ast> CheckExprTypes<'ast> {
             }
         }
     }
+
+    fn check_type_is_numerical_opt(&self, a: &Analysis<'ast>, expr: &'ast Option<Expr>) {
+        match expr {
+            None => {}
+            Some(expr) => self.check_type_is_numerical(a, expr),
+        }
+    }
+
+    fn check_expr_matches_node(&self, a: &Analysis<'ast>, expr: &'ast Expr, node: &fpp_core::Node) {
+        match a.type_map.get(node) {
+            Some(ty) => match self.convert_type(a, expr, ty) {
+                Ok(_) => {}
+                Err(err) => SemanticError::TypeConversion {
+                    loc: expr.span(),
+                    msg: format!("default value cannot be converted to {}", ty.borrow()),
+                    err,
+                }
+                .emit(),
+            },
+            None => {}
+        }
+    }
+
+    fn check_expr_opt_matches_node(
+        &self,
+        a: &Analysis<'ast>,
+        expr: &'ast Option<Expr>,
+        node: &fpp_core::Node,
+    ) {
+        match &expr {
+            Some(expr) => self.check_expr_matches_node(a, expr, node),
+            _ => {}
+        }
+    }
 }
 
 impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
@@ -73,19 +109,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
     ) -> ControlFlow<Self::Break> {
         self.super_visit(a, Node::DefArray(node))?;
         self.check_type_is_numerical(a, &node.size);
-
-        match (&node.default, a.type_map.get(&node.node_id)) {
-            (Some(default), Some(arr_type)) => match self.convert_type(a, default, arr_type) {
-                Ok(_) => {}
-                Err(err) => SemanticError::TypeConversion {
-                    loc: default.span(),
-                    msg: format!("default value cannot be converted to {}", arr_type.borrow()),
-                    err,
-                }
-                .emit(),
-            },
-            _ => {}
-        }
+        self.check_expr_opt_matches_node(a, &node.default, &node.node_id);
 
         ControlFlow::Continue(())
     }
@@ -132,22 +156,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
     fn visit_def_enum(&self, a: &mut Self::State, node: &'ast DefEnum) -> ControlFlow<Self::Break> {
         self.super_visit(a, Node::DefEnum(node))?;
-
-        match (&node.default, a.type_map.get(&node.node_id)) {
-            (Some(default), Some(enum_type)) => match self.convert_type(a, default, enum_type) {
-                Ok(_) => {}
-                Err(err) => SemanticError::TypeConversion {
-                    loc: default.span(),
-                    msg: format!(
-                        "default value cannot be converted to {}",
-                        enum_type.borrow()
-                    ),
-                    err,
-                }
-                .emit(),
-            },
-            _ => {}
-        }
+        self.check_expr_opt_matches_node(a, &node.default, &node.node_id);
 
         ControlFlow::Continue(())
     }
@@ -175,23 +184,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
         node: &'ast DefStruct,
     ) -> ControlFlow<Self::Break> {
         self.super_visit(a, Node::DefStruct(node))?;
-        match (&node.default, a.type_map.get(&node.node_id)) {
-            (Some(default), Some(struct_type)) => {
-                match self.convert_type(a, default, struct_type) {
-                    Ok(_) => {}
-                    Err(err) => SemanticError::TypeConversion {
-                        loc: default.span(),
-                        msg: format!(
-                            "default value cannot be converted to {}",
-                            struct_type.borrow()
-                        ),
-                        err,
-                    }
-                    .emit(),
-                }
-            }
-            _ => {}
-        }
+        self.check_expr_opt_matches_node(a, &node.default, &node.node_id);
 
         ControlFlow::Continue(())
     }
@@ -215,7 +208,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     None => return ControlFlow::Continue(()),
                 };
 
-                let common = array.iter().fold(Ok(first_ty), |common, next| {
+                let common = array.iter().skip(1).fold(Ok(first_ty), |common, next| {
                     match (common, a.type_map.get(&next.node_id)) {
                         (Ok(common), Some(next_type)) => {
                             match Type::common_type(&common, next_type) {
@@ -246,7 +239,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                             node.node_id,
                             Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
                                 elt_type: common,
-                                size: Some(NonZeroU32::new(array.len() as u32).unwrap()),
+                                size: Some(array.len()),
                             }))),
                         );
                     }
@@ -393,6 +386,214 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     _ => {}
                 }
             }
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_command(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecCommand,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecCommand(node))?;
+        self.check_type_is_numerical_opt(a, &node.opcode);
+        self.check_type_is_numerical_opt(a, &node.priority);
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_container(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecContainer,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecContainer(node))?;
+        self.check_type_is_numerical_opt(a, &node.id);
+        self.check_type_is_numerical_opt(a, &node.default_priority);
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_event(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecEvent,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecEvent(node))?;
+        self.check_type_is_numerical_opt(a, &node.id);
+
+        // Check that the throttle count/every are valid
+        match &node.throttle {
+            None => {}
+            Some(throttle) => {
+                self.check_type_is_numerical(a, &throttle.count);
+                match &throttle.every {
+                    Some(every) => {
+                        match self.convert_type(
+                            a,
+                            every,
+                            &Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                                members: HashMap::from([
+                                    (
+                                        "seconds".to_string(),
+                                        Rc::new(RefCell::new(Type::PrimitiveInt(IntegerKind::U32))),
+                                    ),
+                                    (
+                                        "useconds".to_string(),
+                                        Rc::new(RefCell::new(Type::PrimitiveInt(IntegerKind::U32))),
+                                    ),
+                                ]),
+                            }))),
+                        ) {
+                            Err(err) => SemanticError::TypeConversion {
+                                loc: every.span(),
+                                msg: "event throttle every must be convertable to a time interval"
+                                    .to_string(),
+                                err,
+                            }
+                            .emit(),
+                            Ok(()) => {}
+                        }
+                    }
+                    None => {}
+                }
+            }
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_init(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecInit,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecInit(node))?;
+        self.check_type_is_numerical(a, &node.phase);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_internal_port(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecInternalPort,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecInternalPort(node))?;
+        self.check_type_is_numerical_opt(a, &node.priority);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_param(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecParam,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecParam(node))?;
+
+        self.check_expr_opt_matches_node(a, &node.default, &node.type_name.node_id);
+        self.check_type_is_numerical_opt(a, &node.id);
+        self.check_type_is_numerical_opt(a, &node.set_opcode);
+        self.check_type_is_numerical_opt(a, &node.save_opcode);
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_general_port_instance(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecGeneralPortInstance,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecGeneralPortInstance(node))?;
+
+        self.check_type_is_numerical_opt(a, &node.size);
+        self.check_type_is_numerical_opt(a, &node.priority);
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_special_port_instance(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecSpecialPortInstance,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecSpecialPortInstance(node))?;
+        self.check_type_is_numerical_opt(a, &node.priority);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_record(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecRecord,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecRecord(node))?;
+        self.check_type_is_numerical_opt(a, &node.id);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_state_machine_instance(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecStateMachineInstance,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecStateMachineInstance(node))?;
+        self.check_type_is_numerical_opt(a, &node.priority);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_tlm_channel(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecTlmChannel,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecTlmChannel(node))?;
+        self.check_type_is_numerical_opt(a, &node.id);
+        for limit in &node.low {
+            self.check_type_is_numerical(a, &limit.value);
+            self.check_expr_matches_node(a, &limit.value, &node.type_name.node_id)
+        }
+
+        for limit in &node.high {
+            self.check_type_is_numerical(a, &limit.value);
+            self.check_expr_matches_node(a, &limit.value, &node.type_name.node_id)
+        }
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_spec_tlm_packet(
+        &self,
+        a: &mut Self::State,
+        node: &'ast SpecTlmPacket,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::SpecTlmPacket(node))?;
+        self.check_type_is_numerical_opt(a, &node.id);
+        self.check_type_is_numerical(a, &node.group);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_struct_type_member(
+        &self,
+        a: &mut Self::State,
+        node: &'ast StructTypeMember,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::StructTypeMember(node))?;
+        self.check_type_is_numerical_opt(a, &node.size);
+        ControlFlow::Continue(())
+    }
+
+    fn visit_type_name(
+        &self,
+        a: &mut Self::State,
+        node: &'ast TypeName,
+    ) -> ControlFlow<Self::Break> {
+        self.super_visit(a, Node::TypeName(node))?;
+        match &node.kind {
+            TypeNameKind::String(size) => {
+                self.check_type_is_numerical_opt(a, size);
+            }
+            _ => {}
         }
 
         ControlFlow::Continue(())

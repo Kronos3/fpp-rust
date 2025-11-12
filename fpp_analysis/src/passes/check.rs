@@ -1,5 +1,8 @@
 use crate::analysis::Analysis;
-use crate::passes::{CheckExprTypes, CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols};
+use crate::passes::{
+    CheckExprTypes, CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols, EvalConstantExprs,
+    EvalImpliedEnumConsts,
+};
 use fpp_ast::{MutVisitor, Visitor};
 use std::ops::ControlFlow;
 
@@ -13,6 +16,8 @@ pub fn check_semantics<'ast>(
     CheckUseDefCycles::new().visit_trans_unit(a, ast)?;
     CheckTypeUses::new().visit_trans_unit(a, ast)?;
     CheckExprTypes::new().visit_trans_unit(a, ast)?;
+    EvalImpliedEnumConsts::new().visit_trans_unit(a, ast)?;
+    EvalConstantExprs::new().visit_trans_unit(a, ast)?;
 
     ControlFlow::Continue(())
 }

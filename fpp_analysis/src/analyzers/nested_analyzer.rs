@@ -1,12 +1,12 @@
 use crate::analyzers::analyzer::Analyzer;
 use crate::semantics::Symbol;
 use crate::Analysis;
-use fpp_ast::{MoveWalkable, Node, Visitable, Visitor, Walkable};
+use fpp_ast::{MoveWalkable, Node, Visitor, Walkable};
 use std::marker::PhantomData;
 use std::ops::ControlFlow;
 
 pub enum NestedAnalyzerMode {
-    _SHALLOW,
+    SHALLOW,
     DEEP,
 }
 
@@ -46,20 +46,11 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> Analyzer<'ast, V> for Neste
     fn visit(&self, visitor: &V, a: &mut V::State, node: Node<'ast>) -> ControlFlow<V::Break> {
         match &node {
             Node::DefComponent(def) => self.walk_symbol(visitor, a, Symbol::Component(def), node),
-            Node::DefEnum(def) => {
-                def.type_name.visit(a, visitor)?;
-
-                let sym_scope = a.symbol_scope_map.get(&Symbol::Enum(def)).unwrap().clone();
-                a.nested_scope.push(sym_scope);
-                let out = def.constants.walk(a, visitor);
-                a.nested_scope.pop();
-                out?;
-
-                def.default.visit(a, visitor)
-            }
+            Node::DefEnum(def) => self.walk_symbol(visitor, a, Symbol::Enum(def), node),
             Node::DefModule(def) => self.walk_symbol(visitor, a, Symbol::Module(def), node),
+            Node::TransUnit(tu) => tu.walk(a, visitor),
             _ => match self.mode {
-                NestedAnalyzerMode::_SHALLOW => ControlFlow::Continue(()),
+                NestedAnalyzerMode::SHALLOW => ControlFlow::Continue(()),
                 NestedAnalyzerMode::DEEP => node.walk(a, visitor),
             },
         }

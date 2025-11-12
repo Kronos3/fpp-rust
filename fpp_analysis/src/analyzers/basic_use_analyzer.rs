@@ -156,7 +156,7 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
                     }
                 }
                 ExprKind::Ident(id) => visitor.constant_use(a, e, id.clone().into()),
-                _ => ControlFlow::Continue(()),
+                _ => self.super_.visit(visitor, a, node),
             },
             Node::SpecInstance(si) => {
                 visitor.interface_instance_use(a, &si.instance, (&si.instance).into())

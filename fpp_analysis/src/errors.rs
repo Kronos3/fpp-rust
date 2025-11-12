@@ -49,6 +49,17 @@ pub enum SemanticError {
     EmptyArray {
         loc: Span,
     },
+    EnumConstantShouldBeImplied {
+        loc: Span,
+    },
+    EnumConstantShouldBeExplicit {
+        loc: Span,
+    },
+    DuplicateEnumConstant {
+        value: i128,
+        loc: Span,
+        prev_loc: Span,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -107,6 +118,24 @@ impl Into<Diagnostic> for SemanticError {
             SemanticError::EmptyArray { loc } => {
                 Diagnostic::spanned(loc, Level::Error, "array expression may not be empty")
             }
+            SemanticError::EnumConstantShouldBeImplied { loc } => {
+                Diagnostic::spanned(loc, Level::Error, "expected constant value to be implied")
+                    .note("enum constants must be all explicit or all implied")
+            }
+            SemanticError::EnumConstantShouldBeExplicit { loc } => {
+                Diagnostic::spanned(loc, Level::Error, "expected constant value to be explicit")
+                    .note("enum constants must be all explicit or all implied")
+            }
+            SemanticError::DuplicateEnumConstant {
+                value,
+                loc,
+                prev_loc,
+            } => Diagnostic::spanned(
+                loc,
+                Level::Error,
+                format!("duplicate enum constant `{}`", value),
+            )
+            .span_note(prev_loc, "previously defined here"),
         }
     }
 }

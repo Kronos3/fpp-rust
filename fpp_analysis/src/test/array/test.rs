@@ -36,8 +36,8 @@ fn format_alias_not_numeric() {
 }
 
 #[test]
-fn array_default_error() {
-    run_test("array/array_default_error")
+fn default_error() {
+    run_test("array/default_error")
 }
 
 #[test]

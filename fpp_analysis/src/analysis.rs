@@ -1,4 +1,4 @@
-use crate::semantics::{NestedScope, Scope, Symbol, Type, UseDefMatching};
+use crate::semantics::{NestedScope, Scope, Symbol, Type, UseDefMatching, Value};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -27,6 +27,8 @@ pub struct Analysis<'ast> {
     /** The mapping from type and constant symbols, expressions,
      *  and type names to their types */
     pub type_map: HashMap<fpp_core::Node, Rc<RefCell<Type>>>,
+    /** The mapping from constant symbols and expressions to their values. */
+    pub value_map: HashMap<fpp_core::Node, Value>,
 }
 
 impl<'a> Analysis<'a> {
@@ -42,6 +44,7 @@ impl<'a> Analysis<'a> {
             nested_scope: NestedScope::new(Scope::new()),
             included_file_set: Default::default(),
             type_map: Default::default(),
+            value_map: Default::default(),
         }
     }
 }

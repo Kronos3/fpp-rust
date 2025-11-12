@@ -227,8 +227,14 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             TypeNameKind::Bool => Type::Boolean,
             TypeNameKind::Floating(kind) => Type::Float(kind.clone()),
             TypeNameKind::Integer(kind) => Type::PrimitiveInt(kind.clone()),
-            TypeNameKind::QualIdent(_) => {
+            TypeNameKind::QualIdent(qi) => {
                 self.super_visit(a, Node::TypeName(node))?;
+                match a.type_map.get(&qi.id()) {
+                    None => {}
+                    Some(qi_ty) => {
+                        a.type_map.insert(node.node_id, qi_ty.clone());
+                    }
+                }
                 return ControlFlow::Continue(());
             }
             TypeNameKind::String(size) => Type::String(size.clone()),
@@ -253,16 +259,12 @@ impl<'ast> UseAnalysisPass<'ast> for CheckTypeUses<'ast> {
         };
 
         match symbol {
-            Symbol::AbsType(def) => def.walk(a, self),
-            Symbol::AliasType(def) => def.walk(a, self),
-            Symbol::Array(def) => def.walk(a, self),
-            Symbol::Enum(def) => def.walk(a, self),
-            Symbol::Struct(def) => def.walk(a, self),
-            _ => ControlFlow::Continue(()),
-        }?;
-
-        match a.type_map.get(&symbol.node()) {
-            None => {
+            Symbol::AbsType(def) => def.visit(a, self)?,
+            Symbol::AliasType(def) => def.visit(a, self)?,
+            Symbol::Array(def) => def.visit(a, self)?,
+            Symbol::Enum(def) => def.visit(a, self)?,
+            Symbol::Struct(def) => def.visit(a, self)?,
+            _ => {
                 SemanticError::InvalidSymbol {
                     symbol_name: symbol.name().data.clone(),
                     msg: "not a type symbol".to_string(),
@@ -270,7 +272,12 @@ impl<'ast> UseAnalysisPass<'ast> for CheckTypeUses<'ast> {
                     def_loc: symbol.name().span(),
                 }
                 .emit();
+                return ControlFlow::Continue(());
             }
+        };
+
+        match a.type_map.get(&symbol.node()) {
+            None => {}
             Some(ty) => {
                 a.type_map.insert(node.id(), ty.clone());
             }
