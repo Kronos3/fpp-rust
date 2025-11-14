@@ -4,7 +4,6 @@ use crate::semantics::{
 };
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter, Write};
 use std::ops::Deref;
@@ -28,8 +27,8 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn underlying_type(ty: &Rc<RefCell<Type>>) -> Rc<RefCell<Type>> {
-        match ty.borrow().deref() {
+    pub fn underlying_type(ty: &Rc<Type>) -> Rc<Type> {
+        match ty.deref() {
             Type::AliasType(alias) => Type::underlying_type(&alias.alias_type),
             _ => ty.clone(),
         }
@@ -49,19 +48,18 @@ impl Type {
             Type::String(_) => Some(Value::String(StringValue("".to_string()))),
             Type::Boolean => Some(Value::Boolean(BooleanValue(false))),
             Type::Integer => Some(Value::Integer(IntegerValue(0))),
-            Type::AliasType(ty) => ty.alias_type.borrow().default_value().clone(),
+            Type::AliasType(ty) => ty.alias_type.default_value().clone(),
             Type::AbsType(ty) => Some(Value::AbsType(ty.default_value.clone()?)),
             Type::Array(array) => Some(Value::Array(array.default.clone()?)),
             Type::AnonArray(arr) => Some(Value::AnonArray(AnonArrayValue {
-                elements: std::iter::repeat_n(arr.elt_type.borrow().default_value()?, arr.size?)
-                    .collect(),
+                elements: std::iter::repeat_n(arr.elt_type.default_value()?, arr.size?).collect(),
             })),
             Type::Enum(ty) => Some(Value::EnumConstant(ty.default.clone()?)),
             Type::Struct(def) => Some(Value::Struct(def.default.clone()?)),
             Type::AnonStruct(struct_) => {
                 let mut members = vec![];
                 for (name, ty) in &struct_.members {
-                    members.push((name.clone(), ty.borrow().default_value()?))
+                    members.push((name.clone(), ty.default_value()?))
                 }
 
                 Some(Value::AnonStruct(AnonStructValue {
@@ -74,7 +72,7 @@ impl Type {
     /** Get the array size */
     pub fn array_size(&self) -> Option<ArraySize> {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().array_size(),
+            Type::AliasType(ty) => ty.alias_type.array_size(),
             Type::AnonArray(arr) => arr.size,
             Type::Array(arr) => arr.anon_array.size,
             _ => None,
@@ -96,18 +94,18 @@ impl Type {
     /** Does this type have numeric members? */
     pub fn has_numeric_members(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().has_numeric_members(),
-            Type::Array(ty) => ty.anon_array.elt_type.borrow().has_numeric_members(),
-            Type::AnonArray(ty) => ty.elt_type.borrow().has_numeric_members(),
+            Type::AliasType(ty) => ty.alias_type.has_numeric_members(),
+            Type::Array(ty) => ty.anon_array.elt_type.has_numeric_members(),
+            Type::AnonArray(ty) => ty.elt_type.has_numeric_members(),
             Type::Struct(ty) => ty
                 .anon_struct
                 .members
                 .values()
-                .all(|member| member.borrow().has_numeric_members()),
+                .all(|member| member.has_numeric_members()),
             Type::AnonStruct(ty) => ty
                 .members
                 .values()
-                .all(|member| member.borrow().has_numeric_members()),
+                .all(|member| member.has_numeric_members()),
             _ => self.is_numeric(),
         }
     }
@@ -115,7 +113,7 @@ impl Type {
     /** Is this type convertible to a numeric type? */
     pub fn is_convertible_to_numeric(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_convertible_to_numeric(),
+            Type::AliasType(ty) => ty.alias_type.is_convertible_to_numeric(),
             Type::Enum(_) => true,
             _ => self.is_numeric(),
         }
@@ -124,7 +122,7 @@ impl Type {
     /** Is this type promotable to an array type? */
     pub fn is_promotable_to_array(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_promotable_to_array(),
+            Type::AliasType(ty) => ty.alias_type.is_promotable_to_array(),
             Type::String(_) => true,
             Type::Boolean => true,
             Type::Enum(_) => true,
@@ -141,26 +139,23 @@ impl Type {
             Type::Boolean => true,
             Type::Integer => false,
             Type::AbsType(_) => false,
-            Type::AliasType(alias) => alias.alias_type.borrow().is_displayable(),
-            Type::Array(arr) => arr.anon_array.elt_type.borrow().is_displayable(),
-            Type::AnonArray(arr) => arr.elt_type.borrow().is_displayable(),
+            Type::AliasType(alias) => alias.alias_type.is_displayable(),
+            Type::Array(arr) => arr.anon_array.elt_type.is_displayable(),
+            Type::AnonArray(arr) => arr.elt_type.is_displayable(),
             Type::Enum(_) => true,
             Type::Struct(ty) => ty
                 .anon_struct
                 .members
                 .values()
-                .all(|member| member.borrow().is_displayable()),
-            Type::AnonStruct(ty) => ty
-                .members
-                .values()
-                .all(|member| member.borrow().is_displayable()),
+                .all(|member| member.is_displayable()),
+            Type::AnonStruct(ty) => ty.members.values().all(|member| member.is_displayable()),
         }
     }
 
     /** Is this type a float type? */
     pub fn is_float(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_float(),
+            Type::AliasType(ty) => ty.alias_type.is_float(),
             Type::Float(_) => true,
             _ => false,
         }
@@ -169,7 +164,7 @@ impl Type {
     /** Is this type an int type? */
     pub fn is_int(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_int(),
+            Type::AliasType(ty) => ty.alias_type.is_int(),
             Type::PrimitiveInt(_) => true,
             Type::Integer => true,
             _ => false,
@@ -179,7 +174,7 @@ impl Type {
     /** Is this type a primitive type? */
     pub fn is_primitive(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_primitive(),
+            Type::AliasType(ty) => ty.alias_type.is_primitive(),
             Type::PrimitiveInt(_) => true,
             Type::Float(_) => true,
             Type::Boolean => true,
@@ -203,15 +198,15 @@ impl Type {
     /** Is this type numeric? */
     pub fn is_numeric(&self) -> bool {
         match self {
-            Type::AliasType(ty) => ty.alias_type.borrow().is_numeric(),
+            Type::AliasType(ty) => ty.alias_type.is_numeric(),
             _ => self.is_int() || self.is_float(),
         }
     }
 
-    pub fn convert(from: &Rc<RefCell<Type>>, to: &Rc<RefCell<Type>>) -> TypeConversionResult {
+    pub fn convert(from: &Rc<Type>, to: &Rc<Type>) -> TypeConversionResult {
         Type::convert_impl(
-            Type::underlying_type(from).borrow().deref(),
-            Type::underlying_type(to).borrow().deref(),
+            Type::underlying_type(from).deref(),
+            Type::underlying_type(to).deref(),
         )
     }
 
@@ -274,10 +269,7 @@ impl Type {
                     return Err(TypeConversionError::NotPromotableToArray(from.clone()));
                 }
 
-                match Type::convert_impl(
-                    from,
-                    Type::underlying_type(&to_arr.elt_type).borrow().deref(),
-                ) {
+                match Type::convert_impl(from, Type::underlying_type(&to_arr.elt_type).deref()) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(TypeConversionError::ArrayElementDuringPromotion(Box::new(
                         err,
@@ -333,7 +325,7 @@ impl Type {
                 // Make sure that 'from' can fit all members in to_struct
                 for (name, to_member_ty) in &to_struct.members {
                     let to_member_ty_underlying = Type::underlying_type(to_member_ty);
-                    match Type::convert_impl(from, to_member_ty_underlying.borrow().deref()) {
+                    match Type::convert_impl(from, to_member_ty_underlying.deref()) {
                         Ok(_) => {}
                         Err(err) => {
                             return Err(TypeConversionError::StructMember {
@@ -373,21 +365,18 @@ impl Type {
         }
     }
 
-    pub fn common_type(
-        t1_a: &Rc<RefCell<Type>>,
-        t2_a: &Rc<RefCell<Type>>,
-    ) -> Option<Rc<RefCell<Type>>> {
+    pub fn common_type(t1_a: &Rc<Type>, t2_a: &Rc<Type>) -> Option<Rc<Type>> {
         // Trivial case, types are the same
-        if Type::identical(&t1_a.borrow(), &t2_a.borrow()) {
+        if Type::identical(&t1_a, &t2_a) {
             return Some(t1_a.clone());
         }
 
         // Types share a common ancestor in the alias type hierarchy
-        if !t1_a.borrow().is_canonical() || !t2_a.borrow().is_canonical() {
-            fn lca(a: &Rc<RefCell<Type>>, b: &Rc<RefCell<Type>>) -> Option<Rc<RefCell<Type>>> {
-                fn get_ancestors(t: &Rc<RefCell<Type>>, out: &mut Vec<Rc<RefCell<Type>>>) {
+        if !t1_a.is_canonical() || !t2_a.is_canonical() {
+            fn lca(a: &Rc<Type>, b: &Rc<Type>) -> Option<Rc<Type>> {
+                fn get_ancestors(t: &Rc<Type>, out: &mut Vec<Rc<Type>>) {
                     out.push(t.clone());
-                    match t.borrow().deref() {
+                    match t.deref() {
                         Type::AliasType(AliasType { alias_type, .. }) => {
                             get_ancestors(alias_type, out)
                         }
@@ -409,7 +398,7 @@ impl Type {
                 match ancestors_of_b.iter().find(|b| {
                     ancestors_of_a
                         .iter()
-                        .find(|a| Type::identical(&a.borrow(), &b.borrow()))
+                        .find(|a| Type::identical(&a, &b))
                         .is_some()
                 }) {
                     Some(ty) => Some(ty.clone()),
@@ -425,35 +414,31 @@ impl Type {
 
         // Do the rest of the operations on the underlying types since none of aliases
         // in the parent chain matched
-        let t1_c = Type::underlying_type(t1_a);
-        let t2_c = Type::underlying_type(t2_a);
-
-        let t1 = t1_c.borrow();
-        let t2 = t2_c.borrow();
+        let t1 = Type::underlying_type(t1_a);
+        let t2 = Type::underlying_type(t2_a);
 
         // Check for numeric common types
         if t1.is_float() && t2.is_numeric() {
-            return Some(Rc::new(RefCell::new(Type::Float(FloatKind::F64))));
+            return Some(Rc::new(Type::Float(FloatKind::F64)));
         }
         if t1.is_numeric() && t2.is_float() {
-            return Some(Rc::new(RefCell::new(Type::Float(FloatKind::F64))));
+            return Some(Rc::new(Type::Float(FloatKind::F64)));
         }
         if t1.is_numeric() && t2.is_numeric() {
-            return Some(Rc::new(RefCell::new(Type::Integer)));
+            return Some(Rc::new(Type::Integer));
         }
 
         match (t1.deref(), t2.deref()) {
             // String -> String
-            (Type::String(_), Type::String(_)) => Some(Rc::new(RefCell::new(Type::String(None)))),
+            (Type::String(_), Type::String(_)) => Some(Rc::new(Type::String(None))),
 
             // Strip off any enum wrappers over the representable type
-            (Type::Enum(EnumType { rep_type, .. }), _) => Self::common_type(
-                &Rc::new(RefCell::new(Type::PrimitiveInt(rep_type.clone()))),
-                &t2_c,
-            ),
+            (Type::Enum(EnumType { rep_type, .. }), _) => {
+                Self::common_type(&Rc::new(Type::PrimitiveInt(rep_type.clone())), &t1)
+            }
             (_, Type::Enum(EnumType { rep_type, .. })) => Self::common_type(
-                &t1_c,
-                &Rc::new(RefCell::new(Type::PrimitiveInt(rep_type.clone()))),
+                &t1,
+                &Rc::new(Type::PrimitiveInt(rep_type.clone())),
             ),
 
             // t1 + t2 are both array/anon array
@@ -480,10 +465,10 @@ impl Type {
                 };
 
                 let elt_type = Type::common_type(&t1_arr.elt_type, &t2_arr.elt_type)?;
-                Some(Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                Some(Rc::new(Type::AnonArray(AnonArrayType {
                     size,
                     elt_type,
-                }))))
+                })))
             }
 
             // An array and a non array. Try to promote the non-array to the array
@@ -503,14 +488,13 @@ impl Type {
             ) => {
                 if other.is_promotable_to_array() {
                     // Treat the 'other' type as an element of the array
-                    let elt_type =
-                        Type::common_type(&Rc::new(RefCell::new(other.clone())), &arr.elt_type)?;
+                    let elt_type = Type::common_type(&Rc::new(other.clone()), &arr.elt_type)?;
 
                     // Promote the single element to an array keeping the same size
-                    Some(Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                    Some(Rc::new(Type::AnonArray(AnonArrayType {
                         elt_type,
                         size: arr.size,
-                    }))))
+                    })))
                 } else {
                     None
                 }
@@ -558,9 +542,9 @@ impl Type {
                     }
                 }
 
-                Some(Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                Some(Rc::new(Type::AnonStruct(AnonStructType {
                     members: out_members,
-                }))))
+                })))
             }
 
             // A struct and a non struct. The non struct can fill every member in the struct
@@ -582,7 +566,7 @@ impl Type {
                     // Build a new struct with the same members as the old one while trying
                     // to find the common type between the single element and all the members
                     let mut out_members = HashMap::new();
-                    let other_rc = Rc::new(RefCell::new(other.clone()));
+                    let other_rc = Rc::new(other.clone());
 
                     for (name, in_member_ty) in &str.members {
                         let out_member_ty = Type::common_type(&other_rc, in_member_ty)?;
@@ -590,9 +574,9 @@ impl Type {
                     }
 
                     // Create a new struct with similar shape of the old struct
-                    Some(Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                    Some(Rc::new(Type::AnonStruct(AnonStructType {
                         members: out_members,
-                    }))))
+                    })))
                 } else {
                     None
                 }
@@ -614,7 +598,7 @@ impl Display for Type {
             Type::AbsType(ty) => f.write_fmt(format_args!("{} (abstract type)", ty.node.name.data)),
             Type::AliasType(ty) => {
                 f.write_fmt(format_args!("{} (", ty.node.name.data))?;
-                Display::fmt(&Type::underlying_type(&ty.alias_type).borrow(), f)?;
+                Display::fmt(&Type::underlying_type(&ty.alias_type), f)?;
                 f.write_char(')')
             }
             Type::Array(arr) => f.write_fmt(format_args!("{} (array type)", arr.node.name.data)),
@@ -631,7 +615,7 @@ impl Display for Type {
             Type::AnonStruct(anon_struct) => {
                 let mut s = f.debug_struct("anonymous struct");
                 for (name, member_ty) in &anon_struct.members {
-                    s.field(name, member_ty.borrow().deref());
+                    s.field(name, member_ty.deref());
                 }
 
                 s.finish()
@@ -753,7 +737,7 @@ pub struct AliasType {
     /** The AST node giving the definition */
     pub node: fpp_ast::DefAliasType,
     /** Type that this typedef points to */
-    pub alias_type: Rc<RefCell<Type>>,
+    pub alias_type: Rc<Type>,
 }
 
 /** A named array type */
@@ -777,7 +761,7 @@ pub struct AnonArrayType {
     /** The array size */
     pub size: Option<ArraySize>,
     /** The element type */
-    pub elt_type: Rc<RefCell<Type>>,
+    pub elt_type: Rc<Type>,
 }
 
 /** An enum type */
@@ -810,5 +794,5 @@ pub struct StructType {
 #[derive(Debug, Clone)]
 pub struct AnonStructType {
     /** The members */
-    pub members: HashMap<String, Rc<RefCell<Type>>>,
+    pub members: HashMap<String, Rc<Type>>,
 }

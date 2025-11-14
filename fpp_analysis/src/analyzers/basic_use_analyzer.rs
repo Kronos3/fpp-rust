@@ -223,6 +223,7 @@ impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast
             }
             Node::TypeName(tn) => match &tn.kind {
                 TypeNameKind::QualIdent(qi) => visitor.type_use(a, qi, qi.into()),
+                TypeNameKind::String(_) => self.super_.visit(visitor, a, node),
                 _ => ControlFlow::Continue(()),
             },
             _ => self.super_.visit(visitor, a, node),

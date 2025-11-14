@@ -15,7 +15,6 @@ use fpp_ast::{
     TypeNameKind, Visitable, Visitor,
 };
 use fpp_core::Spanned;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
@@ -35,7 +34,7 @@ impl<'ast> CheckExprTypes<'ast> {
         &self,
         a: &Analysis<'ast>,
         expr: &'ast Expr,
-        to_ty: &Rc<RefCell<Type>>,
+        to_ty: &Rc<Type>,
     ) -> TypeConversionResult {
         let from_ty = match a.type_map.get(&expr.node_id) {
             None => return Ok(()),
@@ -46,7 +45,7 @@ impl<'ast> CheckExprTypes<'ast> {
     }
 
     fn check_type_is_numerical(&self, a: &Analysis<'ast>, expr: &'ast Expr) {
-        match self.convert_type(a, expr, &Rc::new(RefCell::new(Type::Integer))) {
+        match self.convert_type(a, expr, &Rc::new(Type::Integer)) {
             Ok(_) => {}
             Err(err) => {
                 SemanticError::TypeConversion {
@@ -72,7 +71,7 @@ impl<'ast> CheckExprTypes<'ast> {
                 Ok(_) => {}
                 Err(err) => SemanticError::TypeConversion {
                     loc: expr.span(),
-                    msg: format!("default value cannot be converted to {}", ty.borrow()),
+                    msg: format!("default value cannot be converted to {}", ty),
                     err,
                 }
                 .emit(),
@@ -216,8 +215,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                                     loc: next.span(),
                                     msg: format!(
                                         "cannot find common type between {} and {}",
-                                        next_type.borrow(),
-                                        common.borrow()
+                                        next_type, common
                                     ),
                                 }),
                                 Some(new_ty) => Ok(new_ty),
@@ -237,10 +235,10 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         // Assign the full expression to an array of the proper size
                         a.type_map.insert(
                             node.node_id,
-                            Rc::new(RefCell::new(Type::AnonArray(AnonArrayType {
+                            Rc::new(Type::AnonArray(AnonArrayType {
                                 elt_type: common,
                                 size: Some(array.len()),
-                            }))),
+                            })),
                         );
                     }
                     Err(err) => err.emit(),
@@ -254,7 +252,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     Some(arr_ty) => Type::underlying_type(arr_ty),
                 };
 
-                let elt_ty = match arr_ty.borrow().deref() {
+                let elt_ty = match arr_ty.deref() {
                     Type::Array(ArrayType { anon_array, .. }) | Type::AnonArray(anon_array) => {
                         anon_array.elt_type.clone()
                     }
@@ -281,8 +279,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                                 loc: node.span(),
                                 msg: format!(
                                     "invalid binary operation between {} and {}",
-                                    lty.borrow(),
-                                    rty.borrow()
+                                    lty, rty
                                 ),
                             }
                             .emit();
@@ -296,7 +293,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     }
                 };
 
-                // TODO(tumbar) Do I need to check if l/r are numeric?
+                self.check_type_is_numerical(a, left);
+                self.check_type_is_numerical(a, right);
                 a.type_map.insert(node.node_id, ty);
             }
             ExprKind::Dot { e, id } => {
@@ -313,13 +311,13 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                     None => return ControlFlow::Continue(()),
                 };
 
-                match e_ty.borrow().deref() {
+                match e_ty.deref() {
                     Type::AnonStruct(anon_struct)
                     | Type::Struct(StructType { anon_struct, .. }) => {
                         match anon_struct.members.get(&id.data) {
                             None => SemanticError::InvalidType {
                                 loc: id.span(),
-                                msg: format!("{} has no member `{}`", e_ty.borrow(), id.data),
+                                msg: format!("{} has no member `{}`", e_ty, id.data),
                             }
                             .emit(),
                             Some(member_ty) => {
@@ -336,22 +334,17 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             }
             ExprKind::Ident(_) => {} // already handled by constantUse
             ExprKind::LiteralBool(_) => {
-                a.type_map
-                    .insert(node.node_id, Rc::new(RefCell::new(Type::Boolean)));
+                a.type_map.insert(node.node_id, Rc::new(Type::Boolean));
             }
             ExprKind::LiteralInt(_) => {
-                a.type_map
-                    .insert(node.node_id, Rc::new(RefCell::new(Type::Integer)));
+                a.type_map.insert(node.node_id, Rc::new(Type::Integer));
             }
             ExprKind::LiteralFloat(_) => {
-                a.type_map.insert(
-                    node.node_id,
-                    Rc::new(RefCell::new(Type::Float(FloatKind::F64))),
-                );
+                a.type_map
+                    .insert(node.node_id, Rc::new(Type::Float(FloatKind::F64)));
             }
             ExprKind::LiteralString(_) => {
-                a.type_map
-                    .insert(node.node_id, Rc::new(RefCell::new(Type::String(None))));
+                a.type_map.insert(node.node_id, Rc::new(Type::String(None)));
             }
             ExprKind::Paren(e) => match a.type_map.get(&e.node_id) {
                 Some(ty) => {
@@ -361,10 +354,22 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             },
             ExprKind::Struct(struct_expr) => {
                 let mut members_out = HashMap::new();
+                let mut member_locs = HashMap::new();
+
                 for member in struct_expr {
                     match a.type_map.get(&member.value.node_id) {
                         Some(member_ty) => {
                             members_out.insert(member.name.data.clone(), member_ty.clone());
+                            if let Some(old_member) =
+                                member_locs.insert(member.name.data.clone(), member.value.span())
+                            {
+                                SemanticError::DuplicateStructMember {
+                                    name: member.name.data.clone(),
+                                    loc: member.span(),
+                                    prev_loc: old_member,
+                                }
+                                .emit();
+                            }
                         }
                         _ => return ControlFlow::Continue(()),
                     }
@@ -372,13 +377,13 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
                 a.type_map.insert(
                     node.node_id,
-                    Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                    Rc::new(Type::AnonStruct(AnonStructType {
                         members: members_out,
-                    }))),
+                    })),
                 );
             }
             ExprKind::Unop { e, .. } => {
-                // TODO(tumbar) Do I need to check if e is numeric?
+                self.check_type_is_numerical(a, e);
                 match a.type_map.get(&e.node_id) {
                     Some(ty) => {
                         a.type_map.insert(node.node_id, ty.clone());
@@ -433,18 +438,18 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         match self.convert_type(
                             a,
                             every,
-                            &Rc::new(RefCell::new(Type::AnonStruct(AnonStructType {
+                            &Rc::new(Type::AnonStruct(AnonStructType {
                                 members: HashMap::from([
                                     (
                                         "seconds".to_string(),
-                                        Rc::new(RefCell::new(Type::PrimitiveInt(IntegerKind::U32))),
+                                        Rc::new(Type::PrimitiveInt(IntegerKind::U32)),
                                     ),
                                     (
                                         "useconds".to_string(),
-                                        Rc::new(RefCell::new(Type::PrimitiveInt(IntegerKind::U32))),
+                                        Rc::new(Type::PrimitiveInt(IntegerKind::U32)),
                                     ),
                                 ]),
-                            }))),
+                            })),
                         ) {
                             Err(err) => SemanticError::TypeConversion {
                                 loc: every.span(),

@@ -9,7 +9,6 @@ use crate::semantics::{
 use crate::Analysis;
 use fpp_ast::*;
 use fpp_core::Spanned;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
@@ -45,10 +44,10 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(RefCell::new(Type::AbsType(AbsType {
+            Rc::new(Type::AbsType(AbsType {
                 node: node.clone(),
                 default_value: None,
-            }))),
+            })),
         );
         ControlFlow::Continue(())
     }
@@ -70,10 +69,10 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             Some(alias_type) => {
                 a.type_map.insert(
                     node.node_id,
-                    Rc::new(RefCell::new(Type::AliasType(AliasType {
+                    Rc::new(Type::AliasType(AliasType {
                         node: node.clone(),
                         alias_type: alias_type.clone(),
-                    }))),
+                    })),
                 );
             }
         }
@@ -98,7 +97,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(RefCell::new(Type::Array(ArrayType {
+            Rc::new(Type::Array(ArrayType {
                 node: node.clone(),
                 anon_array: AnonArrayType {
                     size: None,
@@ -106,7 +105,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                 },
                 default: None,
                 format: None,
-            }))),
+            })),
         );
 
         ControlFlow::Continue(())
@@ -131,7 +130,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                 None => IntegerKind::I32,
                 Some(type_name) => match a.type_map.get(&type_name.node_id) {
                     None => return ControlFlow::Continue(()),
-                    Some(ty) => match Type::underlying_type(ty).borrow().deref() {
+                    Some(ty) => match Type::underlying_type(ty).deref() {
                         Type::PrimitiveInt(kind) => kind.clone(),
                         _ => {
                             SemanticError::InvalidType {
@@ -146,11 +145,11 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             }
         };
 
-        let ty = Rc::new(RefCell::new(Type::Enum(EnumType {
+        let ty = Rc::new(Type::Enum(EnumType {
             node: node.clone(),
             rep_type,
             default: None,
-        })));
+        }));
 
         a.type_map.insert(node.node_id, ty.clone());
 
@@ -202,13 +201,13 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(RefCell::new(Type::Struct(StructType {
+            Rc::new(Type::Struct(StructType {
                 node: node.clone(),
                 anon_struct: anon_ty,
                 default: None,
                 sizes: Default::default(),
                 formats: Default::default(),
-            }))),
+            })),
         );
 
         ControlFlow::Continue(())
@@ -240,7 +239,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             TypeNameKind::String(size) => Type::String(size.clone()),
         };
 
-        a.type_map.insert(node.node_id, Rc::new(RefCell::new(ty)));
+        a.type_map.insert(node.node_id, Rc::new(ty));
         ControlFlow::Continue(())
     }
 }

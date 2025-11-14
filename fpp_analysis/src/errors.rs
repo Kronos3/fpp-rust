@@ -60,6 +60,19 @@ pub enum SemanticError {
         loc: Span,
         prev_loc: Span,
     },
+    InvalidIntValue {
+        loc: Span,
+        v: Option<i128>,
+        msg: String,
+    },
+    DivisionByZero {
+        loc: Span,
+    },
+    InvalidTypeForMemberSelection {
+        loc: Span,
+        member: String,
+        type_name: String,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -136,6 +149,25 @@ impl Into<Diagnostic> for SemanticError {
                 format!("duplicate enum constant `{}`", value),
             )
             .span_note(prev_loc, "previously defined here"),
+            SemanticError::InvalidIntValue { loc, v, msg } => {
+                let diag = Diagnostic::spanned(loc, Level::Error, msg);
+                match v {
+                    None => diag,
+                    Some(v) => diag.note(format!("expression evaluated to `{}`", v)),
+                }
+            }
+            SemanticError::DivisionByZero { loc } => {
+                Diagnostic::spanned(loc, Level::Error, "division by zero")
+            }
+            SemanticError::InvalidTypeForMemberSelection {
+                loc,
+                member,
+                type_name,
+            } => Diagnostic::spanned(
+                loc,
+                Level::Error,
+                format!("{} has no member `{}`", type_name, member),
+            ),
         }
     }
 }

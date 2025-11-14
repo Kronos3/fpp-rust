@@ -34,6 +34,9 @@ pub mod passes {
 
     mod eval_constant_exprs;
     pub use eval_constant_exprs::*;
+
+    mod finalize_type_defs;
+    pub use finalize_type_defs::*;
 }
 
 pub mod semantics {

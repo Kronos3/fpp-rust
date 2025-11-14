@@ -26,7 +26,7 @@ pub struct Analysis<'ast> {
     pub included_file_set: HashSet<fpp_core::SourceFile>,
     /** The mapping from type and constant symbols, expressions,
      *  and type names to their types */
-    pub type_map: HashMap<fpp_core::Node, Rc<RefCell<Type>>>,
+    pub type_map: HashMap<fpp_core::Node, Rc<Type>>,
     /** The mapping from constant symbols and expressions to their values. */
     pub value_map: HashMap<fpp_core::Node, Value>,
 }

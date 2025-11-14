@@ -1,5 +1,5 @@
 use crate::semantics::{ArrayType, EnumType, StructType, Type};
-use std::cell::{Ref, RefCell};
+use fpp_ast::FloatKind;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::rc::Rc;
@@ -32,14 +32,14 @@ impl Value {
         }
     }
 
-    pub fn convert(&self, ty_a: &Rc<RefCell<Type>>) -> Option<Value> {
+    pub fn convert(&self, ty_a: &Rc<Type>) -> Option<Value> {
         match (self.convert_impl(ty_a), self.is_promotable_to_aggregate()) {
             (Some(value), _) => Some(value),
             (None, true) => {
                 // Try to promote this single value an array/struct
                 // (if that's what we are trying to convert to)
                 let ty = Type::underlying_type(ty_a);
-                match ty.borrow().deref() {
+                match ty.deref() {
                     Type::Array(array_ty) => {
                         let elt_value = self.convert(&array_ty.anon_array.elt_type)?;
                         let size = array_ty.anon_array.size?;
@@ -86,9 +86,8 @@ impl Value {
         }
     }
 
-    fn convert_impl(&self, ty_a: &Rc<RefCell<Type>>) -> Option<Value> {
-        let ty_underlying = Type::underlying_type(ty_a);
-        let ty = ty_underlying.borrow();
+    fn convert_impl(&self, ty_a: &Rc<Type>) -> Option<Value> {
+        let ty = Type::underlying_type(ty_a);
 
         match &self {
             Value::PrimitiveInteger(PrimitiveIntegerValue { value: from, .. })
@@ -138,7 +137,7 @@ impl Value {
             | Value::Struct(StructValue { ty: from_ty, .. })
             | Value::EnumConstant(EnumConstantValue { ty: from_ty, .. })
             | Value::AbsType(AbsTypeValue { ty: from_ty })
-                if Type::identical(&ty, &Type::underlying_type(from_ty).borrow()) =>
+                if Type::identical(&ty, &Type::underlying_type(from_ty)) =>
             {
                 Some(self.clone())
             }
@@ -186,7 +185,7 @@ impl Value {
                 match ty.deref() {
                     Type::Array(_) => Some(Value::Array(ArrayValue {
                         anon_array: AnonArrayValue { elements },
-                        ty: ty_underlying.clone(),
+                        ty: ty.clone(),
                     })),
                     Type::AnonArray(_) => Some(Value::AnonArray(AnonArrayValue { elements })),
                     _ => None,
@@ -206,7 +205,7 @@ impl Value {
                 for (name, ty) in &to_ty.members {
                     let member_value = match anon_struct.members.get(name) {
                         // Use the default value
-                        None => ty.borrow().default_value()?,
+                        None => ty.default_value()?,
                         Some(member_value) => member_value.convert(&ty)?,
                     };
 
@@ -226,7 +225,154 @@ impl Value {
             _ => None,
         }
     }
+
+    fn binop(
+        &self,
+        other: &Value,
+        f64_op: fn(&f64, &f64) -> Result<f64, MathError>,
+        i128_op: fn(&i128, &i128) -> Result<i128, MathError>,
+    ) -> MathResult {
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue {
+                value: left,
+                kind: kind_left,
+            }) => match other {
+                Value::PrimitiveInteger(PrimitiveIntegerValue {
+                    value: right,
+                    kind: kind_right,
+                }) => {
+                    if kind_left == kind_right {
+                        Ok(Value::PrimitiveInteger(PrimitiveIntegerValue {
+                            value: i128_op(left, right)?,
+                            kind: kind_left.clone(),
+                        }))
+                    } else {
+                        Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
+                    }
+                }
+                Value::Integer(IntegerValue(right)) => {
+                    Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
+                }
+                Value::Float(FloatValue { value: right, .. }) => Ok(Value::Float(FloatValue {
+                    value: f64_op(&(left.clone() as f64), right)?,
+                    kind: FloatKind::F64,
+                })),
+                Value::EnumConstant(
+                    enum_value @ EnumConstantValue {
+                        value: (_, right), ..
+                    },
+                ) => {
+                    if enum_value.ty().rep_type == *kind_left {
+                        Ok(Value::PrimitiveInteger(PrimitiveIntegerValue {
+                            value: i128_op(left, right)?,
+                            kind: kind_left.clone(),
+                        }))
+                    } else {
+                        Ok(Value::Integer(IntegerValue(i128_op(left, right)?)))
+                    }
+                }
+                _ => Err(MathError::InvalidInputs),
+            },
+
+            Value::Integer(IntegerValue(left)) => match other {
+                Value::Integer(IntegerValue(right))
+                | Value::PrimitiveInteger(PrimitiveIntegerValue { value: right, .. })
+                | Value::EnumConstant(EnumConstantValue {
+                    value: (_, right), ..
+                }) => Ok(Value::Integer(IntegerValue(i128_op(left, right)?))),
+                Value::Float(FloatValue { value: right, .. }) => Ok(Value::Float(FloatValue {
+                    value: f64_op(&(left.clone() as f64), right)?,
+                    kind: FloatKind::F64,
+                })),
+                _ => Err(MathError::InvalidInputs),
+            },
+            Value::Float(FloatValue {
+                value: left,
+                kind: left_kind,
+            }) => match other {
+                // Integral value + F64
+                Value::Integer(IntegerValue(right))
+                | Value::PrimitiveInteger(PrimitiveIntegerValue { value: right, .. })
+                | Value::EnumConstant(EnumConstantValue {
+                    value: (_, right), ..
+                }) => Ok(Value::Float(FloatValue {
+                    value: f64_op(left, &(right.clone() as f64))?,
+                    kind: FloatKind::F64,
+                })),
+                // Attempt to keep the same precision if we can
+                Value::Float(FloatValue {
+                    value: right,
+                    kind: right_kind,
+                }) => Ok(Value::Float(FloatValue {
+                    value: f64_op(left, right)?,
+                    kind: if left_kind == right_kind {
+                        left_kind.clone()
+                    } else {
+                        FloatKind::F64
+                    },
+                })),
+                _ => Err(MathError::InvalidInputs),
+            },
+            Value::EnumConstant(value) => Value::PrimitiveInteger(PrimitiveIntegerValue {
+                value: value.value.1,
+                kind: value.ty().rep_type,
+            })
+            .binop(other, f64_op, i128_op),
+            _ => Err(MathError::InvalidInputs),
+        }
+    }
+
+    pub fn add(&self, other: &Value) -> MathResult {
+        self.binop(
+            other,
+            |left, right| Ok(left + right),
+            |left, right| Ok(left + right),
+        )
+    }
+
+    pub fn div(&self, other: &Value) -> MathResult {
+        self.binop(
+            other,
+            |left, right| {
+                if *right == 0.0 {
+                    Err(MathError::DivByZero)
+                } else {
+                    Ok(left / right)
+                }
+            },
+            |left, right| {
+                if *right == 0 {
+                    Err(MathError::DivByZero)
+                } else {
+                    Ok(left / right)
+                }
+            },
+        )
+    }
+
+    pub fn mul(&self, other: &Value) -> MathResult {
+        self.binop(
+            other,
+            |left, right| Ok(left * right),
+            |left, right| Ok(left * right),
+        )
+    }
+
+    pub fn sub(&self, other: &Value) -> MathResult {
+        self.binop(
+            other,
+            |left, right| Ok(left - right),
+            |left, right| Ok(left - right),
+        )
+    }
 }
+
+pub enum MathError {
+    InvalidInputs,
+    DivByZero,
+}
+
+pub type MathResult = Result<Value, MathError>;
 
 /** Primitive integer values */
 #[derive(Debug, Clone)]
@@ -243,7 +389,7 @@ pub struct IntegerValue(pub i128);
 #[derive(Debug, Clone)]
 pub struct FloatValue {
     pub value: f64,
-    pub kind: fpp_ast::FloatKind,
+    pub kind: FloatKind,
 }
 
 /** Boolean values */
@@ -264,19 +410,19 @@ pub struct AnonArrayValue {
 #[derive(Debug, Clone)]
 pub struct ArrayValue {
     pub anon_array: AnonArrayValue,
-    pub ty: Rc<RefCell<Type>>,
+    pub ty: Rc<Type>,
 }
 
 /** Enum constant values */
 #[derive(Debug, Clone)]
 pub struct EnumConstantValue {
     pub value: (String, i128),
-    ty: Rc<RefCell<Type>>,
+    ty: Rc<Type>,
 }
 
 impl EnumConstantValue {
-    pub fn new(member_name: String, value: i128, ty: Rc<RefCell<Type>>) -> EnumConstantValue {
-        match ty.borrow().deref() {
+    pub fn new(member_name: String, value: i128, ty: Rc<Type>) -> EnumConstantValue {
+        match ty.deref() {
             Type::Enum(_) => (),
             _ => {
                 panic!("expected enum type")
@@ -289,13 +435,13 @@ impl EnumConstantValue {
         }
     }
 
-    pub fn ty(&'_ self) -> Ref<'_, EnumType> {
-        Ref::map(self.ty.borrow(), |t| match t {
+    pub fn ty(&self) -> &EnumType {
+        match self.ty.deref() {
             Type::Enum(e_ty) => e_ty,
             _ => {
                 panic!("expected enum type")
             }
-        })
+        }
     }
 }
 
@@ -307,10 +453,10 @@ pub struct AnonStructValue {
 #[derive(Debug, Clone)]
 pub struct StructValue {
     pub anon_struct: AnonStructValue,
-    ty: Rc<RefCell<Type>>,
+    ty: Rc<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct AbsTypeValue {
-    ty: Rc<RefCell<Type>>,
+    ty: Rc<Type>,
 }
