@@ -1,5 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/expr/neg_error.fpp:1.14
-constant a = - { x = 1 }
-             ^
-error: cannot convert { x: Integer } to a numeric type
+ --> [ local path prefix ]/expr/neg_error.fpp:1:16
+  |
+1 | constant a = - { x = 1 }
+  |                ^^^^^^^^^ cannot convert expression to integer
+  |
+  = note: anonymous struct { x: Integer } cannot be converted to Integer
+

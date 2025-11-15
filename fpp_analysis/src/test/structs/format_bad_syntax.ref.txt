@@ -1,8 +1,13 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/struct/format_bad_syntax.fpp:1.26
-struct S { x: U32 format "{" }
-                         ^
-error: invalid format string: 
-{
- ^
-invalid replacement field
+ --> [ local path prefix ]/structs/format_bad_syntax.fpp:1:27
+  |
+1 | struct S { x: U32 format "{" }
+  |                           ^ unmatched `{` in format string
+  |
+  = note: consider escaping curly brace with `{{`
+
+error: format string missing replacement fields
+ --> [ local path prefix ]/structs/format_bad_syntax.fpp:1:15
+  |
+1 | struct S { x: U32 format "{" }
+  |               --- missing format replacement field
+

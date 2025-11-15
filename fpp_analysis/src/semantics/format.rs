@@ -70,7 +70,7 @@ impl Format {
                                 format_loc: format_spec.span,
                                 type_loc: ty_span.clone(),
                                 msg: format!(
-                                    "{:?} format replacement cannot be used type `{}`",
+                                    "{:?} format replacement cannot be used for type `{}`",
                                     kind, ty
                                 ),
                             }
@@ -97,7 +97,7 @@ impl Format {
                                 format_loc: format_spec.span,
                                 type_loc: ty_span.clone(),
                                 msg: format!(
-                                    "{:?} format replacement cannot be used type `{}`",
+                                    "{:?} format replacement cannot be used for type `{}`",
                                     kind, ty
                                 ),
                             }

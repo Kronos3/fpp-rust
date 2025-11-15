@@ -215,7 +215,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                                     loc: next.span(),
                                     msg: format!(
                                         "cannot find common type between {} and {}",
-                                        next_type, common
+                                        next_type.as_ref(), common.as_ref()
                                     ),
                                 }),
                                 Some(new_ty) => Ok(new_ty),

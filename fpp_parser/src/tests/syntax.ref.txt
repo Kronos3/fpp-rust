@@ -101,6 +101,10 @@
                 format: Some(
                     LitString {
                         data: "{} counts",
+                        inner_span: Span {
+                            start: [ local path prefix ]/syntax.fpp:13:41,
+                            end: [ local path prefix ]/syntax.fpp:13:50,
+                        },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:13:40,
                             end: [ local path prefix ]/syntax.fpp:13:51,
@@ -1055,6 +1059,10 @@
                         format: Some(
                             LitString {
                                 data: "{} s",
+                                inner_span: Span {
+                                    start: [ local path prefix ]/syntax.fpp:94:56,
+                                    end: [ local path prefix ]/syntax.fpp:94:60,
+                                },
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:94:55,
                                     end: [ local path prefix ]/syntax.fpp:94:61,
@@ -1242,6 +1250,10 @@
                         ),
                         format: LitString {
                             data: "{} counts",
+                            inner_span: Span {
+                                start: [ local path prefix ]/syntax.fpp:100:68,
+                                end: [ local path prefix ]/syntax.fpp:100:77,
+                            },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:100:67,
                                 end: [ local path prefix ]/syntax.fpp:100:78,
@@ -1346,6 +1358,10 @@
                         ),
                         format: LitString {
                             data: "{} counts",
+                            inner_span: Span {
+                                start: [ local path prefix ]/syntax.fpp:104:70,
+                                end: [ local path prefix ]/syntax.fpp:104:79,
+                            },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:104:69,
                                 end: [ local path prefix ]/syntax.fpp:104:80,
@@ -1594,6 +1610,10 @@
                 impl_type: Some(
                     LitString {
                         data: "T",
+                        inner_span: Span {
+                            start: [ local path prefix ]/syntax.fpp:122:40,
+                            end: [ local path prefix ]/syntax.fpp:122:41,
+                        },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:122:39,
                             end: [ local path prefix ]/syntax.fpp:122:42,
@@ -1603,6 +1623,10 @@
                 file: Some(
                     LitString {
                         data: "C2.hpp",
+                        inner_span: Span {
+                            start: [ local path prefix ]/syntax.fpp:122:47,
+                            end: [ local path prefix ]/syntax.fpp:122:53,
+                        },
                         node_id: Span {
                             start: [ local path prefix ]/syntax.fpp:122:46,
                             end: [ local path prefix ]/syntax.fpp:122:54,
@@ -1666,6 +1690,10 @@
                         },
                         code: LitString {
                             data: "\"\"\n    line 1\n      line 2\n    line 3\n    \"\"",
+                            inner_span: Span {
+                                start: [ local path prefix ]/syntax.fpp:124:26,
+                                end: [ local path prefix ]/syntax.fpp:128:8,
+                            },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:124:25,
                                 end: [ local path prefix ]/syntax.fpp:128:9,
@@ -1994,6 +2022,10 @@
                         format: Some(
                             LitString {
                                 data: "{} s",
+                                inner_span: Span {
+                                    start: [ local path prefix ]/syntax.fpp:167:21,
+                                    end: [ local path prefix ]/syntax.fpp:167:25,
+                                },
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:167:20,
                                     end: [ local path prefix ]/syntax.fpp:167:26,
@@ -2032,6 +2064,10 @@
                         format: Some(
                             LitString {
                                 data: "{} m/s",
+                                inner_span: Span {
+                                    start: [ local path prefix ]/syntax.fpp:170:21,
+                                    end: [ local path prefix ]/syntax.fpp:170:27,
+                                },
                                 node_id: Span {
                                     start: [ local path prefix ]/syntax.fpp:170:20,
                                     end: [ local path prefix ]/syntax.fpp:170:28,
@@ -2697,6 +2733,10 @@
                 },
                 file: LitString {
                     data: "instances.fpp",
+                    inner_span: Span {
+                        start: [ local path prefix ]/syntax.fpp:232:26,
+                        end: [ local path prefix ]/syntax.fpp:232:39,
+                    },
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:232:25,
                         end: [ local path prefix ]/syntax.fpp:232:40,

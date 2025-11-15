@@ -187,7 +187,22 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             None => anon_array_ty.default_value(),
             Some(default) => match a.value_map.get(&default.node_id) {
                 None => None,
-                Some(default) => default.convert(&Rc::new(anon_array_ty)),
+                Some(default_v) => match default_v.convert(&Rc::new(anon_array_ty)) {
+                    None => None,
+                    Some(Value::AnonArray(v)) => {
+                        if v.elements.len() != size as usize {
+                            SemanticError::ArrayDefaultMismatchedSize {
+                                loc: default.span(),
+                                size_loc: node.size.span(),
+                                value_size: v.elements.len(),
+                                type_size: size,
+                            }.emit();
+                        }
+
+                        Some(Value::AnonArray(v))
+                    }
+                    Some(_) => panic!("expected anon array")
+                },
             },
         };
 

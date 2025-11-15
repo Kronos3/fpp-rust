@@ -220,7 +220,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                         a.value_map.insert(node.node_id, val);
                     }
                     Err(MathError::DivByZero) => {
-                        SemanticError::DivisionByZero { loc: node.span() }.emit();
+                        SemanticError::DivisionByZero { loc: right.span() }.emit();
                     }
                     Err(MathError::InvalidInputs) => {}
                 }

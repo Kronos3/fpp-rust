@@ -1,6 +1,6 @@
 use crate::semantics::{
-    AbsTypeValue, AnonArrayValue, AnonStructValue, BooleanValue, FloatValue,
-    Format, IntegerValue, PrimitiveIntegerValue, StringValue, StructValue, Value,
+    AbsTypeValue, AnonArrayValue, AnonStructValue, BooleanValue, FloatValue, Format, IntegerValue,
+    PrimitiveIntegerValue, StringValue, StructValue, Value,
 };
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
@@ -601,13 +601,16 @@ impl Display for Type {
                     Some(size) => f.write_fmt(format_args!("[{}] ", size))?,
                 }
 
-                anon_arr.fmt(f)
+                std::fmt::Display::fmt(&anon_arr.elt_type, f)
             }
             Type::Enum(ty) => f.write_fmt(format_args!("{} (enum type)", ty.node.name.data)),
             Type::Struct(ty) => f.write_fmt(format_args!("{} (struct type)", ty.node.name.data)),
             Type::AnonStruct(anon_struct) => {
                 let mut s = f.debug_struct("anonymous struct");
-                for (name, member_ty) in &anon_struct.members {
+                let mut members: Vec<(String, Rc<Type>)> =
+                    anon_struct.members.clone().into_iter().collect();
+                members.sort_by(|a, b| a.0.cmp(&b.0));
+                for (name, member_ty) in &members {
                     s.field(name, member_ty.deref());
                 }
 

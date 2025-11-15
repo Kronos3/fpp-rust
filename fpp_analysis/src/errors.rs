@@ -87,6 +87,12 @@ pub enum SemanticError {
         value: i32,
         max: i32,
     },
+    ArrayDefaultMismatchedSize {
+        loc: Span,
+        size_loc: Span,
+        value_size: usize,
+        type_size: i128,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -217,6 +223,18 @@ impl Into<Diagnostic> for SemanticError {
                     value, max
                 ),
             ),
+            SemanticError::ArrayDefaultMismatchedSize {
+                loc,
+                size_loc,
+                value_size,
+                type_size,
+            } => Diagnostic::spanned(
+                loc,
+                Level::Error,
+                "cannot convert value to array type due to mismatched sizes",
+            )
+            .note(format!("value size `{}`", value_size))
+            .span_note(size_loc, format!("array size `{}`", type_size)),
         }
     }
 }

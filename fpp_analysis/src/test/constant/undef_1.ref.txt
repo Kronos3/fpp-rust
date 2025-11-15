@@ -1,5 +1,6 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/constant/undef_1.fpp:1.14
-constant b = a
-             ^
-error: undefined symbol a
+error: undefined symbol
+ --> [ local path prefix ]/constant/undef_1.fpp:1:14
+  |
+1 | constant b = a
+  |              ^ cannot find constant `a` in scope
+

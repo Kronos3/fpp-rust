@@ -1,5 +1,10 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/array/format_alias_float_not_int.fpp:2.24
-array A = [3] T format "{x}"
-                       ^
-error: invalid format string: T is not an integer type
+ --> [ local path prefix ]/array/format_alias_float_not_int.fpp:2:25
+  |
+2 | array A = [3] T format "{x}"
+  |                         ^^^ Hexadecimal format replacement cannot be used for type `T (F32)`
+  |
+ ::: [ local path prefix ]/array/format_alias_float_not_int.fpp:2:15
+  |
+2 | array A = [3] T format "{x}"
+  |               - type defined here
+

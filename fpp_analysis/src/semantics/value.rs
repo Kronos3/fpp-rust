@@ -160,13 +160,14 @@ impl Value {
                     })
                     | Type::AnonArray(anon_array_ty) => {
                         match (anon_array_ty.size, anon_array.elements.len()) {
-                            (Some(ty_size), value_size) if ty_size == value_size => {
-                                let elements = std::iter::repeat_n(
-                                    self.convert(&anon_array_ty.elt_type)?,
-                                    value_size,
+                            (Some(_), _) => {
+                                Some(
+                                    anon_array
+                                        .elements
+                                        .iter()
+                                        .filter_map(|e| e.convert(&anon_array_ty.elt_type))
+                                        .collect(),
                                 )
-                                .collect();
-                                Some(elements)
                             }
                             (None, value_size) => {
                                 let elements = std::iter::repeat_n(
@@ -176,7 +177,6 @@ impl Value {
                                 .collect();
                                 Some(elements)
                             }
-                            _ => None,
                         }
                     }
                     _ => None,

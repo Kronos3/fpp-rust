@@ -1,6 +1,7 @@
-fpp-check
-[ local path prefix ]/compiler/tools/fpp-check/test/struct/invalid_size.fpp:1.16
-struct S { x: [-1] U32 }
-               ^
-error: invalid array size -1
-note: size must be greater than zero
+ --> [ local path prefix ]/structs/invalid_size.fpp:1:16
+  |
+1 | struct S { x: [-1] U32 }
+  |                ^^ array size must be greater than zero
+  |
+  = note: expression evaluated to `-1`
+
