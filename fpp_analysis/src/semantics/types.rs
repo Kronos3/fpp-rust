@@ -1,6 +1,6 @@
 use crate::semantics::{
-    AbsTypeValue, AnonArrayValue, AnonStructValue, BooleanValue, EnumConstantValue,
-    FloatValue, Format, IntegerValue, PrimitiveIntegerValue, StringValue, StructValue, Value,
+    AbsTypeValue, AnonArrayValue, AnonStructValue, BooleanValue, FloatValue,
+    Format, IntegerValue, PrimitiveIntegerValue, StringValue, StructValue, Value,
 };
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
@@ -54,7 +54,7 @@ impl Type {
             Type::AnonArray(arr) => Some(Value::AnonArray(AnonArrayValue {
                 elements: std::iter::repeat_n(arr.elt_type.default_value()?, arr.size?).collect(),
             })),
-            Type::Enum(ty) => Some(Value::EnumConstant(ty.default.clone()?)),
+            Type::Enum(ty) => ty.default.clone(),
             Type::Struct(def) => Some(Value::Struct(def.default.clone()?)),
             Type::AnonStruct(struct_) => {
                 let mut members = vec![];
@@ -763,7 +763,7 @@ pub struct EnumType {
     /** The representation type */
     pub rep_type: IntegerKind,
     /** The default value */
-    pub default: Option<EnumConstantValue>,
+    pub default: Option<Value>,
 }
 
 /** A named struct type */

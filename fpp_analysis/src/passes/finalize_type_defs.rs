@@ -2,14 +2,16 @@ use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
 use crate::errors::SemanticError;
 use crate::semantics::{
-    AliasType, AnonArrayType, ArrayType, Format, IntegerValue, Symbol, Type, Value,
+    AliasType, AnonArrayType, AnonStructType, ArrayType, Format, IntegerValue, StructType, Symbol,
+    Type, Value,
 };
 use crate::Analysis;
 use fpp_ast::{
-    AstNode, DefAliasType, DefArray, Expr, Node, TransUnit, TypeName, TypeNameKind, Visitor,
+    AstNode, DefAliasType, DefArray, DefEnum, DefStruct, Expr, Node, TransUnit, TypeName,
+    TypeNameKind, Visitor,
 };
 use fpp_core::Spanned;
-use std::ops::ControlFlow;
+use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
 pub struct FinalizeTypeDefs<'ast> {
@@ -206,6 +208,117 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         });
 
         a.type_map.insert(node.node_id, Rc::new(ty));
+        ControlFlow::Continue(())
+    }
+
+    fn visit_def_enum(&self, a: &mut Self::State, node: &'ast DefEnum) -> ControlFlow<Self::Break> {
+        let symbol = Symbol::Enum(node);
+        if a.visited_symbol_set.contains(&symbol) {
+            return ControlFlow::Continue(());
+        }
+
+        a.visited_symbol_set.insert(symbol);
+        let mut enum_ty = match a.type_map.get(&node.node_id) {
+            None => return ControlFlow::Continue(()),
+            Some(ty) => match ty.deref() {
+                Type::Enum(ty) => ty.clone(),
+                _ => panic!("expected enum type"),
+            },
+        };
+
+        enum_ty.default = match &node.default {
+            None => {
+                // Choose the first value
+                match node.constants.first() {
+                    None => None,
+                    Some(first_constant) => match a.value_map.get(&first_constant.node_id) {
+                        None => None,
+                        Some(v) => Some(v.clone()),
+                    },
+                }
+            }
+            Some(def) => match a.value_map.get(&def.node_id) {
+                None => None,
+                Some(def) => Some(def.clone()),
+            },
+        };
+
+        a.type_map
+            .insert(node.node_id, Rc::new(Type::Enum(enum_ty)));
+
+        ControlFlow::Continue(())
+    }
+
+    fn visit_def_struct(
+        &self,
+        a: &mut Self::State,
+        node: &'ast DefStruct,
+    ) -> ControlFlow<Self::Break> {
+        let symbol = Symbol::Struct(node);
+        if a.visited_symbol_set.contains(&symbol) {
+            return ControlFlow::Continue(());
+        }
+
+        a.visited_symbol_set.insert(symbol);
+
+        let mut ty = StructType {
+            node: node.clone(),
+            anon_struct: AnonStructType {
+                members: Default::default(),
+            },
+            default: None,
+            sizes: Default::default(),
+            formats: Default::default(),
+        };
+
+        for member in &node.members {
+            let member_ty = self.ty(a, &member.type_name);
+            match &member_ty {
+                None => {}
+                Some(member_ty) => {
+                    ty.anon_struct
+                        .members
+                        .insert(member.name.data.clone(), member_ty.clone());
+                }
+            }
+
+            let size = self.expr_as_integer_opt(a, &member.size);
+            match size {
+                None => {}
+                Some(size) if size >= 1 => {
+                    if size < 1 << 31 {
+                        ty.sizes.insert(member.name.data.clone(), size as u32);
+                    } else {
+                        SemanticError::InvalidIntValue {
+                            loc: member.size.clone().unwrap().span(),
+                            v: Some(size),
+                            msg: "array size must be less than 2^31".to_string(),
+                        }
+                        .emit();
+                    }
+                }
+                Some(size) => {
+                    SemanticError::InvalidIntValue {
+                        loc: member.size.clone().unwrap().span(),
+                        v: Some(size),
+                        msg: "array size must be greater than zero".to_string(),
+                    }
+                    .emit();
+                }
+            }
+
+            match (&member.format, &member_ty) {
+                (Some(format), Some(member_ty)) => {
+                    ty.formats.insert(
+                        member.name.data.clone(),
+                        Format::new(format, vec![(member_ty.clone(), member.type_name.span())]),
+                    );
+                }
+                _ => {}
+            }
+        }
+
+        a.type_map.insert(node.node_id, Rc::new(Type::Struct(ty)));
         ControlFlow::Continue(())
     }
 }
