@@ -1,5 +1,5 @@
 use crate::semantics::{
-    AbsTypeValue, AnonArrayValue, AnonStructValue, ArrayValue, BooleanValue, EnumConstantValue,
+    AbsTypeValue, AnonArrayValue, AnonStructValue, BooleanValue, EnumConstantValue,
     FloatValue, Format, IntegerValue, PrimitiveIntegerValue, StringValue, StructValue, Value,
 };
 use fpp_ast::{FloatKind, IntegerKind};
@@ -13,7 +13,7 @@ use std::rc::Rc;
 pub enum Type {
     PrimitiveInt(IntegerKind),
     Float(FloatKind),
-    String(Option<fpp_ast::Expr>),
+    String(Option<i128>),
     Boolean,
     /** The type of arbitrary-width integers */
     Integer,
@@ -50,7 +50,7 @@ impl Type {
             Type::Integer => Some(Value::Integer(IntegerValue(0))),
             Type::AliasType(ty) => ty.alias_type.default_value().clone(),
             Type::AbsType(ty) => Some(Value::AbsType(ty.default_value.clone()?)),
-            Type::Array(array) => Some(Value::Array(array.default.clone()?)),
+            Type::Array(array) => array.default.clone(),
             Type::AnonArray(arr) => Some(Value::AnonArray(AnonArrayValue {
                 elements: std::iter::repeat_n(arr.elt_type.default_value()?, arr.size?).collect(),
             })),
@@ -70,7 +70,7 @@ impl Type {
     }
 
     /** Get the array size */
-    pub fn array_size(&self) -> Option<ArraySize> {
+    pub fn array_size(&self) -> Option<usize> {
         match self {
             Type::AliasType(ty) => ty.alias_type.array_size(),
             Type::AnonArray(arr) => arr.size,
@@ -354,10 +354,7 @@ impl Type {
             (Type::Integer, Type::Integer) => true,
             (Type::Boolean, Type::Boolean) => true,
             (Type::String(None), Type::String(None)) => true,
-            (Type::String(Some(_e1)), Type::String(Some(_e2))) => {
-                // todo!("implement string size comparisons")
-                false
-            }
+            (Type::String(Some(s1)), Type::String(Some(s2))) => s1 == s2,
             _ => match (t1.def_node_id(), t2.def_node_id()) {
                 (Some(n1), Some(n2)) => n1 == n2,
                 _ => false,
@@ -436,10 +433,9 @@ impl Type {
             (Type::Enum(EnumType { rep_type, .. }), _) => {
                 Self::common_type(&Rc::new(Type::PrimitiveInt(rep_type.clone())), &t1)
             }
-            (_, Type::Enum(EnumType { rep_type, .. })) => Self::common_type(
-                &t1,
-                &Rc::new(Type::PrimitiveInt(rep_type.clone())),
-            ),
+            (_, Type::Enum(EnumType { rep_type, .. })) => {
+                Self::common_type(&t1, &Rc::new(Type::PrimitiveInt(rep_type.clone())))
+            }
 
             // t1 + t2 are both array/anon array
             (
@@ -465,10 +461,7 @@ impl Type {
                 };
 
                 let elt_type = Type::common_type(&t1_arr.elt_type, &t2_arr.elt_type)?;
-                Some(Rc::new(Type::AnonArray(AnonArrayType {
-                    size,
-                    elt_type,
-                })))
+                Some(Rc::new(Type::AnonArray(AnonArrayType { size, elt_type })))
             }
 
             // An array and a non array. Try to promote the non-array to the array
@@ -627,8 +620,8 @@ impl Display for Type {
 #[derive(Debug)]
 pub enum TypeConversionError {
     ArraySizeMismatch {
-        from: ArraySize,
-        to: ArraySize,
+        from: usize,
+        to: usize,
     },
     ArrayElementDuringPromotion(Box<TypeConversionError>),
     ArrayElement(Box<TypeConversionError>),
@@ -748,18 +741,16 @@ pub struct ArrayType {
     /** The structurally equivalent anonymous array */
     pub anon_array: AnonArrayType,
     /** The specified default value, if any */
-    pub default: Option<ArrayValue>,
+    pub default: Option<Value>,
     /** The specified format, if any */
     pub format: Option<Format>,
 }
-
-type ArraySize = usize;
 
 /** An anonymous array type */
 #[derive(Debug, Clone)]
 pub struct AnonArrayType {
     /** The array size */
-    pub size: Option<ArraySize>,
+    pub size: Option<usize>,
     /** The element type */
     pub elt_type: Rc<Type>,
 }

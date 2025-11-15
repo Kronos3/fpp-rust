@@ -124,9 +124,9 @@ mod test {
     //     mod test;
     // }
 
-    // mod expr {
-    //     mod test;
-    // }
+    mod expr {
+        mod test;
+    }
 
     // mod component {
     //     mod test;
@@ -148,9 +148,9 @@ mod test {
     //     mod test;
     // }
 
-    // mod constant {
-    //     mod test;
-    // }
+    mod constant {
+        mod test;
+    }
 
     mod structs {
         mod test;

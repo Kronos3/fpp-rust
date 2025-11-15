@@ -20,6 +20,9 @@ pub struct Lexer<'a> {
     chars: Chars<'a>,
 
     include_span: Option<fpp_core::Span>,
+
+    /// Used to keep track of the inside of a string literal's span
+    inner_span: Option<fpp_core::Span>,
 }
 
 const EOF_CHAR: char = '\0';
@@ -80,6 +83,7 @@ impl<'a> Lexer<'a> {
             token_has_trailing_whitespace: false,
             token_end_before_whitespace: 0,
             include_span,
+            inner_span: None,
         }
     }
 
@@ -99,6 +103,13 @@ impl<'a> Lexer<'a> {
                         LiteralString => {
                             // Ignore the quotes
                             // TODO(tumbar) Process using the indent
+                            // TODO(tumbar) Handle multi-line strings
+                            self.inner_span = Some(fpp_core::Span::new(
+                                self.file,
+                                start + 1,
+                                length - 2,
+                                self.include_span
+                            ));
                             (
                                 Some(self.content[start + 1..end - 1].to_string()),
                                 LiteralString,
@@ -569,6 +580,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn inner_span(&self) -> Option<fpp_core::Span> {
+        self.inner_span
+    }
+
     pub fn as_str(&self) -> &'a str {
         self.chars.as_str()
     }
@@ -624,6 +639,7 @@ impl<'a> Lexer<'a> {
         self.token_end_before_whitespace = 0;
         self.indent = 0;
         self.escaped_identifier = false;
+        self.inner_span = None
     }
 
     /// Moves to the next character.

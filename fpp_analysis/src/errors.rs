@@ -73,6 +73,20 @@ pub enum SemanticError {
         member: String,
         type_name: String,
     },
+    FormatStringMismatchLength {
+        format_locs: Vec<Span>,
+        type_locs: Vec<Span>,
+    },
+    FormatStringInvalidReplacement {
+        format_loc: Span,
+        type_loc: Span,
+        msg: String,
+    },
+    FormatStringInvalidPrecision {
+        loc: Span,
+        value: i32,
+        max: i32,
+    },
 }
 
 pub type SemanticResult<T = ()> = Result<T, SemanticError>;
@@ -167,6 +181,41 @@ impl Into<Diagnostic> for SemanticError {
                 loc,
                 Level::Error,
                 format!("{} has no member `{}`", type_name, member),
+            ),
+            SemanticError::FormatStringMismatchLength {
+                format_locs,
+                type_locs,
+            } => {
+                if format_locs.len() < type_locs.len() {
+                    let diag =
+                        Diagnostic::new(Level::Error, "format string missing replacement fields");
+                    type_locs[format_locs.len()..]
+                        .iter()
+                        .fold(diag, |diag, loc| {
+                            diag.span_note(loc.clone(), "missing format replacement field")
+                        })
+                } else {
+                    let diag = Diagnostic::new(Level::Error, "too many format specifiers");
+                    format_locs[type_locs.len()..]
+                        .iter()
+                        .fold(diag, |diag, loc| {
+                            diag.span_annotation(loc.clone(), "no field to format")
+                        })
+                }
+            }
+            SemanticError::FormatStringInvalidReplacement {
+                format_loc,
+                type_loc,
+                msg,
+            } => Diagnostic::spanned(format_loc, Level::Error, msg)
+                .span_note(type_loc, "type defined here"),
+            SemanticError::FormatStringInvalidPrecision { loc, value, max } => Diagnostic::spanned(
+                loc,
+                Level::Error,
+                format!(
+                    "precision value `{}` is larger than the maximum ({})",
+                    value, max
+                ),
             ),
         }
     }

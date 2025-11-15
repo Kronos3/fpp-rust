@@ -2528,6 +2528,7 @@ impl<'a> Parser<'a> {
         let tok = self.consume(LiteralString)?;
         Ok(LitString {
             node_id: self.node(tok.span()),
+            inner_span: self.cursor.inner_span().unwrap(),
             data: tok.text().to_string(),
         })
     }

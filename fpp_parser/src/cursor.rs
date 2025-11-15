@@ -133,6 +133,10 @@ impl<'a> Cursor<'a> {
         }
     }
 
+    pub fn inner_span(&self) -> Option<Span> {
+        self.lexer.inner_span()
+    }
+
     #[inline]
     pub fn consume(&mut self, kind: TokenKind) -> ParseResult<Token> {
         match self.next() {

@@ -236,7 +236,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
                 }
                 return ControlFlow::Continue(());
             }
-            TypeNameKind::String(size) => Type::String(size.clone()),
+            TypeNameKind::String(_) => Type::String(None),
         };
 
         a.type_map.insert(node.node_id, Rc::new(ty));

@@ -196,7 +196,7 @@ impl Value {
                 let mut members = HashMap::new();
 
                 let to_ty = match ty.deref() {
-                    // TODO(tumbar) default values need to come from struct type
+                    // TODO(tumbar) default values need to come from struct type?
                     Type::Struct(StructType { anon_struct, .. }) => anon_struct,
                     Type::AnonStruct(anon_struct) => anon_struct,
                     _ => return None,

@@ -47,6 +47,8 @@ pub enum QualIdentKind {
 pub struct LitString {
     #[visitable(ignore)]
     pub data: String,
+    #[visitable(ignore)]
+    pub inner_span: fpp_core::Span,
 }
 
 /** Identifier */

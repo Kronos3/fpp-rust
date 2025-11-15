@@ -263,7 +263,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
                     .insert(node.node_id, Value::Boolean(BooleanValue(v.clone())));
             }
             ExprKind::LiteralInt(v) => {
-                let vi: i128 = if v.starts_with("0x") {
+                let vi: i128 = if v.starts_with("0x") || v.starts_with("0X") {
                     // Hexadecimal integer literal
                     match i128::from_str_radix(&v[2..], 16) {
                         Ok(v) => v,
