@@ -3,7 +3,7 @@ use crate::error::Error;
 use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
 use std::cell::{Cell, Ref, RefCell};
 
-pub struct Container<'ctx, E: DiagnosticEmitter> {
+struct Container<'ctx, E: DiagnosticEmitter> {
     ctx: RefCell<&'ctx mut CompilerContext<E>>,
 }
 
@@ -39,47 +39,20 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         node.post_annotation = post;
     }
 
-    fn file_open(&self, path: &str) -> Result<SourceFile, Error> {
-        self.ctx.borrow_mut().file_open(path)
+    fn file_new(&self, uri: &str, content: String) -> SourceFile {
+        self.ctx.borrow_mut().file_new(uri, content)
     }
 
-    fn file_open_relative_path(&self, file: &SourceFile, path: &str) -> Result<SourceFile, Error> {
-        let mut ctx = self.ctx.borrow_mut();
-        let f = ctx.file_get(file);
-        match &f.path {
-            None => {
-                // File comes from stdin
-                // Open relative to the current working directory
-                ctx.file_open(path)
-            }
-            Some(file_path) => {
-                let parent_file_path = std::path::Path::new(&file_path).canonicalize()?;
-                match parent_file_path.parent() {
-                    None => Err(Error(format!(
-                        "Cannot resolve parent directory of {}",
-                        file_path
-                    ))),
-                    Some(parent_dir) => {
-                        let final_path = parent_dir.join(path);
-                        match final_path.as_path().to_str() {
-                            None => Err(Error(format!(
-                                "Failed to resolve path {} relative to {:?}",
-                                path, parent_dir
-                            ))),
-                            Some(file_path) => ctx.file_open(file_path),
-                        }
-                    }
-                }
-            }
-        }
+    fn file_get(&self, uri: &str) -> Option<SourceFile> {
+        self.ctx.borrow().file_get_from_uri(uri)
     }
 
-    fn file_from(&self, content: &str) -> SourceFile {
-        self.ctx.borrow_mut().file_from(content)
+    fn file_uri(&self, file: &SourceFile) -> String {
+        self.ctx.borrow().file_get(file).uri.clone()
     }
 
-    fn file_path(&self, file: &SourceFile) -> Option<String> {
-        self.ctx.borrow().file_get(file).path()
+    fn file_drop(&self, file: SourceFile) {
+        self.ctx.borrow_mut().file_drop(file)
     }
 
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String> {
@@ -112,19 +85,22 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn span_start(&self, s: &Span) -> Position {
         let ctx = self.ctx.borrow();
         let data = ctx.span_get(s);
-        data.file.position(data.start)
+        data.file.upgrade().unwrap().position(data.start)
     }
 
     fn span_end(&self, s: &Span) -> Position {
         let ctx = self.ctx.borrow();
         let data = ctx.span_get(s);
-        data.file.position(data.start + (data.length as BytePos))
+        data.file
+            .upgrade()
+            .unwrap()
+            .position(data.start + (data.length as BytePos))
     }
 
     fn span_file(&self, s: &Span) -> SourceFile {
         let ctx = self.ctx.borrow();
         SourceFile {
-            handle: ctx.span_get(s).file.handle.clone(),
+            handle: ctx.span_get(s).file.upgrade().unwrap().handle.clone(),
         }
     }
 
@@ -149,10 +125,10 @@ pub(crate) trait CompilerInterface {
     fn node_add_annotation(&self, node: &Node, pre: Vec<String>, post: Vec<String>);
 
     /** Source file related functions */
-    fn file_open(&self, path: &str) -> Result<SourceFile, Error>;
-    fn file_open_relative_path(&self, file: &SourceFile, path: &str) -> Result<SourceFile, Error>;
-    fn file_from(&self, content: &str) -> SourceFile;
-    fn file_path(&self, file: &SourceFile) -> Option<String>;
+    fn file_new(&self, uri: &str, content: String) -> SourceFile;
+    fn file_get(&self, uri: &str) -> Option<SourceFile>;
+    fn file_uri(&self, file: &SourceFile) -> String;
+    fn file_drop(&self, file: SourceFile);
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
     fn file_lines(&self, file: &SourceFile) -> Ref<'_, Vec<BytePos>>;
     fn file_len(&self, file: &SourceFile) -> usize;
@@ -192,7 +168,7 @@ where
     run1(&container, f)
 }
 
-pub(crate) fn run1<F, T>(interface: &dyn CompilerInterface, f: F) -> Result<T, Error>
+fn run1<F, T>(interface: &dyn CompilerInterface, f: F) -> Result<T, Error>
 where
     F: FnOnce() -> T,
 {

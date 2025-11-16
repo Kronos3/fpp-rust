@@ -1,15 +1,17 @@
 use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
 use fpp_ast::*;
-use fpp_core::{Position, SourceFile, Span, Spanned};
+use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
 use std::collections::HashSet;
 use std::ops::ControlFlow;
 
-pub struct ResolveIncludes {}
+pub struct ResolveIncludes {
+    reader: Box<dyn FileReader>,
+}
 
 impl ResolveIncludes {
-    pub fn new() -> ResolveIncludes {
-        ResolveIncludes {}
+    pub fn new(reader: Box<dyn FileReader>) -> ResolveIncludes {
+        ResolveIncludes { reader }
     }
 
     fn check_loc_for_cycle(
@@ -21,40 +23,32 @@ impl ResolveIncludes {
         match loc_opt {
             None => Ok(()),
             Some(loc) => {
-                let path = loc.file().path();
-                match path {
-                    None => Ok(()),
-                    Some(path) => {
-                        visited_paths.push(loc.start());
-                        if path == including_path {
-                            Err(ParseError::IncludeCycle {
-                                span: including_span,
-                                include_cycle: visited_paths,
-                            })
-                        } else {
-                            Self::check_loc_for_cycle(
-                                including_span,
-                                including_path,
-                                loc.including_span(),
-                                visited_paths,
-                            )
-                        }
-                    }
+                let uri = loc.file().uri();
+                visited_paths.push(loc.start());
+                if uri == including_path {
+                    Err(ParseError::IncludeCycle {
+                        span: including_span,
+                        include_cycle: visited_paths,
+                    })
+                } else {
+                    Self::check_loc_for_cycle(
+                        including_span,
+                        including_path,
+                        loc.including_span(),
+                        visited_paths,
+                    )
                 }
             }
         }
     }
 
     fn check_for_cycle(including_span: Span, including_path: String) -> ParseResult<()> {
-        match including_span.file().path() {
-            None => Ok(()), // Stdin
-            Some(_) => Self::check_loc_for_cycle(
-                including_span,
-                including_path.clone(),
-                Some(including_span),
-                vec![],
-            ),
-        }
+        Self::check_loc_for_cycle(
+            including_span,
+            including_path.clone(),
+            Some(including_span),
+            vec![],
+        )
     }
 
     fn resolve_spec_include<T>(
@@ -65,10 +59,9 @@ impl ResolveIncludes {
         transformer: fn(&ResolveIncludes, &mut HashSet<SourceFile>, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
-        let file = match spec_include
-            .span()
-            .file()
-            .open_relative_path(&spec_include.file.data)
+        let file = match self
+            .reader
+            .include(spec_include.span().file(), &spec_include.file.data)
         {
             Ok(file) => file,
             Err(err) => {
@@ -82,7 +75,7 @@ impl ResolveIncludes {
             }
         };
 
-        match Self::check_for_cycle(spec_include.span(), file.path().unwrap()) {
+        match Self::check_for_cycle(spec_include.span(), file.uri()) {
             Ok(_) => {}
             Err(err) => {
                 fpp_core::Diagnostic::from(err.into()).emit();

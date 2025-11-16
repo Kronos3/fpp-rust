@@ -4,7 +4,7 @@ members = [
     "fpp_analysis",
     "fpp_ast",
     "fpp_core",
-    "fpp_errors",
+    "fpp_errors", "fpp_fs",
     "fpp_lsp",
     "fpp_macros",
     "fpp_parser",

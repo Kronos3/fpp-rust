@@ -13,7 +13,7 @@ pub trait Annotated {
 
 #[derive(Eq, Hash, PartialEq, Copy, Clone)]
 pub struct Node {
-    pub(crate) handle: u32,
+    pub(crate) handle: usize,
 }
 
 impl Node {
@@ -23,12 +23,6 @@ impl Node {
 
     pub fn annotate(node: &Node, pre: Vec<String>, post: Vec<String>) {
         with(|w| w.node_add_annotation(node, pre, post))
-    }
-
-    pub(crate) fn next(&self) -> Node {
-        Node {
-            handle: self.handle + 1,
-        }
     }
 }
 

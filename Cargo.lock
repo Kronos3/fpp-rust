@@ -111,6 +111,7 @@ dependencies = [
  "fpp_analysis",
  "fpp_core",
  "fpp_errors",
+ "fpp_fs",
  "fpp_parser",
 ]
 
@@ -121,6 +122,7 @@ dependencies = [
  "fpp_ast",
  "fpp_core",
  "fpp_errors",
+ "fpp_fs",
  "fpp_macros",
  "fpp_parser",
  "fpp_util",
@@ -154,10 +156,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fpp_fs"
+version = "0.1.0"
+dependencies = [
+ "fpp_core",
+]
+
+[[package]]
 name = "fpp_lsp"
 version = "0.1.0"
 dependencies = [
  "fpp_analysis",
+ "fpp_ast",
  "fpp_core",
  "fpp_parser",
  "log",
@@ -184,6 +194,7 @@ dependencies = [
  "fpp_ast",
  "fpp_core",
  "fpp_errors",
+ "fpp_fs",
  "memchr",
  "pretty_assertions",
 ]

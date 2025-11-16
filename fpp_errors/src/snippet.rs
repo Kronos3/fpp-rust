@@ -21,7 +21,7 @@ fn diagnostic_snippet_to_annotation<'a>(
     for include_loc in &snippet.include_spans {
         annotation = annotation.label(format!(
             "included from {}:{}:{}",
-            include_loc.file_path,
+            include_loc.uri,
             include_loc.line + 1,
             include_loc.column + 1
         ))
@@ -34,13 +34,13 @@ pub(crate) fn diagnostic_to_snippet_group(diagnostic: &'_ DiagnosticData) -> Gro
     let snippet = diagnostic.span.snippet();
     Group::with_level(diagnostic_level(diagnostic.level))
         .element(
-            Snippet::source(snippet.file_content)
+            Snippet::source(snippet.file_content.clone())
                 .line_start(if snippet.line_offset == 0 {
                     1
                 } else {
                     snippet.line_offset
                 })
-                .path(snippet.file_path)
+                .path(snippet.uri.clone())
                 .annotation(diagnostic_snippet_to_annotation(
                     diagnostic.message.clone(),
                     AnnotationKind::Primary,
@@ -58,13 +58,13 @@ pub(crate) fn diagnostic_to_snippet_group(diagnostic: &'_ DiagnosticData) -> Gro
                 ),
                 Some(span) => {
                     let snippet = span.snippet();
-                    Snippet::source(snippet.file_content)
+                    Snippet::source(snippet.file_content.clone())
                         .line_start(if snippet.line_offset == 0 {
                             1
                         } else {
                             snippet.line_offset
                         })
-                        .path(snippet.file_path)
+                        .path(snippet.uri.clone())
                         .annotation(diagnostic_snippet_to_annotation(
                             child.message.clone(),
                             match child.kind {

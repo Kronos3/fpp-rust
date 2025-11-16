@@ -1,38 +1,40 @@
 use crate::diagnostic::DiagnosticMessage;
-use crate::error::Error;
 use crate::file::SourceFile;
+use crate::map::IdMap;
 use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
-use rustc_hash::FxHashMap as HashMap;
-use std::cell::{Ref, RefCell};
-use std::fs;
-use std::rc::Rc;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 #[derive(Clone, Debug)]
 pub struct SpanData {
     pub handle: usize,
-    pub file: Rc<SourceFileData>,
+    pub file: Weak<SourceFileData>,
     pub start: BytePos,
     pub length: BytePos,
     pub include_span: Option<Box<SpanData>>,
+
+    /// Exposed outside the weak reference for performance
+    file_handle: usize,
 }
 
 impl SpanData {
-    pub fn snippet(&'_ self) -> DiagnosticDataSnippet<'_> {
-        self.file.snippet(self)
+    pub fn snippet(&self) -> DiagnosticDataSnippet {
+        self.file.upgrade().unwrap().snippet(self)
     }
 }
 
 #[derive(Debug)]
 pub struct SourceFileData {
     pub handle: usize,
-    pub path: Option<String>,
+    pub uri: String,
     pub content: String,
     pub lines: Vec<BytePos>,
 }
 
 impl SourceFileData {
-    fn new(handle: usize, path: Option<String>, content: String) -> SourceFileData {
+    fn new(handle: usize, uri: String, content: String) -> SourceFileData {
         // Compute the newline position
         let lines = {
             let mut out = vec![0];
@@ -47,16 +49,9 @@ impl SourceFileData {
 
         SourceFileData {
             handle,
-            path,
+            uri,
             content,
             lines,
-        }
-    }
-
-    pub fn path(&self) -> Option<String> {
-        match &self.path {
-            None => None,
-            Some(path) => Some(path.clone()),
         }
     }
 
@@ -88,11 +83,11 @@ impl SourceFileData {
         DiagnosticDataIncludeLocation {
             line: pos.line,
             column: pos.column,
-            file_path: self.path().unwrap_or_else(|| "<stdin>".to_string()),
+            uri: self.uri.clone(),
         }
     }
 
-    pub fn snippet(&'_ self, span: &SpanData) -> DiagnosticDataSnippet<'_> {
+    pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet {
         // Find the line start of the start/end
         let first_line = match self.lines.binary_search(&span.start) {
             // The span start is a newline
@@ -122,7 +117,7 @@ impl SourceFileData {
             match loc {
                 None => {}
                 Some(loc) => {
-                    out.push(loc.file.include_loc(loc));
+                    out.push(loc.file.upgrade().unwrap().include_loc(loc));
                     collect_include_locs(&loc.include_span, out)
                 }
             }
@@ -135,18 +130,15 @@ impl SourceFileData {
             start: span.start - first,
             end: span.start + span.length - first,
             line_offset: first_line,
-            file_path: match &self.path {
-                None => "<stdin>",
-                Some(path) => &path,
-            },
-            file_content: &self.content[first..last],
+            uri: self.uri.clone(),
+            file_content: self.content[first..last].into(),
             include_spans,
         }
     }
 }
 
 pub(crate) struct NodeData {
-    pub span_id: usize,
+    pub span_handle: usize,
     pub pre_annotation: Vec<String>,
     pub post_annotation: Vec<String>,
 }
@@ -155,16 +147,16 @@ pub(crate) struct NodeData {
 pub struct DiagnosticDataIncludeLocation {
     pub line: u32,
     pub column: u32,
-    pub file_path: String,
+    pub uri: String,
 }
 
 #[derive(Debug)]
-pub struct DiagnosticDataSnippet<'a> {
+pub struct DiagnosticDataSnippet {
     pub start: BytePos,
     pub end: BytePos,
     pub line_offset: usize,
-    pub file_path: &'a str,
-    pub file_content: &'a str,
+    pub uri: String,
+    pub file_content: String,
     pub include_spans: Vec<DiagnosticDataIncludeLocation>,
 }
 
@@ -188,72 +180,82 @@ pub trait DiagnosticEmitter {
 }
 
 pub struct CompilerContext<E: DiagnosticEmitter> {
-    spans: Vec<SpanData>,
-    files: Vec<Rc<SourceFileData>>,
-
-    current_node_id: Node,
-    nodes: HashMap<Node, NodeData>,
-    emitter: RefCell<E>,
+    spans: IdMap<SpanData>,
+    files: IdMap<Rc<SourceFileData>>,
+    file_uris: FxHashMap<String, usize>,
+    nodes: IdMap<NodeData>,
+    emitter: Rc<RefCell<E>>,
 }
 
 impl<'e, E: DiagnosticEmitter> CompilerContext<E> {
-    pub fn new(emitter: E) -> CompilerContext<E> {
+    pub fn new(emitter: Rc<RefCell<E>>) -> CompilerContext<E> {
         CompilerContext {
-            spans: vec![],
-            files: vec![],
-            current_node_id: Node { handle: 1 },
-            nodes: HashMap::default(),
-            emitter: RefCell::new(emitter),
+            spans: Default::default(),
+            files: Default::default(),
+            file_uris: Default::default(),
+            nodes: Default::default(),
+            emitter,
         }
     }
 
-    pub(crate) fn file_open(&mut self, path: &str) -> Result<SourceFile, Error> {
-        let fs_path = std::path::Path::new(path).canonicalize()?;
+    pub(crate) fn file_new(&mut self, uri: &str, content: String) -> SourceFile {
+        // If this file uri is overlapping, remove it and refresh the file contents
+        if let Some(old) = self.file_uris.get(uri) {
+            self.file_drop(SourceFile {
+                handle: old.clone(),
+            });
+        }
 
-        let handle = self.files.len();
-        let content = match fs::read_to_string(&fs_path) {
-            Ok(c) => c,
-            Err(err) => return Err(Error(format!("failed to read file {}: {}", path, err))),
-        };
-
-        let path_str = match fs_path.to_str() {
-            None => {
-                return Err(Error(format!(
-                    "failed to convert path to string: {:?}",
-                    fs_path
-                )));
-            }
-            Some(p) => p,
-        };
-
-        self.files.push(Rc::new(SourceFileData::new(
-            handle,
-            Some(path_str.to_string()),
-            content,
-        )));
-        Ok(SourceFile { handle })
-    }
-
-    pub(crate) fn file_from(&mut self, src: &str) -> SourceFile {
-        let handle = self.files.len();
-        self.files
-            .push(Rc::new(SourceFileData::new(handle, None, src.to_string())));
+        let handle = self
+            .files
+            .push_with(|handle| Rc::new(SourceFileData::new(handle, uri.to_string(), content)));
 
         SourceFile { handle }
     }
 
+    pub(crate) fn file_drop(&mut self, file: SourceFile) {
+        // Clean up anything pointing to this file
+        let old = self.files.remove(file.handle);
+        let removed_spans = FxHashSet::from_iter(self.spans.retain(|_, v| {
+            if file.handle == v.file_handle {
+                // Span is in the file
+                return false;
+            } else {
+                // Check if file includes this span
+                let mut included_loc = &v.include_span;
+                while included_loc.is_some() {
+                    let l = included_loc.as_ref().unwrap();
+                    if l.file_handle == file.handle {
+                        return false;
+                    }
+
+                    included_loc = &l.include_span
+                }
+
+                true
+            }
+        }));
+
+        self.nodes
+            .retain(|_, v| !removed_spans.contains(&v.span_handle));
+
+        self.file_uris.remove(&old.uri);
+    }
+
+    pub(crate) fn file_get_from_uri(&self, uri: &str) -> Option<SourceFile> {
+        self.file_uris
+            .get(uri)
+            .map(|s| SourceFile { handle: s.clone() })
+    }
+
     pub(crate) fn node_add(&mut self, span: &Span) -> Node {
-        let node_id = self.current_node_id;
-        self.current_node_id = self.current_node_id.next();
-        self.nodes.insert(
-            node_id,
-            NodeData {
-                span_id: span.handle,
-                pre_annotation: vec![],
-                post_annotation: vec![],
-            },
-        );
-        node_id
+        let handle = self.nodes.push(NodeData {
+            span_handle: span.handle,
+            pre_annotation: vec![],
+            post_annotation: vec![],
+        });
+
+        Node { handle }
     }
 
     pub(crate) fn span_add(
@@ -263,50 +265,40 @@ impl<'e, E: DiagnosticEmitter> CompilerContext<E> {
         length: BytePos,
         include_span: Option<Span>,
     ) -> Span {
-        let handle = self.spans.len();
-        self.spans.push(SpanData {
+        let file = self.files.get(file.handle);
+        let include_span = include_span.map(|s| Box::new(self.span_get(&s).clone()));
+        let handle = self.spans.push_with(|handle| SpanData {
             handle,
-            file: self.files.get(file.handle).unwrap().clone(),
+            file: Rc::downgrade(file),
             start,
             length,
-            include_span: include_span.map(|s| Box::new(self.span_get(&s).clone())),
+            include_span,
+            file_handle: file.handle,
         });
 
         Span { handle }
     }
 
     pub(crate) fn node_get(&self, node: &Node) -> &NodeData {
-        self.nodes
-            .get(node)
-            .expect(&format!("invalid node: {}", node.handle))
+        self.nodes.get(node.handle)
     }
 
     pub(crate) fn node_get_mut(&mut self, node: &Node) -> &mut NodeData {
-        self.nodes
-            .get_mut(node)
-            .expect(&format!("invalid node: {}", node.handle))
+        self.nodes.get_mut(node.handle)
     }
 
     pub(crate) fn node_get_span(&self, node: &Node) -> Span {
         Span {
-            handle: self
-                .nodes
-                .get(node)
-                .expect(&format!("invalid node: {}", node.handle))
-                .span_id,
+            handle: self.nodes.get(node.handle).span_handle,
         }
     }
 
     pub(crate) fn span_get(&self, span: &Span) -> &SpanData {
-        self.spans
-            .get(span.handle)
-            .expect(&format!("invalid span: {}", span.handle))
+        self.spans.get(span.handle)
     }
 
     pub(crate) fn file_get(&self, file: &SourceFile) -> &SourceFileData {
-        self.files
-            .get(file.handle)
-            .expect(&format!("invalid file: {}", file.handle))
+        self.files.get(file.handle)
     }
 
     fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData {
@@ -334,9 +326,5 @@ impl<'e, E: DiagnosticEmitter> CompilerContext<E> {
         // Convert a standard diagnostic to a flattened diagnostic
         // Send to the emitter
         self.emitter.borrow_mut().emit(self.diagnostic_get(diag));
-    }
-
-    pub fn diagnostics(&'_ self) -> Ref<'_, E> {
-        self.emitter.borrow()
     }
 }

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-fpp_core = { path = "../fpp_core" }
-fpp_parser = { path = "../fpp_parser" }
-fpp_errors = { path = "../fpp_errors" }
 fpp_analysis = { path = "../fpp_analysis" }
+fpp_core = { path = "../fpp_core" }
+fpp_errors = { path = "../fpp_errors" }
+fpp_fs = { path = "../fpp_fs" }
+fpp_parser = { path = "../fpp_parser" }

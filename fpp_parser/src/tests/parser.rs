@@ -1,9 +1,12 @@
 use crate::{parse, ResolveIncludes};
 use fpp_ast::MutVisitor;
-use fpp_core::SourceFile;
+use fpp_core::FileReader;
+use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::{env, fs};
 
 fn run_test(file_path: &str) {
@@ -18,12 +21,15 @@ fn run_test(file_path: &str) {
     ref_file.push(file_path);
     ref_file.set_extension("ref.txt");
 
+    let file_reader = FsReader {};
+
     let mut diagnostics_str = vec![];
-    let mut ctx =
-        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
+    let mut ctx = fpp_core::CompilerContext::new(Rc::new(RefCell::new(
+        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
+    )));
     let ast: String = fpp_core::run(&mut ctx, || {
         let source_file_path = fpp_file.to_str().unwrap();
-        let src = match SourceFile::open(source_file_path) {
+        let src = match file_reader.read(source_file_path) {
             Ok(src) => src,
             Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
         };
@@ -31,7 +37,8 @@ fn run_test(file_path: &str) {
         // Parse the source
         let mut ast = parse(src, |p| p.trans_unit(), None);
         let mut source_files = HashSet::new();
-        let _ = ResolveIncludes::new().visit_trans_unit(&mut source_files, &mut ast);
+        let _ = ResolveIncludes::new(Box::new(file_reader))
+            .visit_trans_unit(&mut source_files, &mut ast);
         format!("{:#?}", ast)
     })
     .expect("compiler_error");

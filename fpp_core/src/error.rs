@@ -28,3 +28,5 @@ impl From<std::io::Error> for Error {
         Error(value.to_string())
     }
 }
+
+impl std::error::Error for Error {}

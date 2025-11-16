@@ -5,6 +5,7 @@ mod file;
 mod interface;
 mod node;
 mod span;
+mod map;
 
 pub use context::*;
 pub use diagnostic::*;

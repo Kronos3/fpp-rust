@@ -2,6 +2,8 @@ use crate::cursor::Cursor;
 use crate::token::TokenKind::*;
 use crate::token::{KeywordKind, Token, TokenKind};
 use fpp_core::SourceFile;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 struct Index(usize);
 
@@ -15,10 +17,12 @@ impl Index {
 
 fn lex(content: &str) -> Vec<Token> {
     let mut diagnostics_str = vec![];
-    let mut ctx =
-        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
+    let mut ctx = fpp_core::CompilerContext::new(Rc::new(RefCell::new(
+        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
+    )));
+
     fpp_core::run(&mut ctx, || {
-        let file = SourceFile::from(content);
+        let file = SourceFile::new("<stdin>", content.to_string());
         let mut cursor = Cursor::new(file, content, None);
 
         let mut out = vec![];

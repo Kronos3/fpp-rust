@@ -1,6 +1,9 @@
-use fpp_core::SourceFile;
+use fpp_core::FileReader;
+use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
+use std::cell::RefCell;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::{env, fs};
 
 pub(crate) fn run_test(file_path: &str) {
@@ -16,22 +19,25 @@ pub(crate) fn run_test(file_path: &str) {
     ref_file.push(file_path);
     ref_file.set_extension("ref.txt");
 
+    let file_reader = FsReader {};
+
     // Set up the compiler context to capture diagnostic messages into a buffer
     let mut diagnostics_str = vec![];
-    let mut ctx =
-        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
+    let mut ctx = fpp_core::CompilerContext::new(Rc::new(RefCell::new(
+        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
+    )));
 
     // Parse the input and run the semantic checker on the AST
     fpp_core::run(&mut ctx, || {
         let source_file_path = fpp_file.to_str().unwrap();
-        let src = match SourceFile::open(source_file_path) {
+        let src = match file_reader.read(source_file_path) {
             Ok(src) => src,
             Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
         };
 
         let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);
         let mut a = crate::Analysis::new();
-        let _ = crate::passes::check_semantics(&mut a, &mut ast);
+        let _ = crate::passes::check_semantics(&mut a, Box::new(file_reader), &mut ast);
     })
     .expect("compiler_error");
 

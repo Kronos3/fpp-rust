@@ -3,6 +3,14 @@ use crate::{Error, Span};
 use std::cell::Ref;
 use std::fmt::{Debug, Display, Formatter};
 
+pub trait FileReader {
+    /// Read a file given the current FPP source file and the included FPP source file
+    fn include(&self, current: SourceFile, include: &str) -> Result<SourceFile, Error>;
+
+    /// Read a file given its path
+    fn read(&self, path: &str) -> Result<SourceFile, Error>;
+}
+
 pub type BytePos = usize;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
@@ -22,33 +30,42 @@ impl<'a> AsRef<str> for SourceFileContent<'a> {
 
 impl Debug for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match &self.path() {
-            None => "<stdin>",
-            Some(path) => path,
-        })
+        f.write_str(&self.uri())
     }
 }
 
 impl Display for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match &self.path() {
-            None => "<stdin>",
-            Some(path) => path,
-        })
+        f.write_str(&self.uri())
     }
 }
 
 impl SourceFile {
-    pub fn open(path: &str) -> Result<SourceFile, Error> {
-        with(|w| w.file_open(path))
+    /// Create a new source file given a unique Universal-Resource-Identifier (URI) and it's contents.
+    /// The URI is used by a [FileReader] to identify the source location.
+    /// If there already is a file with this URI in the compiler, that file will be dropped and all
+    /// its spans and AST nodes will be dropped.
+    ///
+    /// # Arguments
+    ///
+    /// * `uri`: File's unique URI
+    /// * `content`: File content
+    ///
+    /// returns: SourceFile
+    pub fn new(uri: &str, content: String) -> SourceFile {
+        with(|w| w.file_new(uri, content))
     }
 
-    pub fn open_relative_path(&self, path: &str) -> Result<SourceFile, Error> {
-        with(|w| w.file_open_relative_path(self, path))
+    pub fn get(uri: &str) -> Option<SourceFile> {
+        with(|w| w.file_get(uri))
     }
 
-    pub fn path(&self) -> Option<String> {
-        with(|w| w.file_path(self))
+    pub fn uri(&self) -> String {
+        with(|w| w.file_uri(self))
+    }
+
+    pub fn drop(self) {
+        with(|w| w.file_drop(self))
     }
 
     pub fn read(&self) -> SourceFileContent<'_> {
@@ -73,11 +90,5 @@ impl SourceFile {
 
     pub fn len(&self) -> usize {
         with(|w| w.file_len(self))
-    }
-}
-
-impl From<&str> for SourceFile {
-    fn from(value: &str) -> Self {
-        with(|w| w.file_from(value))
     }
 }
