@@ -72,7 +72,7 @@ impl ResolveIncludes {
         {
             Ok(file) => file,
             Err(err) => {
-                fpp_core::Diagnostic::spanned(
+                fpp_core::Diagnostic::new(
                     spec_include.file.span(),
                     fpp_core::Level::Error,
                     err.to_string(),

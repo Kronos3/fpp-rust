@@ -110,22 +110,26 @@ impl Into<Diagnostic> for SemanticError {
                 name,
                 loc,
                 prev_loc,
-            } => Diagnostic::new(Level::Error, "duplicate symbol definition")
-                .span_annotation(loc, format!("redefinition of symbol {}", name))
-                .span_note(prev_loc, "previous definition is here"),
-            SemanticError::UndefinedSymbol { ng, name, loc } => {
-                Diagnostic::new(Level::Error, "undefined symbol")
-                    .span_annotation(loc, format!("cannot find {} `{}` in scope", ng, name))
-            }
+            } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("redefinition of symbol {}", name),
+            )
+            .span_note(prev_loc, "previous definition is here"),
+            SemanticError::UndefinedSymbol { ng, name, loc } => Diagnostic::new(
+                loc,
+                Level::Error,
+                format!("cannot find {} `{}` in scope", ng, name),
+            ),
             SemanticError::InvalidSymbol {
                 symbol_name,
                 msg,
                 loc,
                 def_loc,
-            } => Diagnostic::spanned(loc, Level::Error, msg)
+            } => Diagnostic::new(loc, Level::Error, msg)
                 .span_note(def_loc, format!("{} defined here", symbol_name)),
             SemanticError::UseDefCycle { loc, cycle } => cycle.iter().enumerate().fold(
-                Diagnostic::spanned(loc, Level::Error, "encountered symbol use-definition cycle"),
+                Diagnostic::new(loc, Level::Error, "encountered symbol use-definition cycle"),
                 |out, (i, suse)| match i {
                     0 => out.span_note(suse.def_loc, "defined here"),
                     _ if i == cycle.len() - 1 => out.span_note(suse.use_loc, "used here"),
@@ -134,56 +138,56 @@ impl Into<Diagnostic> for SemanticError {
                         .span_note(suse.def_loc, "defined here"),
                 },
             ),
-            SemanticError::InvalidType { loc, msg } => Diagnostic::spanned(loc, Level::Error, msg),
+            SemanticError::InvalidType { loc, msg } => Diagnostic::new(loc, Level::Error, msg),
             SemanticError::DuplicateStructMember {
                 name,
                 loc,
                 prev_loc,
-            } => Diagnostic::spanned(
+            } => Diagnostic::new(
                 loc,
                 Level::Error,
                 format!("duplicate struct member `{}`", name),
             )
             .span_note(prev_loc, "previously defined here"),
             SemanticError::TypeConversion { loc, msg, err } => {
-                err.annotate(Diagnostic::spanned(loc, Level::Error, msg))
+                err.annotate(Diagnostic::new(loc, Level::Error, msg))
             }
             SemanticError::EmptyArray { loc } => {
-                Diagnostic::spanned(loc, Level::Error, "array expression may not be empty")
+                Diagnostic::new(loc, Level::Error, "array expression may not be empty")
             }
             SemanticError::EnumConstantShouldBeImplied { loc } => {
-                Diagnostic::spanned(loc, Level::Error, "expected constant value to be implied")
+                Diagnostic::new(loc, Level::Error, "expected constant value to be implied")
                     .note("enum constants must be all explicit or all implied")
             }
             SemanticError::EnumConstantShouldBeExplicit { loc } => {
-                Diagnostic::spanned(loc, Level::Error, "expected constant value to be explicit")
+                Diagnostic::new(loc, Level::Error, "expected constant value to be explicit")
                     .note("enum constants must be all explicit or all implied")
             }
             SemanticError::DuplicateEnumConstant {
                 value,
                 loc,
                 prev_loc,
-            } => Diagnostic::spanned(
+            } => Diagnostic::new(
                 loc,
                 Level::Error,
                 format!("duplicate enum constant `{}`", value),
             )
             .span_note(prev_loc, "previously defined here"),
             SemanticError::InvalidIntValue { loc, v, msg } => {
-                let diag = Diagnostic::spanned(loc, Level::Error, msg);
+                let diag = Diagnostic::new(loc, Level::Error, msg);
                 match v {
                     None => diag,
                     Some(v) => diag.note(format!("expression evaluated to `{}`", v)),
                 }
             }
             SemanticError::DivisionByZero { loc } => {
-                Diagnostic::spanned(loc, Level::Error, "division by zero")
+                Diagnostic::new(loc, Level::Error, "division by zero")
             }
             SemanticError::InvalidTypeForMemberSelection {
                 loc,
                 member,
                 type_name,
-            } => Diagnostic::spanned(
+            } => Diagnostic::new(
                 loc,
                 Level::Error,
                 format!("{} has no member `{}`", type_name, member),
@@ -193,19 +197,26 @@ impl Into<Diagnostic> for SemanticError {
                 type_locs,
             } => {
                 if format_locs.len() < type_locs.len() {
-                    let diag =
-                        Diagnostic::new(Level::Error, "format string missing replacement fields");
-                    type_locs[format_locs.len()..]
+                    let diag = Diagnostic::new(
+                        type_locs[format_locs.len()],
+                        Level::Error,
+                        "missing format replacement field",
+                    );
+                    type_locs[format_locs.len() + 1..]
                         .iter()
                         .fold(diag, |diag, loc| {
                             diag.span_note(loc.clone(), "missing format replacement field")
                         })
                 } else {
-                    let diag = Diagnostic::new(Level::Error, "too many format specifiers");
-                    format_locs[type_locs.len()..]
+                    let diag = Diagnostic::new(
+                        format_locs[type_locs.len()],
+                        Level::Error,
+                        "extraneous format replacement field",
+                    );
+                    format_locs[type_locs.len() + 1..]
                         .iter()
                         .fold(diag, |diag, loc| {
-                            diag.span_annotation(loc.clone(), "no field to format")
+                            diag.span_annotation(loc.clone(), "extraneous format replacement field")
                         })
                 }
             }
@@ -213,9 +224,9 @@ impl Into<Diagnostic> for SemanticError {
                 format_loc,
                 type_loc,
                 msg,
-            } => Diagnostic::spanned(format_loc, Level::Error, msg)
+            } => Diagnostic::new(format_loc, Level::Error, msg)
                 .span_note(type_loc, "type defined here"),
-            SemanticError::FormatStringInvalidPrecision { loc, value, max } => Diagnostic::spanned(
+            SemanticError::FormatStringInvalidPrecision { loc, value, max } => Diagnostic::new(
                 loc,
                 Level::Error,
                 format!(
@@ -228,7 +239,7 @@ impl Into<Diagnostic> for SemanticError {
                 size_loc,
                 value_size,
                 type_size,
-            } => Diagnostic::spanned(
+            } => Diagnostic::new(
                 loc,
                 Level::Error,
                 "cannot convert value to array type due to mismatched sizes",

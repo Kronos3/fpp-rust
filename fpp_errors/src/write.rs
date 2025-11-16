@@ -19,7 +19,7 @@ impl<W: Write> WriteEmitter<W> {
 }
 
 impl<W: Write> DiagnosticEmitter for WriteEmitter<W> {
-    fn emit<'d>(&'_ mut self, diagnostic: DiagnosticData<'d>) {
+    fn emit(&mut self, diagnostic: DiagnosticData) {
         let group = diagnostic_to_snippet_group(&diagnostic);
         let mut out = self.renderer.render(&[group]);
         out.push('\n');

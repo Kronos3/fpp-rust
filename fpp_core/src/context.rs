@@ -3,19 +3,28 @@ use crate::error::Error;
 use crate::file::SourceFile;
 use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
-use std::cell::RefCell;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
+use std::cell::{Ref, RefCell};
 use std::fs;
+use std::rc::Rc;
 
-#[derive(Clone)]
-pub(crate) struct SpanData {
-    pub file: SourceFile,
+#[derive(Clone, Debug)]
+pub struct SpanData {
+    pub handle: usize,
+    pub file: Rc<SourceFileData>,
     pub start: BytePos,
     pub length: BytePos,
-    pub include_span: Option<Span>,
+    pub include_span: Option<Box<SpanData>>,
 }
 
-pub(crate) struct SourceFileData {
+impl SpanData {
+    pub fn snippet(&'_ self) -> DiagnosticDataSnippet<'_> {
+        self.file.snippet(self)
+    }
+}
+
+#[derive(Debug)]
+pub struct SourceFileData {
     pub handle: usize,
     pub path: Option<String>,
     pub content: String,
@@ -83,11 +92,7 @@ impl SourceFileData {
         }
     }
 
-    pub fn snippet<E: DiagnosticEmitter>(
-        &self,
-        ctx: &CompilerContext<E>,
-        span: &SpanData,
-    ) -> DiagnosticDataSnippet<'_> {
+    pub fn snippet(&'_ self, span: &SpanData) -> DiagnosticDataSnippet<'_> {
         // Find the line start of the start/end
         let first_line = match self.lines.binary_search(&span.start) {
             // The span start is a newline
@@ -110,23 +115,21 @@ impl SourceFileData {
         };
 
         // Collect all the include locations
-        fn collect_include_locs<E: DiagnosticEmitter>(
-            ctx: &CompilerContext<E>,
-            loc: &Option<Span>,
+        fn collect_include_locs(
+            loc: &Option<Box<SpanData>>,
             out: &mut Vec<DiagnosticDataIncludeLocation>,
         ) {
             match loc {
                 None => {}
                 Some(loc) => {
-                    let loc_data = ctx.span_get(loc);
-                    out.push(ctx.file_get(&loc_data.file).include_loc(loc_data));
-                    collect_include_locs(ctx, &loc_data.include_span, out)
+                    out.push(loc.file.include_loc(loc));
+                    collect_include_locs(&loc.include_span, out)
                 }
             }
         }
 
         let mut include_spans = vec![];
-        collect_include_locs(ctx, &span.include_span, &mut include_spans);
+        collect_include_locs(&span.include_span, &mut include_spans);
 
         DiagnosticDataSnippet {
             start: span.start - first,
@@ -166,43 +169,41 @@ pub struct DiagnosticDataSnippet<'a> {
 }
 
 #[derive(Debug)]
-pub struct DiagnosticMessageData<'a> {
+pub struct DiagnosticMessageData {
     pub kind: DiagnosticMessageKind,
     pub message: String,
-    pub snippet: Option<DiagnosticDataSnippet<'a>>,
+    pub span: Option<SpanData>,
 }
 
 #[derive(Debug)]
-pub struct DiagnosticData<'a> {
+pub struct DiagnosticData {
     pub level: Level,
-    pub message: DiagnosticMessageData<'a>,
-    pub children: Vec<DiagnosticMessageData<'a>>,
+    pub message: String,
+    pub span: SpanData,
+    pub children: Vec<DiagnosticMessageData>,
 }
 
 pub trait DiagnosticEmitter {
-    fn emit<'d>(&'_ mut self, diagnostic: DiagnosticData<'d>);
+    fn emit(&mut self, diagnostic: DiagnosticData);
 }
 
 pub struct CompilerContext<E: DiagnosticEmitter> {
     spans: Vec<SpanData>,
-    files: Vec<SourceFileData>,
+    files: Vec<Rc<SourceFileData>>,
 
     current_node_id: Node,
     nodes: HashMap<Node, NodeData>,
-
     emitter: RefCell<E>,
-    seen_errors: bool,
 }
 
-impl<E: DiagnosticEmitter> CompilerContext<E> {
+impl<'e, E: DiagnosticEmitter> CompilerContext<E> {
     pub fn new(emitter: E) -> CompilerContext<E> {
         CompilerContext {
             spans: vec![],
             files: vec![],
             current_node_id: Node { handle: 1 },
-            nodes: HashMap::new(),
+            nodes: HashMap::default(),
             emitter: RefCell::new(emitter),
-            seen_errors: false,
         }
     }
 
@@ -225,18 +226,18 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             Some(p) => p,
         };
 
-        self.files.push(SourceFileData::new(
+        self.files.push(Rc::new(SourceFileData::new(
             handle,
             Some(path_str.to_string()),
             content,
-        ));
+        )));
         Ok(SourceFile { handle })
     }
 
     pub(crate) fn file_from(&mut self, src: &str) -> SourceFile {
         let handle = self.files.len();
         self.files
-            .push(SourceFileData::new(handle, None, src.to_string()));
+            .push(Rc::new(SourceFileData::new(handle, None, src.to_string())));
 
         SourceFile { handle }
     }
@@ -264,10 +265,11 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     ) -> Span {
         let handle = self.spans.len();
         self.spans.push(SpanData {
-            file,
+            handle,
+            file: self.files.get(file.handle).unwrap().clone(),
             start,
             length,
-            include_span,
+            include_span: include_span.map(|s| Box::new(self.span_get(&s).clone())),
         });
 
         Span { handle }
@@ -307,27 +309,19 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             .expect(&format!("invalid file: {}", file.handle))
     }
 
-    fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData<'_> {
-        let snippet = match diagnostic.span {
-            None => None,
-            Some(span) => {
-                let span = self.span_get(&span);
-                let file = self.file_get(&span.file);
-                Some(file.snippet(self, span))
-            }
-        };
-
+    fn diagnostic_message_get(&self, diagnostic: DiagnosticMessage) -> DiagnosticMessageData {
         DiagnosticMessageData {
-            snippet,
             message: diagnostic.message,
             kind: diagnostic.kind,
+            span: diagnostic.span.map(|s| self.span_get(&s).clone()),
         }
     }
 
-    fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData<'_> {
+    fn diagnostic_get(&self, diagnostic: Diagnostic) -> DiagnosticData {
         DiagnosticData {
             level: diagnostic.level,
-            message: self.diagnostic_message_get(diagnostic.msg),
+            message: diagnostic.msg,
+            span: self.span_get(&diagnostic.span).clone(),
             children: diagnostic
                 .children
                 .into_iter()
@@ -337,19 +331,12 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     }
 
     pub(crate) fn diagnostic_emit(&mut self, diag: Diagnostic) {
-        match diag.level {
-            Level::Error => {
-                self.seen_errors = true;
-            }
-            _ => {}
-        }
-
         // Convert a standard diagnostic to a flattened diagnostic
         // Send to the emitter
         self.emitter.borrow_mut().emit(self.diagnostic_get(diag));
     }
 
-    pub fn has_errors(&self) -> bool {
-        self.seen_errors
+    pub fn diagnostics(&'_ self) -> Ref<'_, E> {
+        self.emitter.borrow()
     }
 }

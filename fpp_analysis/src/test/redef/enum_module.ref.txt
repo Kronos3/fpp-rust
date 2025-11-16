@@ -1,4 +1,3 @@
-error: duplicate symbol definition
  --> [ local path prefix ]/redef/enum_module.fpp:2:8
   |
 2 | module E { }

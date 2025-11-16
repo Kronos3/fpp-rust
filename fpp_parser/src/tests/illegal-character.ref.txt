@@ -1,29 +1,25 @@
-error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:1:1
   |
 1 | %
-  | ^ invalid character '%'
+  | ^ syntax error: invalid character '%'
 
-error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:2:1
   |
 2 |     
-  | ^^^^ invalid character '\t'
+  | ^^^^ syntax error: invalid character '\t'
 
-error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:3:1
   |
 3 | tok \     
-  | ^^^ module member expected
+  | ^^^ syntax error: module member expected
   |
   = note: expected one of type, array, constant, enum, struct, component, active, passive, queued, interface, module, port, state, topology, include, locate
   = note: got identifier
 
-error: syntax error
  --> [ local path prefix ]/illegal-character.fpp:4:6
   |
 4 | tok2 \ illegal
-  |      ^^^^^^^^^ invalid token
+  |      ^^^^^^^^^ syntax error: invalid token
   |
   = error: Non whitespace character illegal after line continuation
 

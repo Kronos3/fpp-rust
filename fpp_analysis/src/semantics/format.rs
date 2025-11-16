@@ -371,7 +371,7 @@ impl<'a> FormatParser<'a> {
     }
 
     fn error(&self, msg: &str) -> fpp_core::Diagnostic {
-        fpp_core::Diagnostic::spanned(
+        fpp_core::Diagnostic::new(
             fpp_core::Span::new(
                 self.parent_span.file(),
                 self.parent_span.start().pos() + self.pos + self.pos_within_token() - 1,

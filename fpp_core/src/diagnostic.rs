@@ -2,7 +2,7 @@ use crate::interface::with;
 use crate::{Span, Spanned};
 
 /// An enum representing a diagnostic level.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Level {
     /// An error.
@@ -33,7 +33,8 @@ pub(crate) struct DiagnosticMessage {
 #[derive(Clone, Debug)]
 pub struct Diagnostic {
     pub(crate) level: Level,
-    pub(crate) msg: DiagnosticMessage,
+    pub(crate) msg: String,
+    pub(crate) span: Span,
     pub(crate) children: Vec<DiagnosticMessage>,
 }
 
@@ -68,36 +69,16 @@ macro_rules! diagnostic_child_methods {
 }
 
 impl Diagnostic {
-    /// Creates a new diagnostic with the given `level` and `message`
-    pub fn new<T>(level: Level, message: T) -> Diagnostic
-    where
-        T: Into<String>,
-    {
-        Diagnostic {
-            level,
-            msg: DiagnosticMessage {
-                kind: DiagnosticMessageKind::Primary,
-                message: message.into(),
-                span: None,
-            },
-            children: vec![],
-        }
-    }
-
-    /// Creates a new diagnostic with the given `level` and `message` pointing to
-    /// the given set of `spans`.
-    pub fn spanned<S, T>(span: S, level: Level, message: T) -> Diagnostic
+    /// Creates a new diagnostic with the given `span`, `level` and `message`
+    pub fn new<S, T>(span: S, level: Level, message: T) -> Diagnostic
     where
         S: Spanned,
         T: Into<String>,
     {
         Diagnostic {
             level,
-            msg: DiagnosticMessage {
-                kind: DiagnosticMessageKind::Primary,
-                message: message.into(),
-                span: Some(span.span()),
-            },
+            msg: message.into(),
+            span: span.span(),
             children: vec![],
         }
     }

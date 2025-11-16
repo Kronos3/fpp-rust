@@ -33,14 +33,16 @@ impl<'a> Cursor<'a> {
                     None => return None,
                     Some(tok) => match tok.kind {
                         TokenKind::Error(lexer_error) => {
-                            Diagnostic::new(Level::Error, "syntax error")
-                                .span_annotation(tok, "invalid token")
+                            Diagnostic::new(tok, Level::Error, "syntax error: invalid token")
                                 .annotation(lexer_error)
                                 .emit()
                         }
-                        TokenKind::Unknown(c) => Diagnostic::new(Level::Error, "syntax error")
-                            .span_annotation(tok, format!("invalid character {:#?}", c))
-                            .emit(),
+                        TokenKind::Unknown(c) => Diagnostic::new(
+                            tok,
+                            Level::Error,
+                            format!("syntax error: invalid character {:#?}", c),
+                        )
+                        .emit(),
                         _ => self.token_queue.push_back(tok),
                     },
                 }

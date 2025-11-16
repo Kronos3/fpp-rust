@@ -112,24 +112,27 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn span_start(&self, s: &Span) -> Position {
         let ctx = self.ctx.borrow();
         let data = ctx.span_get(s);
-        ctx.file_get(&data.file).position(data.start)
+        data.file.position(data.start)
     }
 
     fn span_end(&self, s: &Span) -> Position {
         let ctx = self.ctx.borrow();
         let data = ctx.span_get(s);
-        ctx.file_get(&data.file)
-            .position(data.start + (data.length as BytePos))
+        data.file.position(data.start + (data.length as BytePos))
     }
 
     fn span_file(&self, s: &Span) -> SourceFile {
         let ctx = self.ctx.borrow();
-        ctx.span_get(s).file
+        SourceFile {
+            handle: ctx.span_get(s).file.handle.clone(),
+        }
     }
 
     fn span_include_span(&self, s: &Span) -> Option<Span> {
         let ctx = self.ctx.borrow();
-        ctx.span_get(s).include_span.clone()
+        Some(Span {
+            handle: ctx.span_get(s).include_span.clone()?.handle,
+        })
     }
 
     fn diagnostic_emit(&self, diag: Diagnostic) {

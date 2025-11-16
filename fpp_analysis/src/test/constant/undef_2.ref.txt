@@ -1,4 +1,3 @@
-error: undefined symbol
  --> [ local path prefix ]/constant/undef_2.fpp:1:14
   |
 1 | constant b = M.a

@@ -12,7 +12,7 @@ use fpp_ast::{
     Binop, DefConstant, DefEnum, DefEnumConstant, Expr, ExprKind, Node, Unop, Visitable, Visitor,
 };
 use fpp_core::Spanned;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 

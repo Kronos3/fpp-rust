@@ -10,6 +10,7 @@ fpp_util = { path = "../fpp_util" }
 fpp_macros = { path = "../fpp_macros" }
 fpp_errors = { path = "../fpp_errors" }
 fpp_parser = { path = "../fpp_parser" }
+rustc-hash = "2.1.1"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

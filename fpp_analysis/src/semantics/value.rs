@@ -1,6 +1,6 @@
 use crate::semantics::{ArrayType, EnumType, StructType, Type};
 use fpp_ast::FloatKind;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -58,7 +58,7 @@ impl Value {
                         }))
                     }
                     Type::Struct(struct_ty) => {
-                        let mut out_value = HashMap::new();
+                        let mut out_value = HashMap::default();
                         for (name, member_ty) in &struct_ty.anon_struct.members {
                             out_value.insert(name.clone(), self.clone().convert(member_ty)?);
                         }
@@ -69,7 +69,7 @@ impl Value {
                         }))
                     }
                     Type::AnonStruct(struct_ty) => {
-                        let mut out_value = HashMap::new();
+                        let mut out_value = HashMap::default();
                         for (name, member_ty) in &struct_ty.members {
                             out_value.insert(name.clone(), self.clone().convert(member_ty)?);
                         }
@@ -193,7 +193,7 @@ impl Value {
             }
 
             Value::AnonStruct(anon_struct) | Value::Struct(StructValue { anon_struct, .. }) => {
-                let mut members = HashMap::new();
+                let mut members = HashMap::default();
 
                 let to_ty = match ty.deref() {
                     // TODO(tumbar) default values need to come from struct type?

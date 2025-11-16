@@ -1,4 +1,3 @@
-error: duplicate symbol definition
  --> [ local path prefix ]/redef/array.fpp:2:7
   |
 2 | array A = [2] U32

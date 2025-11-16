@@ -30,12 +30,10 @@ fn diagnostic_snippet_to_annotation<'a>(
     annotation
 }
 
-pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) -> Group<'a> {
-    (match &diagnostic.message.snippet {
-        None => Group::with_title(
-            diagnostic_level(diagnostic.level).primary_title(diagnostic.message.message.clone()),
-        ),
-        Some(snippet) => Group::with_level(diagnostic_level(diagnostic.level)).element(
+pub(crate) fn diagnostic_to_snippet_group(diagnostic: &'_ DiagnosticData) -> Group<'_> {
+    let snippet = diagnostic.span.snippet();
+    Group::with_level(diagnostic_level(diagnostic.level))
+        .element(
             Snippet::source(snippet.file_content)
                 .line_start(if snippet.line_offset == 0 {
                     1
@@ -44,37 +42,39 @@ pub(crate) fn diagnostic_to_snippet_group<'a>(diagnostic: &'a DiagnosticData) ->
                 })
                 .path(snippet.file_path)
                 .annotation(diagnostic_snippet_to_annotation(
-                    diagnostic.message.message.clone(),
+                    diagnostic.message.clone(),
                     AnnotationKind::Primary,
-                    snippet,
+                    &snippet,
                 )),
-        ),
-    })
-    .elements(diagnostic.children.iter().map(|child| {
-        match &child.snippet {
-            None => Element::Message(
-                (match child.kind {
-                    DiagnosticMessageKind::Primary => diagnostic_level(diagnostic.level),
-                    DiagnosticMessageKind::Note => diagnostic_level(Level::Note),
-                })
-                .message(child.message.clone()),
-            ),
-            Some(snippet) => Snippet::source(snippet.file_content)
-                .line_start(if snippet.line_offset == 0 {
-                    1
-                } else {
-                    snippet.line_offset
-                })
-                .path(snippet.file_path)
-                .annotation(diagnostic_snippet_to_annotation(
-                    child.message.clone(),
-                    match child.kind {
-                        DiagnosticMessageKind::Primary => AnnotationKind::Primary,
-                        DiagnosticMessageKind::Note => AnnotationKind::Context,
-                    },
-                    snippet,
-                ))
-                .into(),
-        }
-    }))
+        )
+        .elements(diagnostic.children.iter().map(|child| {
+            match &child.span {
+                None => Element::Message(
+                    (match child.kind {
+                        DiagnosticMessageKind::Primary => diagnostic_level(diagnostic.level),
+                        DiagnosticMessageKind::Note => diagnostic_level(Level::Note),
+                    })
+                    .message(child.message.clone()),
+                ),
+                Some(span) => {
+                    let snippet = span.snippet();
+                    Snippet::source(snippet.file_content)
+                        .line_start(if snippet.line_offset == 0 {
+                            1
+                        } else {
+                            snippet.line_offset
+                        })
+                        .path(snippet.file_path)
+                        .annotation(diagnostic_snippet_to_annotation(
+                            child.message.clone(),
+                            match child.kind {
+                                DiagnosticMessageKind::Primary => AnnotationKind::Primary,
+                                DiagnosticMessageKind::Note => AnnotationKind::Context,
+                            },
+                            &snippet,
+                        ))
+                        .into()
+                }
+            }
+        }))
 }

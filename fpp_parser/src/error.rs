@@ -53,8 +53,7 @@ impl Into<Diagnostic> for ParseError {
                 got_span,
                 msg,
                 expected,
-            } => Diagnostic::new(Level::Error, "syntax error")
-                .span_annotation(got_span, msg)
+            } => Diagnostic::new(got_span, Level::Error, format!("syntax error: {msg}"))
                 .note(format!("expected one of {}", TokenList(expected)))
                 .note(format!("got {}", got_kind)),
             ParseError::ExpectedToken {
@@ -62,18 +61,17 @@ impl Into<Diagnostic> for ParseError {
                 msg,
                 expected,
                 got,
-            } => Diagnostic::new(Level::Error, "syntax error")
-                .span_annotation(last, msg)
+            } => Diagnostic::new(last, Level::Error, format!("syntax error: {msg}"))
                 .note(format!("expected {}", expected))
                 .note(format!("got {}", got)),
             ParseError::UnexpectedEof { last } => {
-                Diagnostic::spanned(last, Level::Error, "unexpected end of input")
+                Diagnostic::new(last, Level::Error, "unexpected end of input")
             }
             ParseError::IncludeCycle {
                 span,
                 include_cycle,
             } => {
-                let diag = Diagnostic::spanned(span, Level::Error, "include cycle detected");
+                let diag = Diagnostic::new(span, Level::Error, "include cycle detected");
                 include_cycle.into_iter().fold(diag, |diag, pos| {
                     diag.note(format! {"included from {}", pos})
                 })

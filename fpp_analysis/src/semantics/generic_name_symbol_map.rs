@@ -1,14 +1,14 @@
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::SymbolInterface;
 use fpp_core::Spanned;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 
 #[derive(Debug)]
 pub struct GenericNameSymbolMap<'a, S: SymbolInterface<'a>>(HashMap<&'a str, S>);
 
 impl<'a, S: SymbolInterface<'a>> GenericNameSymbolMap<'a, S> {
     pub fn new() -> Self {
-        Self { 0: HashMap::new() }
+        Self { 0: HashMap::default() }
     }
 
     /** Get a symbol from the map. Return none if the name is not there. */

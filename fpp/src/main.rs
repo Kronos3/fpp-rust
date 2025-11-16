@@ -18,10 +18,11 @@ fn compiler_main() -> String {
 }
 
 fn main() {
-    let mut ctx = fpp_core::CompilerContext::new(fpp_errors::ConsoleEmitter::color());
+    let diagnostics = fpp_errors::ConsoleEmitter::color();
+    let mut ctx = fpp_core::CompilerContext::new(diagnostics);
     let out = fpp_core::run(&mut ctx, compiler_main).expect("Failed to run compiler");
 
-    if ctx.has_errors() {
+    if ctx.diagnostics().has_errors() {
         exit(1)
     }
 

@@ -1,4 +1,3 @@
-error: duplicate symbol definition
  --> [ local path prefix ]/redef/enum.fpp:2:6
   |
 2 | enum E { Y }

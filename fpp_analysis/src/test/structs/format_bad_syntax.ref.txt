@@ -5,9 +5,8 @@
   |
   = note: consider escaping curly brace with `{{`
 
-error: format string missing replacement fields
  --> [ local path prefix ]/structs/format_bad_syntax.fpp:1:15
   |
 1 | struct S { x: U32 format "{" }
-  |               --- missing format replacement field
+  |               ^^^ missing format replacement field
 

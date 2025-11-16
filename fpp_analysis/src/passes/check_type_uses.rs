@@ -9,7 +9,7 @@ use crate::semantics::{
 use crate::Analysis;
 use fpp_ast::*;
 use fpp_core::Spanned;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
@@ -173,7 +173,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
         // Visit all the members to resolve type info
         node.walk(a, self)?;
 
-        let mut member_locs = HashMap::new();
+        let mut member_locs = HashMap::default();
         let mut anon_ty = AnonStructType {
             members: Default::default(),
         };

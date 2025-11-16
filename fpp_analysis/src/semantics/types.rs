@@ -4,7 +4,7 @@ use crate::semantics::{
 };
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 use std::fmt::{Debug, Display, Formatter, Write};
 use std::ops::Deref;
 use std::rc::Rc;
@@ -511,7 +511,7 @@ impl Type {
                 // - If the member only exists in t2, bring it in unchanged
                 // - If the member exists in _both_, find the common type of the member on both
                 //    - If there is no common type, return None
-                let mut out_members = HashMap::new();
+                let mut out_members = HashMap::default();
 
                 for (name, t1_ty) in &t1_struct.members {
                     match t2_struct.members.get(name) {
@@ -558,7 +558,7 @@ impl Type {
                 if other.is_promotable_to_struct() {
                     // Build a new struct with the same members as the old one while trying
                     // to find the common type between the single element and all the members
-                    let mut out_members = HashMap::new();
+                    let mut out_members = HashMap::default();
                     let other_rc = Rc::new(other.clone());
 
                     for (name, in_member_ty) in &str.members {

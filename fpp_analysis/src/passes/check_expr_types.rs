@@ -15,7 +15,7 @@ use fpp_ast::{
     TypeNameKind, Visitable, Visitor,
 };
 use fpp_core::Spanned;
-use std::collections::HashMap;
+use rustc_hash::{FxHashMap as HashMap};
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
@@ -353,8 +353,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                 _ => {}
             },
             ExprKind::Struct(struct_expr) => {
-                let mut members_out = HashMap::new();
-                let mut member_locs = HashMap::new();
+                let mut members_out = HashMap::default();
+                let mut member_locs = HashMap::default();
 
                 for member in struct_expr {
                     match a.type_map.get(&member.value.node_id) {
@@ -439,7 +439,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                             a,
                             every,
                             &Rc::new(Type::AnonStruct(AnonStructType {
-                                members: HashMap::from([
+                                members: HashMap::from_iter([
                                     (
                                         "seconds".to_string(),
                                         Rc::new(Type::PrimitiveInt(IntegerKind::U32)),

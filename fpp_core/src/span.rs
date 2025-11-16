@@ -27,7 +27,7 @@ macro_rules! diagnostic_method {
         /// Creates a new `Diagnostic` with the given `message` at the span
         /// `self`.
         pub fn $name<T: Into<String>>(self, message: T) -> Diagnostic {
-            Diagnostic::spanned(self, $level, message)
+            Diagnostic::new(self, $level, message)
         }
     };
 }
