@@ -20,11 +20,11 @@ impl<'ast> CheckUses<'ast> {
 
     fn visit_qualified(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         ng: NameGroup,
         qualifier: &QualIdent,
         name: &Ident,
-    ) -> SemanticResult<Symbol<'ast>> {
+    ) -> SemanticResult<Symbol> {
         self.visit_qual_ident_impl(a, ng, qualifier)?;
         let scope = {
             let symbol = a.use_def_map.get(&qualifier.id()).unwrap();
@@ -48,7 +48,7 @@ impl<'ast> CheckUses<'ast> {
                 loc: name.span(),
             }),
             Some(sym) => {
-                a.use_def_map.insert(name.id(), sym);
+                a.use_def_map.insert(name.id(), sym.clone());
                 Ok(sym)
             }
         }
@@ -56,10 +56,10 @@ impl<'ast> CheckUses<'ast> {
 
     fn visit_qual_ident_impl(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         ng: NameGroup,
         node: &QualIdent,
-    ) -> SemanticResult<Symbol<'ast>> {
+    ) -> SemanticResult<Symbol> {
         match &node {
             QualIdent::Unqualified(name) => match a.nested_scope.get(ng, &name.data) {
                 None => Err(SemanticError::UndefinedSymbol {
@@ -68,7 +68,7 @@ impl<'ast> CheckUses<'ast> {
                     loc: name.span(),
                 }),
                 Some(sym) => {
-                    a.use_def_map.insert(name.id(), sym);
+                    a.use_def_map.insert(name.id(), sym.clone());
                     Ok(sym)
                 }
             },
@@ -78,7 +78,7 @@ impl<'ast> CheckUses<'ast> {
         }
     }
 
-    fn visit_qual_ident(&self, a: &mut Analysis<'ast>, ng: NameGroup, node: &QualIdent) {
+    fn visit_qual_ident(&self, a: &mut Analysis, ng: NameGroup, node: &QualIdent) {
         match self.visit_qual_ident_impl(a, ng, node) {
             Ok(sym) => {
                 a.use_def_map.insert(node.id(), sym);
@@ -92,10 +92,10 @@ impl<'ast> CheckUses<'ast> {
 
 impl<'ast> Visitor<'ast> for CheckUses<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
     // Walk all nodes deeply and collect up scope where relevant
-    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 }
@@ -103,7 +103,7 @@ impl<'ast> Visitor<'ast> for CheckUses<'ast> {
 impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
     fn component_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -114,7 +114,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn interface_instance_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -125,7 +125,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn constant_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &'ast Expr,
         _: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -190,7 +190,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn port_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -201,7 +201,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn interface_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -212,7 +212,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn type_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -223,7 +223,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
 
     fn state_machine_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {

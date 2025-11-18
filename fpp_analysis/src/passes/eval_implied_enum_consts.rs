@@ -21,7 +21,7 @@ impl<'ast> EvalImpliedEnumConsts<'ast> {
 
 impl<'ast> Visitor<'ast> for EvalImpliedEnumConsts<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
     fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)

@@ -8,11 +8,11 @@ use std::ops::{ControlFlow, Deref};
 
 /// An extension of the standard [Visitor] trait that allows analyzing uses of symbols
 /// [BasicUseAnalyzer] or [UseAnalyzer] should be used in your pass for this to work properly
-pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
+pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of a component definition */
     fn component_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -25,7 +25,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of an interface instance (topology def or component instance def) */
     fn interface_instance_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -38,7 +38,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of a constant definition or enumerated constant definition */
     fn constant_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &'ast Expr,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -51,7 +51,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of a port definition */
     fn port_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -64,7 +64,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of an interface definition */
     fn interface_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -77,7 +77,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of a type definition */
     fn type_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -90,7 +90,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis<'ast>> {
     /** A use of a state machine definition*/
     fn state_machine_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {

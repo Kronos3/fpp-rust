@@ -207,7 +207,7 @@ impl std::fmt::Display for TokenKind {
 }
 
 #[derive(Debug)]
-pub(crate) struct Token {
+pub struct Token {
     pub kind: TokenKind,
     pub span: Span,
     pub text: Option<String>,

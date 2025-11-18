@@ -2,7 +2,7 @@ use crate::error::{ParseError, ParseResult};
 use crate::{parse, Parser};
 use fpp_ast::*;
 use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 use std::ops::ControlFlow;
 
 pub struct ResolveIncludes {
@@ -278,9 +278,9 @@ impl MutVisitor for ResolveIncludes {
         a: &mut Self::State,
         node: &mut TransUnit,
     ) -> ControlFlow<Self::Break> {
-        let old_members = std::mem::replace(&mut node.members, vec![]);
+        let old_members = std::mem::replace(&mut node.0, vec![]);
         for member in old_members.into_iter() {
-            self.module_member(a, member, &mut node.members)
+            self.module_member(a, member, &mut node.0)
         }
 
         ControlFlow::Continue(())

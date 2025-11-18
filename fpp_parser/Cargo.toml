@@ -7,6 +7,7 @@ edition = "2024"
 memchr = "2.7.4"
 fpp_core = { path = "../fpp_core" }
 fpp_ast = { path = "../fpp_ast" }
+rustc-hash = "2.1.1"
 
 [dev-dependencies]
 fpp_errors = { path = "../fpp_errors" }

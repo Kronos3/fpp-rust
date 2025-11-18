@@ -12,7 +12,7 @@ use fpp_ast::{
     Binop, DefConstant, DefEnum, DefEnumConstant, Expr, ExprKind, Node, Unop, Visitable, Visitor,
 };
 use fpp_core::Spanned;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
@@ -30,9 +30,9 @@ impl<'ast> EvalConstantExprs<'ast> {
 
 impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
-    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 
@@ -91,7 +91,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
 
         self.super_visit(a, Node::DefEnumConstant(node))?;
 
-        fn apply_value<'ast>(a: &mut Analysis<'ast>, node: &'ast DefEnumConstant) -> Option<()> {
+        fn apply_value(a: &mut Analysis, node: &DefEnumConstant) -> Option<()> {
             let value_expr = match &node.value {
                 None => return None,
                 Some(v) => v,
@@ -362,19 +362,19 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
 impl<'ast> UseAnalysisPass<'ast> for EvalConstantExprs<'ast> {
     fn constant_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &'ast Expr,
         _: QualifiedName,
     ) -> ControlFlow<Self::Break> {
         let symbol = match a.use_def_map.get(&node.node_id) {
             Some(sym @ Symbol::Constant(def)) => {
                 let sym = sym.clone();
-                def.visit(a, self)?;
+                def.clone().visit(a, self)?;
                 sym
             }
             Some(sym @ Symbol::EnumConstant(def)) => {
                 let sym = sym.clone();
-                def.visit(a, self)?;
+                def.clone().visit(a, self)?;
                 sym
             }
             _ => return ControlFlow::Continue(()),

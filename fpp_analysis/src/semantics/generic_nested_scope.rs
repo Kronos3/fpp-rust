@@ -6,24 +6,21 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 #[derive(Debug, Clone)]
-pub struct GenericNestedScope<
-    'a,
-    NG: Copy,
-    S: SymbolInterface<'a>,
-    M: EnumMap<NG, GenericNameSymbolMap<'a, S>>,
->(Vec<Rc<RefCell<GenericScope<'a, NG, S, M>>>>);
+pub struct GenericNestedScope<NG: Copy, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>>(
+    Vec<Rc<RefCell<GenericScope<NG, S, M>>>>,
+);
 
-impl<'a, NG: Copy, S: SymbolInterface<'a>, M: EnumMap<NG, GenericNameSymbolMap<'a, S>>>
-    GenericNestedScope<'a, NG, S, M>
+impl<'a, NG: Copy, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>>
+    GenericNestedScope<NG, S, M>
 {
-    pub fn new(global_scope: Rc<RefCell<GenericScope<'a, NG, S, M>>>) -> Self {
+    pub fn new(global_scope: Rc<RefCell<GenericScope<NG, S, M>>>) -> Self {
         Self {
             0: vec![global_scope],
         }
     }
 
     /// Push a new scope onto the stack
-    pub fn push(&mut self, scope: Rc<RefCell<GenericScope<'a, NG, S, M>>>) {
+    pub fn push(&mut self, scope: Rc<RefCell<GenericScope<NG, S, M>>>) {
         self.0.push(scope);
     }
 
@@ -40,11 +37,11 @@ impl<'a, NG: Copy, S: SymbolInterface<'a>, M: EnumMap<NG, GenericNameSymbolMap<'
             .find_map(|s| s.borrow().get(name_group, name))
     }
 
-    pub fn current(&self) -> &Rc<RefCell<GenericScope<'a, NG, S, M>>> {
+    pub fn current(&self) -> &Rc<RefCell<GenericScope<NG, S, M>>> {
         self.0.last().unwrap()
     }
 
-    pub fn current_mut(&mut self) -> &Rc<RefCell<GenericScope<'a, NG, S, M>>> {
+    pub fn current_mut(&mut self) -> &Rc<RefCell<GenericScope<NG, S, M>>> {
         self.0.last_mut().unwrap()
     }
 }

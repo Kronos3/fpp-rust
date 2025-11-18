@@ -1,29 +1,30 @@
+use std::sync::Arc;
 use fpp_core::Node;
 
-pub trait SymbolInterface<'ast>: Clone {
+pub trait SymbolInterface: Clone {
     fn node(&self) -> Node;
-    fn name(&self) -> &'ast fpp_ast::Ident;
+    fn name(&self) -> &fpp_ast::Ident;
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum Symbol<'ast> {
-    AbsType(&'ast fpp_ast::DefAbsType),
-    AliasType(&'ast fpp_ast::DefAliasType),
-    Array(&'ast fpp_ast::DefArray),
-    Component(&'ast fpp_ast::DefComponent),
-    ComponentInstance(&'ast fpp_ast::DefComponentInstance),
-    Constant(&'ast fpp_ast::DefConstant),
-    Enum(&'ast fpp_ast::DefEnum),
-    EnumConstant(&'ast fpp_ast::DefEnumConstant),
-    Interface(&'ast fpp_ast::DefInterface),
-    Module(&'ast fpp_ast::DefModule),
-    Port(&'ast fpp_ast::DefPort),
-    StateMachine(&'ast fpp_ast::DefStateMachine),
-    Struct(&'ast fpp_ast::DefStruct),
-    Topology(&'ast fpp_ast::DefTopology),
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub enum Symbol {
+    AbsType(Arc<fpp_ast::DefAbsType>),
+    AliasType(Arc<fpp_ast::DefAliasType>),
+    Array(Arc<fpp_ast::DefArray>),
+    Component(Arc<fpp_ast::DefComponent>),
+    ComponentInstance(Arc<fpp_ast::DefComponentInstance>),
+    Constant(Arc<fpp_ast::DefConstant>),
+    Enum(Arc<fpp_ast::DefEnum>),
+    EnumConstant(Arc<fpp_ast::DefEnumConstant>),
+    Interface(Arc<fpp_ast::DefInterface>),
+    Module(Arc<fpp_ast::DefModuleStub>),
+    Port(Arc<fpp_ast::DefPort>),
+    StateMachine(Arc<fpp_ast::DefStateMachine>),
+    Struct(Arc<fpp_ast::DefStruct>),
+    Topology(Arc<fpp_ast::DefTopology>),
 }
 
-impl<'a> SymbolInterface<'a> for Symbol<'a> {
+impl SymbolInterface for Symbol {
     fn node(&self) -> Node {
         match self {
             Symbol::AbsType(node) => node.node_id,
@@ -43,7 +44,7 @@ impl<'a> SymbolInterface<'a> for Symbol<'a> {
         }
     }
 
-    fn name(&self) -> &'a fpp_ast::Ident {
+    fn name(&self) -> &fpp_ast::Ident {
         match self {
             Symbol::AbsType(def) => &def.name,
             Symbol::AliasType(def) => &def.name,

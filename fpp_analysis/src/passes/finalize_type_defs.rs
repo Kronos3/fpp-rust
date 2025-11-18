@@ -25,7 +25,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         }
     }
 
-    fn expr_as_integer(&self, a: &mut Analysis<'ast>, e: &Expr) -> Option<i128> {
+    fn expr_as_integer(&self, a: &mut Analysis, e: &Expr) -> Option<i128> {
         match a.value_map.get(&e.node_id) {
             None => None,
             Some(v) => {
@@ -38,24 +38,24 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         }
     }
 
-    fn expr_as_integer_opt(&self, a: &mut Analysis<'ast>, e: &Option<Expr>) -> Option<i128> {
+    fn expr_as_integer_opt(&self, a: &mut Analysis, e: &Option<Expr>) -> Option<i128> {
         match e {
             None => None,
             Some(e) => self.expr_as_integer(a, e),
         }
     }
 
-    fn ty(&self, a: &mut Analysis<'ast>, node: &'ast TypeName) -> Option<Rc<Type>> {
+    fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Rc<Type>> {
         match &node.kind {
             TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()) {
                 None => {}
                 Some(symbol) => {
-                    let _ = match symbol {
-                        Symbol::AbsType(ty) => self.visit_def_abs_type(a, ty),
-                        Symbol::AliasType(ty) => self.visit_def_alias_type(a, ty),
-                        Symbol::Array(ty) => self.visit_def_array(a, ty),
-                        Symbol::Enum(ty) => self.visit_def_enum(a, ty),
-                        Symbol::Struct(ty) => self.visit_def_struct(a, ty),
+                    let _ = match symbol.clone() {
+                        Symbol::AbsType(ty) => self.visit_def_abs_type(a, ty.deref()),
+                        Symbol::AliasType(ty) => self.visit_def_alias_type(a, ty.deref()),
+                        Symbol::Array(ty) => self.visit_def_array(a, ty.deref()),
+                        Symbol::Enum(ty) => self.visit_def_enum(a, ty.deref()),
+                        Symbol::Struct(ty) => self.visit_def_struct(a, ty.deref()),
                         _ => ControlFlow::Continue(()),
                     };
                 }
@@ -97,9 +97,9 @@ impl<'ast> FinalizeTypeDefs<'ast> {
 
 impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
-    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 
@@ -122,7 +122,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         a: &mut Self::State,
         node: &'ast DefAliasType,
     ) -> ControlFlow<Self::Break> {
-        let symbol = Symbol::AliasType(node);
+        let symbol = a.get_symbol(node);
         if a.visited_symbol_set.contains(&symbol) {
             return ControlFlow::Continue(());
         }
@@ -149,7 +149,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         a: &mut Self::State,
         node: &'ast DefArray,
     ) -> ControlFlow<Self::Break> {
-        let symbol = Symbol::Array(node);
+        let symbol = a.get_symbol(node);
         if a.visited_symbol_set.contains(&symbol) {
             return ControlFlow::Continue(());
         }
@@ -227,7 +227,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
     }
 
     fn visit_def_enum(&self, a: &mut Self::State, node: &'ast DefEnum) -> ControlFlow<Self::Break> {
-        let symbol = Symbol::Enum(node);
+        let symbol = a.get_symbol(node);
         if a.visited_symbol_set.contains(&symbol) {
             return ControlFlow::Continue(());
         }
@@ -269,7 +269,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         a: &mut Self::State,
         node: &'ast DefStruct,
     ) -> ControlFlow<Self::Break> {
-        let symbol = Symbol::Struct(node);
+        let symbol = a.get_symbol(node);
         if a.visited_symbol_set.contains(&symbol) {
             return ControlFlow::Continue(());
         }

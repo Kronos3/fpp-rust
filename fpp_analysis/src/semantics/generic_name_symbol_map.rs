@@ -1,14 +1,16 @@
 use crate::errors::{SemanticError, SemanticResult};
 use crate::semantics::SymbolInterface;
 use fpp_core::Spanned;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 
 #[derive(Debug)]
-pub struct GenericNameSymbolMap<'a, S: SymbolInterface<'a>>(HashMap<&'a str, S>);
+pub struct GenericNameSymbolMap<S: SymbolInterface>(HashMap<String, S>);
 
-impl<'a, S: SymbolInterface<'a>> GenericNameSymbolMap<'a, S> {
+impl<S: SymbolInterface> GenericNameSymbolMap<S> {
     pub fn new() -> Self {
-        Self { 0: HashMap::default() }
+        Self {
+            0: HashMap::default(),
+        }
     }
 
     /** Get a symbol from the map. Return none if the name is not there. */
@@ -23,7 +25,7 @@ impl<'a, S: SymbolInterface<'a>> GenericNameSymbolMap<'a, S> {
         let name = symbol.name().data.as_str();
         match self.0.get(name) {
             None => {
-                self.0.insert(name, symbol);
+                self.0.insert(name.to_string(), symbol);
                 Ok(())
             }
             Some(prev) => Err(SemanticError::RedefinedSymbol {

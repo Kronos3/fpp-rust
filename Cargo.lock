@@ -169,6 +169,7 @@ dependencies = [
  "fpp_analysis",
  "fpp_ast",
  "fpp_core",
+ "fpp_fs",
  "fpp_parser",
  "log",
  "lsp-server",
@@ -197,6 +198,7 @@ dependencies = [
  "fpp_fs",
  "memchr",
  "pretty_assertions",
+ "rustc-hash",
 ]
 
 [[package]]

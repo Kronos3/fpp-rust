@@ -188,13 +188,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn trans_unit(&mut self) -> TransUnit {
-        let first = self.cursor.last_token_span();
-        let members = self.module_members();
-
-        TransUnit {
-            node_id: self.node(first),
-            members,
-        }
+        TransUnit(self.module_members())
     }
 
     pub fn component_members(&mut self) -> Vec<ComponentMember> {

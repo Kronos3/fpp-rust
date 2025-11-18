@@ -29,7 +29,7 @@ impl<'a> Cursor<'a> {
         } else {
             // Queue up as many tokens as we need
             while self.token_queue.len() <= n {
-                match self.lexer.next_token() {
+                match self.lexer.next() {
                     None => return None,
                     Some(tok) => match tok.kind {
                         TokenKind::Error(lexer_error) => {
@@ -122,7 +122,7 @@ impl<'a> Cursor<'a> {
         // Try to pull token off the queue
         let tok = match self.token_queue.pop_front() {
             // No more tokens in our queue, go to the lexer
-            None => self.lexer.next_token(),
+            None => self.lexer.next(),
             Some(tok) => Some(tok),
         };
 

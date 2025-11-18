@@ -27,9 +27,9 @@ impl<'ast> CheckTypeUses<'ast> {
 
 impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
-    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 
@@ -247,7 +247,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 impl<'ast> UseAnalysisPass<'ast> for CheckTypeUses<'ast> {
     fn type_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &QualIdent,
         _name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -257,7 +257,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckTypeUses<'ast> {
             Some(symbol) => symbol.clone(),
         };
 
-        match symbol {
+        match &symbol {
             Symbol::AbsType(def) => def.visit(a, self)?,
             Symbol::AliasType(def) => def.visit(a, self)?,
             Symbol::Array(def) => def.visit(a, self)?,

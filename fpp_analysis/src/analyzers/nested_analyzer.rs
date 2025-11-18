@@ -10,12 +10,12 @@ pub enum NestedAnalyzerMode {
     DEEP,
 }
 
-pub struct NestedAnalyzer<'ast, V: Visitor<'ast, State = Analysis<'ast>>> {
+pub struct NestedAnalyzer<'ast, V: Visitor<'ast, State = Analysis>> {
     phantom_data: PhantomData<&'ast V>,
     mode: NestedAnalyzerMode,
 }
 
-impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> NestedAnalyzer<'ast, V> {
+impl<'ast, V: Visitor<'ast, State = Analysis>> NestedAnalyzer<'ast, V> {
     pub fn new(mode: NestedAnalyzerMode) -> NestedAnalyzer<'ast, V> {
         NestedAnalyzer {
             phantom_data: Default::default(),
@@ -27,7 +27,7 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> NestedAnalyzer<'ast, V> {
         &self,
         visitor: &V,
         a: &mut V::State,
-        symbol: Symbol<'ast>,
+        symbol: Symbol,
         node: Node<'ast>,
     ) -> ControlFlow<V::Break> {
         match a.symbol_scope_map.get(&symbol) {
@@ -42,12 +42,12 @@ impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> NestedAnalyzer<'ast, V> {
     }
 }
 
-impl<'ast, V: Visitor<'ast, State = Analysis<'ast>>> Analyzer<'ast, V> for NestedAnalyzer<'ast, V> {
+impl<'ast, V: Visitor<'ast, State = Analysis>> Analyzer<'ast, V> for NestedAnalyzer<'ast, V> {
     fn visit(&self, visitor: &V, a: &mut V::State, node: Node<'ast>) -> ControlFlow<V::Break> {
-        match &node {
-            Node::DefComponent(def) => self.walk_symbol(visitor, a, Symbol::Component(def), node),
-            Node::DefEnum(def) => self.walk_symbol(visitor, a, Symbol::Enum(def), node),
-            Node::DefModule(def) => self.walk_symbol(visitor, a, Symbol::Module(def), node),
+        match node {
+            Node::DefComponent(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
+            Node::DefEnum(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
+            Node::DefModule(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             Node::TransUnit(tu) => tu.walk(a, visitor),
             _ => match self.mode {
                 NestedAnalyzerMode::SHALLOW => ControlFlow::Continue(()),

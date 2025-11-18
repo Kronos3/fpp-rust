@@ -4,7 +4,6 @@ use fpp_core::FileReader;
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::{env, fs};
@@ -36,7 +35,7 @@ fn run_test(file_path: &str) {
 
         // Parse the source
         let mut ast = parse(src, |p| p.trans_unit(), None);
-        let mut source_files = HashSet::new();
+        let mut source_files = Default::default();
         let _ = ResolveIncludes::new(Box::new(file_reader))
             .visit_trans_unit(&mut source_files, &mut ast);
         format!("{:#?}", ast)

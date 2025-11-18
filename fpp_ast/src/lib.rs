@@ -19,15 +19,12 @@ pub trait AstNode: fpp_core::Spanned + Sized {
     fn id(&self) -> fpp_core::Node;
 }
 
-#[ast]
 #[derive(VisitorWalkable)]
-pub struct TransUnit {
-    pub members: Vec<ModuleMember>,
-}
+pub struct TransUnit(pub Vec<ModuleMember>);
 
 impl Debug for TransUnit {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(self.members.iter()).finish()
+        f.debug_list().entries(self.0.iter()).finish()
     }
 }
 
@@ -292,6 +289,21 @@ pub struct DefEnumConstant {
 pub struct DefModule {
     pub name: Ident,
     pub members: Vec<ModuleMember>,
+}
+
+#[ast]
+#[derive(Debug, Clone, VisitorWalkable)]
+pub struct DefModuleStub {
+    pub name: Ident,
+}
+
+impl From<&DefModule> for DefModuleStub {
+    fn from(value: &DefModule) -> Self {
+        Self {
+            name: value.name.clone(),
+            node_id: value.node_id,
+        }
+    }
 }
 
 #[ast]

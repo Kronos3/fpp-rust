@@ -65,29 +65,10 @@ fn is_identifier_rest(c: char) -> bool {
     }
 }
 
-impl<'a> Lexer<'a> {
-    pub fn new(
-        file: SourceFile,
-        content: &'a str,
-        include_span: Option<fpp_core::Span>,
-    ) -> Lexer<'a> {
-        let chars = content.chars();
-        Lexer {
-            pos: 0,
-            file,
-            indent: 0,
-            content,
-            chars,
-            len_remaining: file.len(),
-            escaped_identifier: false,
-            token_has_trailing_whitespace: false,
-            token_end_before_whitespace: 0,
-            include_span,
-            inner_span: None,
-        }
-    }
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Token;
 
-    pub fn next_token(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Self::Item> {
         loop {
             self.pos += self.pos_within_token();
             self.reset_token();
@@ -108,7 +89,7 @@ impl<'a> Lexer<'a> {
                                 self.file,
                                 start + 1,
                                 length - 2,
-                                self.include_span
+                                self.include_span,
                             ));
                             (
                                 Some(self.content[start + 1..end - 1].to_string()),
@@ -267,6 +248,29 @@ impl<'a> Lexer<'a> {
                     ));
                 }
             }
+        }
+    }
+}
+
+impl<'a> Lexer<'a> {
+    pub fn new(
+        file: SourceFile,
+        content: &'a str,
+        include_span: Option<fpp_core::Span>,
+    ) -> Lexer<'a> {
+        let chars = content.chars();
+        Lexer {
+            pos: 0,
+            file,
+            indent: 0,
+            content,
+            chars,
+            len_remaining: file.len(),
+            escaped_identifier: false,
+            token_has_trailing_whitespace: false,
+            token_end_before_whitespace: 0,
+            include_span,
+            inner_span: None,
         }
     }
 

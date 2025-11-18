@@ -7,16 +7,13 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 #[derive(Debug, Clone, Copy)]
-pub struct GenericScope<
-    'ast,
-    NG,
-    S: SymbolInterface<'ast>,
-    M: EnumMap<NG, GenericNameSymbolMap<'ast, S>>,
->(M, PhantomData<NG>, PhantomData<&'ast S>);
+pub struct GenericScope<NG, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>>(
+    M,
+    PhantomData<NG>,
+    PhantomData<S>,
+);
 
-impl<'ast, NG, S: SymbolInterface<'ast>, M: EnumMap<NG, GenericNameSymbolMap<'ast, S>>>
-    GenericScope<'ast, NG, S, M>
-{
+impl<'ast, NG, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>> GenericScope<NG, S, M> {
     /// Construct a new scope
     pub fn new() -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {

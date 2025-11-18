@@ -1,27 +1,30 @@
 use crate::semantics::{NestedScope, Scope, Symbol, Type, UseDefMatching, Value};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-pub struct Analysis<'ast> {
+#[derive(Debug)]
+pub struct Analysis {
     /** The mapping from symbols to their parent symbols */
-    pub parent_symbol_map: HashMap<Symbol<'ast>, Symbol<'ast>>,
+    pub parent_symbol_map: HashMap<Symbol, Symbol>,
     /** The mapping from symbols with scopes to their scopes */
-    pub symbol_scope_map: HashMap<Symbol<'ast>, Rc<RefCell<Scope<'ast>>>>,
+    pub symbol_scope_map: HashMap<Symbol, Rc<RefCell<Scope>>>,
+    /** The mapping from definition node ID to their entered symbol */
+    pub symbol_map: HashMap<fpp_core::Node, Symbol>,
     /** The mapping from uses (by node ID) to their definitions */
-    pub use_def_map: HashMap<fpp_core::Node, Symbol<'ast>>,
+    pub use_def_map: HashMap<fpp_core::Node, Symbol>,
     /** The list of use-def matchings on the current use-def path.
      *  Used during cycle analysis. */
-    pub use_def_matching_list: Vec<UseDefMatching<'ast>>,
+    pub use_def_matching_list: Vec<UseDefMatching>,
     /** The set of symbols visited so far */
-    pub visited_symbol_set: HashSet<Symbol<'ast>>,
+    pub visited_symbol_set: HashSet<Symbol>,
     /** The set of symbols on the current use-def path.
      *  Used during cycle analysis. */
-    pub use_def_symbol_set: HashSet<Symbol<'ast>>,
+    pub use_def_symbol_set: HashSet<Symbol>,
     /** The current parent symbol */
-    pub parent_symbol: Option<Symbol<'ast>>,
+    pub parent_symbol: Option<Symbol>,
     /** The current nested scope for symbol lookup */
-    pub nested_scope: NestedScope<'ast>,
+    pub nested_scope: NestedScope,
     /** The set of files included when parsing input */
     pub included_file_set: HashSet<fpp_core::SourceFile>,
     /** The mapping from type and constant symbols, expressions,
@@ -31,11 +34,12 @@ pub struct Analysis<'ast> {
     pub value_map: HashMap<fpp_core::Node, Value>,
 }
 
-impl<'a> Analysis<'a> {
-    pub fn new() -> Analysis<'a> {
+impl Analysis {
+    pub fn new() -> Analysis {
         Analysis {
             parent_symbol_map: Default::default(),
             symbol_scope_map: Default::default(),
+            symbol_map: Default::default(),
             use_def_map: Default::default(),
             use_def_matching_list: vec![],
             visited_symbol_set: Default::default(),
@@ -46,5 +50,9 @@ impl<'a> Analysis<'a> {
             type_map: Default::default(),
             value_map: Default::default(),
         }
+    }
+
+    pub fn get_symbol<N: fpp_ast::AstNode>(&self, node: &N) -> Symbol {
+        self.symbol_map.get(&node.id()).unwrap().clone()
     }
 }

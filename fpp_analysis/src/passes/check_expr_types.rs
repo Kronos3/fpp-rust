@@ -32,7 +32,7 @@ impl<'ast> CheckExprTypes<'ast> {
 
     fn convert_type(
         &self,
-        a: &Analysis<'ast>,
+        a: &Analysis,
         expr: &'ast Expr,
         to_ty: &Rc<Type>,
     ) -> TypeConversionResult {
@@ -44,7 +44,7 @@ impl<'ast> CheckExprTypes<'ast> {
         Type::convert(from_ty, to_ty)
     }
 
-    fn check_type_is_numerical(&self, a: &Analysis<'ast>, expr: &'ast Expr) {
+    fn check_type_is_numerical(&self, a: &Analysis, expr: &'ast Expr) {
         match self.convert_type(a, expr, &Rc::new(Type::Integer)) {
             Ok(_) => {}
             Err(err) => {
@@ -58,14 +58,14 @@ impl<'ast> CheckExprTypes<'ast> {
         }
     }
 
-    fn check_type_is_numerical_opt(&self, a: &Analysis<'ast>, expr: &'ast Option<Expr>) {
+    fn check_type_is_numerical_opt(&self, a: &Analysis, expr: &'ast Option<Expr>) {
         match expr {
             None => {}
             Some(expr) => self.check_type_is_numerical(a, expr),
         }
     }
 
-    fn check_expr_matches_node(&self, a: &Analysis<'ast>, expr: &'ast Expr, node: &fpp_core::Node) {
+    fn check_expr_matches_node(&self, a: &Analysis, expr: &'ast Expr, node: &fpp_core::Node) {
         match a.type_map.get(node) {
             Some(ty) => match self.convert_type(a, expr, ty) {
                 Ok(_) => {}
@@ -82,7 +82,7 @@ impl<'ast> CheckExprTypes<'ast> {
 
     fn check_expr_opt_matches_node(
         &self,
-        a: &Analysis<'ast>,
+        a: &Analysis,
         expr: &'ast Option<Expr>,
         node: &fpp_core::Node,
     ) {
@@ -95,9 +95,9 @@ impl<'ast> CheckExprTypes<'ast> {
 
 impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
     type Break = ();
-    type State = Analysis<'ast>;
+    type State = Analysis;
 
-    fn super_visit(&self, a: &mut Analysis<'ast>, node: Node<'ast>) -> ControlFlow<Self::Break> {
+    fn super_visit(&self, a: &mut Analysis, node: Node<'ast>) -> ControlFlow<Self::Break> {
         self.super_.visit(self, a, node)
     }
 
@@ -608,7 +608,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 impl<'ast> UseAnalysisPass<'ast> for CheckExprTypes<'ast> {
     fn constant_use(
         &self,
-        a: &mut Analysis<'ast>,
+        a: &mut Analysis,
         node: &'ast Expr,
         _: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -617,7 +617,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckExprTypes<'ast> {
             Some(symbol) => symbol.clone(),
         };
 
-        match symbol {
+        match &symbol {
             // Constant symbol: visit the constant definition
             // to ensure it has a type
             Symbol::Constant(def) => {
