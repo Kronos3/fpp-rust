@@ -196,12 +196,13 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
                                 size_loc: node.size.span(),
                                 value_size: v.elements.len(),
                                 type_size: size,
-                            }.emit();
+                            }
+                            .emit();
                         }
 
                         Some(Value::AnonArray(v))
                     }
-                    Some(_) => panic!("expected anon array")
+                    Some(_) => panic!("expected anon array"),
                 },
             },
         };

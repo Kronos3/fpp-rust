@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use fpp_core::Node;
+use std::sync::Arc;
 
 pub trait SymbolInterface: Clone {
     fn node(&self) -> Node;

@@ -3,9 +3,9 @@ mod diagnostic;
 mod error;
 mod file;
 mod interface;
+mod map;
 mod node;
 mod span;
-mod map;
 
 pub use context::*;
 pub use diagnostic::*;

@@ -15,7 +15,7 @@ use fpp_ast::{
     TypeNameKind, Visitable, Visitor,
 };
 use fpp_core::Spanned;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
@@ -215,7 +215,8 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                                     loc: next.span(),
                                     msg: format!(
                                         "cannot find common type between {} and {}",
-                                        next_type.as_ref(), common.as_ref()
+                                        next_type.as_ref(),
+                                        common.as_ref()
                                     ),
                                 }),
                                 Some(new_ty) => Ok(new_ty),

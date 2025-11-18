@@ -4,7 +4,7 @@ use crate::semantics::{
 };
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 use std::fmt::{Debug, Display, Formatter, Write};
 use std::ops::Deref;
 use std::rc::Rc;

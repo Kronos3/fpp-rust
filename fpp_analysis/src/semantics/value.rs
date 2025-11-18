@@ -1,6 +1,6 @@
 use crate::semantics::{ArrayType, EnumType, StructType, Type};
 use fpp_ast::FloatKind;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -160,15 +160,13 @@ impl Value {
                     })
                     | Type::AnonArray(anon_array_ty) => {
                         match (anon_array_ty.size, anon_array.elements.len()) {
-                            (Some(_), _) => {
-                                Some(
-                                    anon_array
-                                        .elements
-                                        .iter()
-                                        .filter_map(|e| e.convert(&anon_array_ty.elt_type))
-                                        .collect(),
-                                )
-                            }
+                            (Some(_), _) => Some(
+                                anon_array
+                                    .elements
+                                    .iter()
+                                    .filter_map(|e| e.convert(&anon_array_ty.elt_type))
+                                    .collect(),
+                            ),
                             (None, value_size) => {
                                 let elements = std::iter::repeat_n(
                                     self.convert(&anon_array_ty.elt_type)?,

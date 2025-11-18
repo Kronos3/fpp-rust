@@ -9,7 +9,7 @@ use crate::semantics::{
 use crate::Analysis;
 use fpp_ast::*;
 use fpp_core::Spanned;
-use rustc_hash::{FxHashMap as HashMap};
+use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
 use std::rc::Rc;
 
