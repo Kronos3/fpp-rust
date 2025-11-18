@@ -24,11 +24,7 @@ impl<'ast> EnterSymbols {
 
     /// Enter a symbol into its own name group
     fn enter_symbol(&self, a: &mut Analysis, sym: Symbol, ng: NameGroup) -> SemanticResult {
-        let res = a
-            .nested_scope
-            .current_mut()
-            .borrow_mut()
-            .put(ng, sym.clone());
+        let res = a.symbol_put(ng, sym.clone());
         match res {
             Ok(_) => {
                 // We successfully added the symbol to the scope
@@ -118,9 +114,8 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         })()
         .unwrap_or_else(|err| err.emit());
 
-        let scope = Scope::new();
-        a.symbol_scope_map.insert(symbol.clone(), scope.clone());
-        a.nested_scope.push(scope);
+        a.symbol_scope_map.insert(symbol.clone(), Scope::new());
+        a.nested_scope.push(symbol.clone());
 
         let save_paren = a.parent_symbol.clone();
         a.parent_symbol = Some(symbol);
@@ -154,9 +149,8 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         })()
         .unwrap_or_else(|err| err.emit());
 
-        let scope = Scope::new();
-        a.symbol_scope_map.insert(symbol.clone(), scope.clone());
-        a.nested_scope.push(scope);
+        a.symbol_scope_map.insert(symbol.clone(), Scope::new());
+        a.nested_scope.push(symbol.clone());
 
         let save_paren = a.parent_symbol.clone();
         a.parent_symbol = Some(symbol);
@@ -196,24 +190,15 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
         // We first need to check if a scope that this module will create already exists
         // If so we can just open that scope without adding a new one
         let existing_symbol = a
-            .nested_scope
-            .current()
-            .borrow()
+            .get_scope(a.nested_scope.current())
             .get(NameGroup::Value, &def.name.data);
 
-        let (sym, scope) = match existing_symbol {
+        let sym = match existing_symbol {
             Some(other @ Symbol::Module(_)) => {
                 // We found a module symbol with the same name at the current level.
                 // Re-open the scope.
                 a.symbol_map.insert(def.node_id, other.clone());
-
-                (
-                    other.clone(),
-                    a.symbol_scope_map
-                        .get(&other)
-                        .expect("could not find scope for existing symbol")
-                        .clone(),
-                )
+                other.clone()
             }
             Some(other) => {
                 // We found a non-module symbol with the same name at the current level.
@@ -233,26 +218,20 @@ impl<'ast> Visitor<'ast> for EnterSymbols {
                 // Create a new module symbol now.
                 let sym = Symbol::Module(Arc::new(def.into()));
                 a.symbol_map.insert(def.node_id, sym.clone());
+                a.symbol_scope_map.insert(sym.clone(), Scope::new());
 
                 for ng in NameGroup::all() {
-                    match a
-                        .nested_scope
-                        .current_mut()
-                        .borrow_mut()
-                        .put(ng, sym.clone())
-                    {
+                    match a.symbol_put(ng, sym.clone()) {
                         Ok(_) => {}
                         Err(err) => err.emit(),
                     }
                 }
 
-                (sym, Scope::new())
+                sym
             }
         };
 
-        a.symbol_scope_map.insert(sym.clone(), scope.clone());
-        a.nested_scope.push(scope);
-
+        a.nested_scope.push(sym.clone());
         let save_paren = a.parent_symbol.clone();
         a.parent_symbol = Some(sym);
         let res = def.walk(a, self);

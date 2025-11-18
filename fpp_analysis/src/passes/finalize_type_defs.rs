@@ -12,7 +12,7 @@ use fpp_ast::{
 };
 use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct FinalizeTypeDefs<'ast> {
     super_: NestedAnalyzer<'ast, Self>,
@@ -29,7 +29,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         match a.value_map.get(&e.node_id) {
             None => None,
             Some(v) => {
-                if let Some(Value::Integer(IntegerValue(i))) = v.convert(&Rc::new(Type::Integer)) {
+                if let Some(Value::Integer(IntegerValue(i))) = v.convert(&Arc::new(Type::Integer)) {
                     Some(i)
                 } else {
                     None
@@ -45,7 +45,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
         }
     }
 
-    fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Rc<Type>> {
+    fn ty(&self, a: &mut Analysis, node: &'ast TypeName) -> Option<Arc<Type>> {
         match &node.kind {
             TypeNameKind::QualIdent(q) => match a.use_def_map.get(&q.id()) {
                 None => {}
@@ -81,7 +81,7 @@ impl<'ast> FinalizeTypeDefs<'ast> {
                         .emit();
                     } else {
                         a.type_map
-                            .insert(node.node_id, Rc::new(Type::String(Some(size_v))));
+                            .insert(node.node_id, Arc::new(Type::String(Some(size_v))));
                     }
                 }
             },
@@ -133,7 +133,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             Some(ty) => {
                 a.type_map.insert(
                     node.node_id,
-                    Rc::new(Type::AliasType(AliasType {
+                    Arc::new(Type::AliasType(AliasType {
                         node: node.clone(),
                         alias_type: ty,
                     })),
@@ -187,7 +187,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             None => anon_array_ty.default_value(),
             Some(default) => match a.value_map.get(&default.node_id) {
                 None => None,
-                Some(default_v) => match default_v.convert(&Rc::new(anon_array_ty)) {
+                Some(default_v) => match default_v.convert(&Arc::new(anon_array_ty)) {
                     None => None,
                     Some(Value::AnonArray(v)) => {
                         if v.elements.len() != size as usize {
@@ -223,7 +223,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             format,
         });
 
-        a.type_map.insert(node.node_id, Rc::new(ty));
+        a.type_map.insert(node.node_id, Arc::new(ty));
         ControlFlow::Continue(())
     }
 
@@ -260,7 +260,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         };
 
         a.type_map
-            .insert(node.node_id, Rc::new(Type::Enum(enum_ty)));
+            .insert(node.node_id, Arc::new(Type::Enum(enum_ty)));
 
         ControlFlow::Continue(())
     }
@@ -334,7 +334,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
             }
         }
 
-        a.type_map.insert(node.node_id, Rc::new(Type::Struct(ty)));
+        a.type_map.insert(node.node_id, Arc::new(Type::Struct(ty)));
         ControlFlow::Continue(())
     }
 }

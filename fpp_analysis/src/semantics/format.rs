@@ -2,8 +2,8 @@ use crate::errors::SemanticError;
 use crate::semantics::Type;
 use fpp_ast::LitString;
 use fpp_core::BytePos;
-use std::rc::Rc;
 use std::str::{Chars, FromStr};
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum IntegerFormatKind {
@@ -46,7 +46,7 @@ pub enum FormatPart {
 pub struct Format(pub Vec<FormatPart>);
 
 impl Format {
-    pub fn new(node: &LitString, ts: Vec<(Rc<Type>, fpp_core::Span)>) -> Format {
+    pub fn new(node: &LitString, ts: Vec<(Arc<Type>, fpp_core::Span)>) -> Format {
         let format = Format(FormatParser::new(node.inner_span, &node.data).collect());
 
         // Validate the fields in the format string against the types expected to be formated

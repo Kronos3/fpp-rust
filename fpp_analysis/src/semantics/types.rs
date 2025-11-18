@@ -7,7 +7,7 @@ use fpp_core::Diagnostic;
 use rustc_hash::FxHashMap as HashMap;
 use std::fmt::{Debug, Display, Formatter, Write};
 use std::ops::Deref;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Type {
@@ -27,7 +27,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn underlying_type(ty: &Rc<Type>) -> Rc<Type> {
+    pub fn underlying_type(ty: &Arc<Type>) -> Arc<Type> {
         match ty.deref() {
             Type::AliasType(alias) => Type::underlying_type(&alias.alias_type),
             _ => ty.clone(),
@@ -203,7 +203,7 @@ impl Type {
         }
     }
 
-    pub fn convert(from: &Rc<Type>, to: &Rc<Type>) -> TypeConversionResult {
+    pub fn convert(from: &Arc<Type>, to: &Arc<Type>) -> TypeConversionResult {
         Type::convert_impl(
             Type::underlying_type(from).deref(),
             Type::underlying_type(to).deref(),
@@ -362,7 +362,7 @@ impl Type {
         }
     }
 
-    pub fn common_type(t1_a: &Rc<Type>, t2_a: &Rc<Type>) -> Option<Rc<Type>> {
+    pub fn common_type(t1_a: &Arc<Type>, t2_a: &Arc<Type>) -> Option<Arc<Type>> {
         // Trivial case, types are the same
         if Type::identical(&t1_a, &t2_a) {
             return Some(t1_a.clone());
@@ -370,8 +370,8 @@ impl Type {
 
         // Types share a common ancestor in the alias type hierarchy
         if !t1_a.is_canonical() || !t2_a.is_canonical() {
-            fn lca(a: &Rc<Type>, b: &Rc<Type>) -> Option<Rc<Type>> {
-                fn get_ancestors(t: &Rc<Type>, out: &mut Vec<Rc<Type>>) {
+            fn lca(a: &Arc<Type>, b: &Arc<Type>) -> Option<Arc<Type>> {
+                fn get_ancestors(t: &Arc<Type>, out: &mut Vec<Arc<Type>>) {
                     out.push(t.clone());
                     match t.deref() {
                         Type::AliasType(AliasType { alias_type, .. }) => {
@@ -416,25 +416,25 @@ impl Type {
 
         // Check for numeric common types
         if t1.is_float() && t2.is_numeric() {
-            return Some(Rc::new(Type::Float(FloatKind::F64)));
+            return Some(Arc::new(Type::Float(FloatKind::F64)));
         }
         if t1.is_numeric() && t2.is_float() {
-            return Some(Rc::new(Type::Float(FloatKind::F64)));
+            return Some(Arc::new(Type::Float(FloatKind::F64)));
         }
         if t1.is_numeric() && t2.is_numeric() {
-            return Some(Rc::new(Type::Integer));
+            return Some(Arc::new(Type::Integer));
         }
 
         match (t1.deref(), t2.deref()) {
             // String -> String
-            (Type::String(_), Type::String(_)) => Some(Rc::new(Type::String(None))),
+            (Type::String(_), Type::String(_)) => Some(Arc::new(Type::String(None))),
 
             // Strip off any enum wrappers over the representable type
             (Type::Enum(EnumType { rep_type, .. }), _) => {
-                Self::common_type(&Rc::new(Type::PrimitiveInt(rep_type.clone())), &t1)
+                Self::common_type(&Arc::new(Type::PrimitiveInt(rep_type.clone())), &t1)
             }
             (_, Type::Enum(EnumType { rep_type, .. })) => {
-                Self::common_type(&t1, &Rc::new(Type::PrimitiveInt(rep_type.clone())))
+                Self::common_type(&t1, &Arc::new(Type::PrimitiveInt(rep_type.clone())))
             }
 
             // t1 + t2 are both array/anon array
@@ -461,7 +461,7 @@ impl Type {
                 };
 
                 let elt_type = Type::common_type(&t1_arr.elt_type, &t2_arr.elt_type)?;
-                Some(Rc::new(Type::AnonArray(AnonArrayType { size, elt_type })))
+                Some(Arc::new(Type::AnonArray(AnonArrayType { size, elt_type })))
             }
 
             // An array and a non array. Try to promote the non-array to the array
@@ -481,10 +481,10 @@ impl Type {
             ) => {
                 if other.is_promotable_to_array() {
                     // Treat the 'other' type as an element of the array
-                    let elt_type = Type::common_type(&Rc::new(other.clone()), &arr.elt_type)?;
+                    let elt_type = Type::common_type(&Arc::new(other.clone()), &arr.elt_type)?;
 
                     // Promote the single element to an array keeping the same size
-                    Some(Rc::new(Type::AnonArray(AnonArrayType {
+                    Some(Arc::new(Type::AnonArray(AnonArrayType {
                         elt_type,
                         size: arr.size,
                     })))
@@ -535,7 +535,7 @@ impl Type {
                     }
                 }
 
-                Some(Rc::new(Type::AnonStruct(AnonStructType {
+                Some(Arc::new(Type::AnonStruct(AnonStructType {
                     members: out_members,
                 })))
             }
@@ -559,7 +559,7 @@ impl Type {
                     // Build a new struct with the same members as the old one while trying
                     // to find the common type between the single element and all the members
                     let mut out_members = HashMap::default();
-                    let other_rc = Rc::new(other.clone());
+                    let other_rc = Arc::new(other.clone());
 
                     for (name, in_member_ty) in &str.members {
                         let out_member_ty = Type::common_type(&other_rc, in_member_ty)?;
@@ -567,7 +567,7 @@ impl Type {
                     }
 
                     // Create a new struct with similar shape of the old struct
-                    Some(Rc::new(Type::AnonStruct(AnonStructType {
+                    Some(Arc::new(Type::AnonStruct(AnonStructType {
                         members: out_members,
                     })))
                 } else {
@@ -607,7 +607,7 @@ impl Display for Type {
             Type::Struct(ty) => f.write_fmt(format_args!("{} (struct type)", ty.node.name.data)),
             Type::AnonStruct(anon_struct) => {
                 let mut s = f.debug_struct("anonymous struct");
-                let mut members: Vec<(String, Rc<Type>)> =
+                let mut members: Vec<(String, Arc<Type>)> =
                     anon_struct.members.clone().into_iter().collect();
                 members.sort_by(|a, b| a.0.cmp(&b.0));
                 for (name, member_ty) in &members {
@@ -733,7 +733,7 @@ pub struct AliasType {
     /** The AST node giving the definition */
     pub node: fpp_ast::DefAliasType,
     /** Type that this typedef points to */
-    pub alias_type: Rc<Type>,
+    pub alias_type: Arc<Type>,
 }
 
 /** A named array type */
@@ -755,7 +755,7 @@ pub struct AnonArrayType {
     /** The array size */
     pub size: Option<usize>,
     /** The element type */
-    pub elt_type: Rc<Type>,
+    pub elt_type: Arc<Type>,
 }
 
 /** An enum type */
@@ -788,5 +788,5 @@ pub struct StructType {
 #[derive(Debug, Clone)]
 pub struct AnonStructType {
     /** The members */
-    pub members: HashMap<String, Rc<Type>>,
+    pub members: HashMap<String, Arc<Type>>,
 }

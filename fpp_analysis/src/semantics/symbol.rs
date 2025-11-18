@@ -6,6 +6,21 @@ pub trait SymbolInterface: Clone {
     fn name(&self) -> &fpp_ast::Ident;
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DefModuleStub {
+    pub node_id: Node,
+    pub name: fpp_ast::Ident,
+}
+
+impl From<&fpp_ast::DefModule> for DefModuleStub {
+    fn from(value: &fpp_ast::DefModule) -> Self {
+        Self {
+            name: value.name.clone(),
+            node_id: value.node_id,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Symbol {
     AbsType(Arc<fpp_ast::DefAbsType>),
@@ -17,7 +32,7 @@ pub enum Symbol {
     Enum(Arc<fpp_ast::DefEnum>),
     EnumConstant(Arc<fpp_ast::DefEnumConstant>),
     Interface(Arc<fpp_ast::DefInterface>),
-    Module(Arc<fpp_ast::DefModuleStub>),
+    Module(Arc<DefModuleStub>),
     Port(Arc<fpp_ast::DefPort>),
     StateMachine(Arc<fpp_ast::DefStateMachine>),
     Struct(Arc<fpp_ast::DefStruct>),

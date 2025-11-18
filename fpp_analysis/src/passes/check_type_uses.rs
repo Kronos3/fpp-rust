@@ -11,7 +11,7 @@ use fpp_ast::*;
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct CheckTypeUses<'ast> {
     super_: UseAnalyzer<'ast, Self>,
@@ -44,7 +44,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(Type::AbsType(AbsType {
+            Arc::new(Type::AbsType(AbsType {
                 node: node.clone(),
                 default_value: None,
             })),
@@ -69,7 +69,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             Some(alias_type) => {
                 a.type_map.insert(
                     node.node_id,
-                    Rc::new(Type::AliasType(AliasType {
+                    Arc::new(Type::AliasType(AliasType {
                         node: node.clone(),
                         alias_type: alias_type.clone(),
                     })),
@@ -97,7 +97,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(Type::Array(ArrayType {
+            Arc::new(Type::Array(ArrayType {
                 node: node.clone(),
                 anon_array: AnonArrayType {
                     size: None,
@@ -145,7 +145,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             }
         };
 
-        let ty = Rc::new(Type::Enum(EnumType {
+        let ty = Arc::new(Type::Enum(EnumType {
             node: node.clone(),
             rep_type,
             default: None,
@@ -201,7 +201,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
 
         a.type_map.insert(
             node.node_id,
-            Rc::new(Type::Struct(StructType {
+            Arc::new(Type::Struct(StructType {
                 node: node.clone(),
                 anon_struct: anon_ty,
                 default: None,
@@ -239,7 +239,7 @@ impl<'ast> Visitor<'ast> for CheckTypeUses<'ast> {
             TypeNameKind::String(_) => Type::String(None),
         };
 
-        a.type_map.insert(node.node_id, Rc::new(ty));
+        a.type_map.insert(node.node_id, Arc::new(ty));
         ControlFlow::Continue(())
     }
 }

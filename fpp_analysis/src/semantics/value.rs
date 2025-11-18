@@ -2,7 +2,7 @@ use crate::semantics::{ArrayType, EnumType, StructType, Type};
 use fpp_ast::FloatKind;
 use rustc_hash::FxHashMap as HashMap;
 use std::ops::Deref;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -32,7 +32,7 @@ impl Value {
         }
     }
 
-    pub fn convert(&self, ty_a: &Rc<Type>) -> Option<Value> {
+    pub fn convert(&self, ty_a: &Arc<Type>) -> Option<Value> {
         match (self.convert_impl(ty_a), self.is_promotable_to_aggregate()) {
             (Some(value), _) => Some(value),
             (None, true) => {
@@ -86,7 +86,7 @@ impl Value {
         }
     }
 
-    fn convert_impl(&self, ty_a: &Rc<Type>) -> Option<Value> {
+    fn convert_impl(&self, ty_a: &Arc<Type>) -> Option<Value> {
         let ty = Type::underlying_type(ty_a);
 
         match &self {
@@ -408,18 +408,18 @@ pub struct AnonArrayValue {
 #[derive(Debug, Clone)]
 pub struct ArrayValue {
     pub anon_array: AnonArrayValue,
-    pub ty: Rc<Type>,
+    pub ty: Arc<Type>,
 }
 
 /** Enum constant values */
 #[derive(Debug, Clone)]
 pub struct EnumConstantValue {
     pub value: (String, i128),
-    ty: Rc<Type>,
+    ty: Arc<Type>,
 }
 
 impl EnumConstantValue {
-    pub fn new(member_name: String, value: i128, ty: Rc<Type>) -> EnumConstantValue {
+    pub fn new(member_name: String, value: i128, ty: Arc<Type>) -> EnumConstantValue {
         match ty.deref() {
             Type::Enum(_) => (),
             _ => {
@@ -451,10 +451,10 @@ pub struct AnonStructValue {
 #[derive(Debug, Clone)]
 pub struct StructValue {
     pub anon_struct: AnonStructValue,
-    ty: Rc<Type>,
+    ty: Arc<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct AbsTypeValue {
-    ty: Rc<Type>,
+    ty: Arc<Type>,
 }

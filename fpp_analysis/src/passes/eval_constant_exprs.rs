@@ -14,7 +14,7 @@ use fpp_ast::{
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct EvalConstantExprs<'ast> {
     super_: UseAnalyzer<'ast, Self>,
@@ -100,7 +100,7 @@ impl<'ast> Visitor<'ast> for EvalConstantExprs<'ast> {
             let value = match a
                 .value_map
                 .get(&value_expr.node_id)?
-                .convert(&Rc::new(Type::Integer))?
+                .convert(&Arc::new(Type::Integer))?
             {
                 Value::Integer(IntegerValue(value)) => value,
                 _ => panic!("expected integer value"),

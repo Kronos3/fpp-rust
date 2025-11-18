@@ -292,21 +292,6 @@ pub struct DefModule {
 }
 
 #[ast]
-#[derive(Debug, Clone, VisitorWalkable)]
-pub struct DefModuleStub {
-    pub name: Ident,
-}
-
-impl From<&DefModule> for DefModuleStub {
-    fn from(value: &DefModule) -> Self {
-        Self {
-            name: value.name.clone(),
-            node_id: value.node_id,
-        }
-    }
-}
-
-#[ast]
 #[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum ModuleMember {
     DefAbsType(DefAbsType),

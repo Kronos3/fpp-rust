@@ -1,4 +1,4 @@
-use crate::{DefModuleStub, Node};
+use crate::Node;
 use std::ops::{ControlFlow, Deref, DerefMut};
 
 macro_rules! visit_signature {
@@ -183,14 +183,6 @@ pub trait Visitor<'ast>: Sized {
         (TlmChannelLimit, visit_tlm_channel_limit),
         (TransitionExpr, visit_transition_expr),
     );
-
-    fn visit_def_module_stub(
-        &self,
-        _: &mut Self::State,
-        _: &DefModuleStub,
-    ) -> ControlFlow<Self::Break> {
-        panic!("DefModuleStub should not be visited")
-    }
 }
 
 /// This is the mutable variant of [Visitor]. It allows making changes to the AST
@@ -288,14 +280,6 @@ pub trait MutVisitor: Sized {
         (TlmChannelLimit, visit_tlm_channel_limit),
         (TransitionExpr, visit_transition_expr),
     );
-
-    fn visit_def_module_stub(
-        &self,
-        _: &mut Self::State,
-        _: &mut DefModuleStub,
-    ) -> ControlFlow<Self::Break> {
-        panic!("DefModuleStub should not be visited")
-    }
 }
 
 /// Trait to wrap all the nodes that have a structure to them

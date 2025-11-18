@@ -17,7 +17,7 @@ use fpp_ast::{
 use fpp_core::Spanned;
 use rustc_hash::FxHashMap as HashMap;
 use std::ops::{ControlFlow, Deref};
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct CheckExprTypes<'ast> {
     super_: UseAnalyzer<'ast, Self>,
@@ -34,7 +34,7 @@ impl<'ast> CheckExprTypes<'ast> {
         &self,
         a: &Analysis,
         expr: &'ast Expr,
-        to_ty: &Rc<Type>,
+        to_ty: &Arc<Type>,
     ) -> TypeConversionResult {
         let from_ty = match a.type_map.get(&expr.node_id) {
             None => return Ok(()),
@@ -45,7 +45,7 @@ impl<'ast> CheckExprTypes<'ast> {
     }
 
     fn check_type_is_numerical(&self, a: &Analysis, expr: &'ast Expr) {
-        match self.convert_type(a, expr, &Rc::new(Type::Integer)) {
+        match self.convert_type(a, expr, &Arc::new(Type::Integer)) {
             Ok(_) => {}
             Err(err) => {
                 SemanticError::TypeConversion {
@@ -236,7 +236,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         // Assign the full expression to an array of the proper size
                         a.type_map.insert(
                             node.node_id,
-                            Rc::new(Type::AnonArray(AnonArrayType {
+                            Arc::new(Type::AnonArray(AnonArrayType {
                                 elt_type: common,
                                 size: Some(array.len()),
                             })),
@@ -335,17 +335,17 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
             }
             ExprKind::Ident(_) => {} // already handled by constantUse
             ExprKind::LiteralBool(_) => {
-                a.type_map.insert(node.node_id, Rc::new(Type::Boolean));
+                a.type_map.insert(node.node_id, Arc::new(Type::Boolean));
             }
             ExprKind::LiteralInt(_) => {
-                a.type_map.insert(node.node_id, Rc::new(Type::Integer));
+                a.type_map.insert(node.node_id, Arc::new(Type::Integer));
             }
             ExprKind::LiteralFloat(_) => {
                 a.type_map
-                    .insert(node.node_id, Rc::new(Type::Float(FloatKind::F64)));
+                    .insert(node.node_id, Arc::new(Type::Float(FloatKind::F64)));
             }
             ExprKind::LiteralString(_) => {
-                a.type_map.insert(node.node_id, Rc::new(Type::String(None)));
+                a.type_map.insert(node.node_id, Arc::new(Type::String(None)));
             }
             ExprKind::Paren(e) => match a.type_map.get(&e.node_id) {
                 Some(ty) => {
@@ -378,7 +378,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
 
                 a.type_map.insert(
                     node.node_id,
-                    Rc::new(Type::AnonStruct(AnonStructType {
+                    Arc::new(Type::AnonStruct(AnonStructType {
                         members: members_out,
                     })),
                 );
@@ -439,15 +439,15 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
                         match self.convert_type(
                             a,
                             every,
-                            &Rc::new(Type::AnonStruct(AnonStructType {
+                            &Arc::new(Type::AnonStruct(AnonStructType {
                                 members: HashMap::from_iter([
                                     (
                                         "seconds".to_string(),
-                                        Rc::new(Type::PrimitiveInt(IntegerKind::U32)),
+                                        Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
                                     ),
                                     (
                                         "useconds".to_string(),
-                                        Rc::new(Type::PrimitiveInt(IntegerKind::U32)),
+                                        Arc::new(Type::PrimitiveInt(IntegerKind::U32)),
                                     ),
                                 ]),
                             })),

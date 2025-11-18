@@ -187,7 +187,7 @@ pub struct CompilerContext<E: DiagnosticEmitter> {
     emitter: Rc<RefCell<E>>,
 }
 
-impl<'e, E: DiagnosticEmitter> CompilerContext<E> {
+impl<E: DiagnosticEmitter> CompilerContext<E> {
     pub fn new(emitter: Rc<RefCell<E>>) -> CompilerContext<E> {
         CompilerContext {
             spans: Default::default(),

@@ -37,7 +37,7 @@ impl<'ast> CheckUses<'ast> {
                         def_loc: symbol.node().span(),
                     });
                 }
-                Some(scope) => scope.borrow(),
+                Some(scope) => scope,
             }
         };
 
@@ -61,7 +61,7 @@ impl<'ast> CheckUses<'ast> {
         node: &QualIdent,
     ) -> SemanticResult<Symbol> {
         match &node {
-            QualIdent::Unqualified(name) => match a.nested_scope.get(ng, &name.data) {
+            QualIdent::Unqualified(name) => match a.symbol_get(ng, &name.data) {
                 None => Err(SemanticError::UndefinedSymbol {
                     ng: ng.to_string(),
                     name: name.data.clone(),
@@ -146,7 +146,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
                     // The left side is some symbol other than a constant (a qualifier),
                     // look up this symbol and add it to the use-def entries
                     Some(qual) => {
-                        let scope = a.symbol_scope_map.get(qual).unwrap().borrow();
+                        let scope = a.symbol_scope_map.get(qual).unwrap();
                         match scope.get(NameGroup::Value, &id.data) {
                             None => {
                                 SemanticError::UndefinedSymbol {
@@ -169,7 +169,7 @@ impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
                     }
                 }
             }
-            ExprKind::Ident(id) => match a.nested_scope.get(NameGroup::Value, id) {
+            ExprKind::Ident(id) => match a.symbol_get(NameGroup::Value, id) {
                 None => {
                     SemanticError::UndefinedSymbol {
                         ng: NameGroup::Value.to_string(),
