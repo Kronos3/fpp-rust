@@ -92,13 +92,12 @@ fn literals() {
     assert_token_eq(&tokens[idx.next()], LiteralString, "");
     assert_token_eq(&tokens[idx.next()], LiteralString, "string \\\"");
 
-    // TODO(tumbar) Fix the multiline string parsing
     assert_token_eq(
         &tokens[idx.next()],
-        LiteralString,
-        "\"\"\n    a multiline literal string with \\\"\\\"\\\" some \\escapes \" \"\n    \"\"",
+        LiteralMultilineString { indent: 4 },
+        "\na multiline literal string with \\\"\\\"\\\" some \\escapes \" \"\n",
     );
-    assert_token_eq(&tokens[idx.next()], LiteralString, "\"\"\"\"");
+    assert_token_eq(&tokens[idx.next()], LiteralMultilineString { indent: 0 }, "");
     assert_eq!(tokens.len(), 12);
 }
 

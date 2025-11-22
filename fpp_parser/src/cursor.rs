@@ -195,9 +195,18 @@ impl<'a> Cursor<'a> {
                     ));
                 }
 
-                TokenKind::LiteralMultilineString => {
-                    let text = if tok.len >= 6 {
-                        self.content[prev + 3..=(prev + tok.len - 6)].to_string()
+                TokenKind::LiteralMultilineString { indent } => {
+                    let text = if tok.len >= 6 && self.content.len() > prev + tok.len {
+                        let raw_text = self.content[prev + 3..(prev + 3 + tok.len - 6)].to_string();
+                        let lines: Vec<_> = raw_text.split('\n').map(|l| {
+                            if l.len() > indent as usize {
+                                l[(indent as usize)..].to_string()
+                            } else {
+                                "".to_string()
+                            }
+                        })
+                            .collect();
+                        lines.join("\n")
                     } else {
                         "".to_string()
                     };

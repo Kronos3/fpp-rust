@@ -2463,7 +2463,7 @@ impl<'a> Parser<'a> {
                     kind: ExprKind::Paren(Box::new(e)),
                 })
             }
-            LiteralString => {
+            LiteralString | LiteralMultilineString { .. } => {
                 let first = self.next().unwrap();
                 Ok(Expr {
                     node_id: self.node(first.span()),
@@ -2534,7 +2534,7 @@ impl<'a> Parser<'a> {
 
                 (token, inner_span)
             }
-            LiteralMultilineString => {
+            LiteralMultilineString { .. } => {
                 let token = self.next().unwrap();
                 let inner_span = fpp_core::Span::new(
                     token.span.file(),
@@ -2548,7 +2548,7 @@ impl<'a> Parser<'a> {
             _ => {
                 return Err(self.cursor.err_expected_one_of(
                     "string literal expected",
-                    vec![LiteralString, LiteralMultilineString],
+                    vec![LiteralString],
                 ));
             }
         };

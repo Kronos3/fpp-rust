@@ -1689,10 +1689,10 @@
                             },
                         },
                         code: LitString {
-                            data: "\"\"\n    line 1\n      line 2\n    line 3\n    \"\"",
+                            data: "\nline 1\n  line 2\nline 3\n",
                             inner_span: Span {
-                                start: [ local path prefix ]/syntax.fpp:124:26,
-                                end: [ local path prefix ]/syntax.fpp:128:8,
+                                start: [ local path prefix ]/syntax.fpp:124:28,
+                                end: [ local path prefix ]/syntax.fpp:126:14,
                             },
                             node_id: Span {
                                 start: [ local path prefix ]/syntax.fpp:124:25,
@@ -3735,7 +3735,7 @@
                 },
                 value: Expr {
                     kind: LiteralString(
-                        "\"\"\n                                  line 1\n                                  line 2\n                                  line 3\n                                  \"\"",
+                        "\nline 1\nline 2\nline 3\n",
                     ),
                     node_id: Span {
                         start: [ local path prefix ]/syntax.fpp:302:36,

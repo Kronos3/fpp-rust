@@ -393,7 +393,7 @@ impl<'a> Lexer<'a> {
                 Some('\"') => {
                     if self.first() == '\"' && self.second() == '\"' {
                         self.bump_bytes(2);
-                        return LiteralString;
+                        return LiteralMultilineString { indent: self.indent };
                     }
                 }
 
@@ -405,7 +405,7 @@ impl<'a> Lexer<'a> {
                 Some(_) => {}
                 None => {
                     self.error(0, "unclosed multi-line string literal");
-                    return LiteralString;
+                    return LiteralMultilineString { indent: self.indent };
                 }
             }
         }

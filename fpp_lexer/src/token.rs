@@ -1,4 +1,3 @@
-
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum KeywordKind {
     Action,
@@ -138,7 +137,7 @@ pub enum TokenKind {
     LiteralFloat,
     LiteralInt,
     LiteralString,
-    LiteralMultilineString,
+    LiteralMultilineString { indent: u32 },
 
     // Keywords,
     Keyword(KeywordKind),
@@ -179,7 +178,7 @@ impl std::fmt::Display for TokenKind {
             TokenKind::LiteralFloat => "literal float",
             TokenKind::LiteralInt => "literal integer",
             TokenKind::LiteralString => "literal string",
-            TokenKind::LiteralMultilineString => "literal multiline string",
+            TokenKind::LiteralMultilineString { .. } => "literal multiline string",
             TokenKind::Keyword(keyword) => return std::fmt::Display::fmt(&keyword, f),
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
