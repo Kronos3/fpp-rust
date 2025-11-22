@@ -52,6 +52,10 @@ impl Span {
         with(|w| w.span_end(self))
     }
 
+    pub fn len(&self) -> usize {
+        with(|w| w.span_len(self))
+    }
+
     /// The path to the source file in which this span occurs, for display purposes.
     pub fn file(&self) -> SourceFile {
         with(|w| w.span_file(self))

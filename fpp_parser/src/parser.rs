@@ -1,10 +1,11 @@
 use crate::cursor::Cursor;
 use crate::error::{ParseError, ParseResult};
-use crate::token::KeywordKind::*;
-use crate::token::TokenKind::*;
-use crate::token::{KeywordKind, Token, TokenKind};
+use crate::token::Token;
 use fpp_ast::*;
 use fpp_core::{SourceFile, Spanned};
+use fpp_lexer::KeywordKind::*;
+use fpp_lexer::TokenKind::*;
+use fpp_lexer::{KeywordKind, TokenKind};
 
 pub struct Parser<'a> {
     cursor: Cursor<'a>,
@@ -30,7 +31,9 @@ pub fn parse<T>(
         include_span,
     };
 
-    entry(&mut parser)
+    let out = entry(&mut parser);
+    parser.cursor.emit_errors();
+    out
 }
 
 impl<'a> Parser<'a> {
@@ -2519,10 +2522,40 @@ impl<'a> Parser<'a> {
     }
 
     fn lit_string(&mut self) -> ParseResult<LitString> {
-        let tok = self.consume(LiteralString)?;
+        let (tok, inner_span) = match self.peek(0) {
+            LiteralString => {
+                let token = self.next().unwrap();
+                let inner_span = fpp_core::Span::new(
+                    token.span.file(),
+                    token.span.start().pos() + 1,
+                    token.text().len(),
+                    token.span.including_span(),
+                );
+
+                (token, inner_span)
+            }
+            LiteralMultilineString => {
+                let token = self.next().unwrap();
+                let inner_span = fpp_core::Span::new(
+                    token.span.file(),
+                    token.span.start().pos() + 3,
+                    token.text().len(),
+                    token.span.including_span(),
+                );
+
+                (token, inner_span)
+            }
+            _ => {
+                return Err(self.cursor.err_expected_one_of(
+                    "string literal expected",
+                    vec![LiteralString, LiteralMultilineString],
+                ));
+            }
+        };
+
         Ok(LitString {
             node_id: self.node(tok.span()),
-            inner_span: self.cursor.inner_span().unwrap(),
+            inner_span,
             data: tok.text().to_string(),
         })
     }

@@ -1,7 +1,6 @@
 mod cursor;
 mod error;
 mod include;
-mod lexer;
 mod parser;
 mod token;
 

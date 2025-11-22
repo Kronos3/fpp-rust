@@ -97,6 +97,12 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
             .position(data.start + (data.length as BytePos))
     }
 
+    fn span_len(&self, s: &Span) -> usize {
+        let ctx = self.ctx.borrow();
+        let data = ctx.span_get(s);
+        data.length
+    }
+
     fn span_file(&self, s: &Span) -> SourceFile {
         let ctx = self.ctx.borrow();
         SourceFile {
@@ -143,6 +149,7 @@ pub(crate) trait CompilerInterface {
     ) -> Span;
     fn span_start(&self, s: &Span) -> Position;
     fn span_end(&self, s: &Span) -> Position;
+    fn span_len(&self, s: &Span) -> usize;
     fn span_file(&self, s: &Span) -> SourceFile;
     fn span_include_span(&self, s: &Span) -> Option<Span>;
 

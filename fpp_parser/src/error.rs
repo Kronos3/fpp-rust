@@ -1,6 +1,6 @@
-use crate::token::TokenKind;
 use fpp_core::{Diagnostic, Level, Position, Span};
 use std::fmt::Formatter;
+use fpp_lexer::TokenKind;
 
 #[derive(Debug)]
 pub(crate) enum ParseError {

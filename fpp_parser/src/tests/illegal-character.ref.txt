@@ -16,10 +16,10 @@
   = note: expected one of type, array, constant, enum, struct, component, active, passive, queued, interface, module, port, state, topology, include, locate
   = note: got identifier
 
- --> [ local path prefix ]/illegal-character.fpp:4:6
+ --> [ local path prefix ]/illegal-character.fpp:4:8
   |
 4 | tok2 \ illegal
-  |      ^^^^^^^^^ syntax error: invalid token
+  |        ^^^^^^^ syntax error: invalid token
   |
-  = error: Non whitespace character illegal after line continuation
+  = error: non whitespace character illegal after line continuation
 
