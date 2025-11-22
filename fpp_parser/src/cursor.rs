@@ -180,7 +180,7 @@ impl<'a> Cursor<'a> {
 
                 TokenKind::LiteralString => {
                     let text = if tok.len >= 2 {
-                        self.content[prev + 1..=(prev + tok.len - 2)].to_string()
+                        self.content[prev + 1..(prev + 1 + tok.len - 2)].to_string()
                     } else {
                         "".to_string()
                     };
@@ -196,7 +196,7 @@ impl<'a> Cursor<'a> {
                 }
 
                 TokenKind::LiteralMultilineString { indent } => {
-                    let text = if tok.len >= 6 && self.content.len() > prev + tok.len {
+                    let text = if tok.len >= 6 {
                         let raw_text = self.content[prev + 3..(prev + 3 + tok.len - 6)].to_string();
                         let lines: Vec<_> = raw_text.split('\n').map(|l| {
                             if l.len() > indent as usize {
