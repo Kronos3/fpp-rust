@@ -16,7 +16,7 @@ is that this parser simply groups tokens in syntactical nodes while the
 meaning is lossy meaning you cannot recreate the original token stream
 from the AST. This parser's grouping is lossless meaning the original
 source text can be recreated. This makes it a good fit for operations
-and transformations that operate on the source text rather on the
+and transformations that operate on the source text rather than
 language semantics.
 
 This parser interfaces with the language server to provide semantic
