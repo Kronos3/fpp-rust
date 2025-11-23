@@ -10,5 +10,15 @@ is copied directly from the Rust Analyzer source. Nearly all the code in the
 top level of the crate is directly from Rust Analyzer. The FPP parsing code
 can be found in `src/grammar`.
 
-This parser will interface with the language server to provide semantic
-highlighting, edits, formatting, auto-complete etc.
+The primary difference between this parser and the parser in `fpp_parser`
+is that this parser simply groups tokens in syntactical nodes while the
+`fpp_parser` extracts semantic meaning from the token stream. The semantic
+meaning is lossy meaning you cannot recreate the original token stream
+from the AST. This parser's grouping is lossless meaning the original
+source text can be recreated. This makes it a good fit with operations
+and transformations that operate on the source text rather on the
+language semantics.
+
+This parser interfaces with the language server to provide semantic
+highlighting, edits, formatting, auto-complete etc. It can also be
+used standalone for formatting.

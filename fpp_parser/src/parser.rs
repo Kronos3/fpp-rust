@@ -231,24 +231,12 @@ impl<'a> Parser<'a> {
                 }
             }
             Keyword(Struct) => Ok(ComponentMember::DefStruct(self.def_struct()?)),
-            Keyword(Async | Guarded | Sync) => {
-                if self.peek(1) == Keyword(Command) {
-                    Ok(ComponentMember::SpecCommand(self.spec_command()?))
-                } else {
-                    Ok(ComponentMember::SpecPortInstance(
-                        self.spec_port_instance()?,
-                    ))
-                }
+            Keyword(Async | Guarded | Sync) if self.peek(1) == Keyword(Command) => {
+                Ok(ComponentMember::SpecCommand(self.spec_command()?))
             }
-            Keyword(Output) => Ok(ComponentMember::SpecPortInstance(
-                self.spec_port_instance()?,
-            )),
-            Keyword(Command | Text | Time) => {
-                // Special command port
-                Ok(ComponentMember::SpecPortInstance(
-                    self.spec_port_instance()?,
-                ))
-            }
+            Keyword(Async | Guarded | Sync | Output | Command | Text | Time) => Ok(
+                ComponentMember::SpecPortInstance(self.spec_port_instance()?),
+            ),
             Keyword(Product) => {
                 if self.peek(1) == Keyword(Container) {
                     Ok(ComponentMember::SpecContainer(self.spec_container()?))
@@ -277,25 +265,14 @@ impl<'a> Parser<'a> {
             Keyword(Match) => Ok(ComponentMember::SpecPortMatching(
                 self.spec_port_matching()?,
             )),
-            Keyword(External) => Ok(ComponentMember::SpecParam(self.spec_param()?)),
-            Keyword(Param) => {
-                if self.peek(1) == Keyword(Port) {
-                    Ok(ComponentMember::SpecPortInstance(
-                        self.spec_port_instance()?,
-                    ))
-                } else {
-                    Ok(ComponentMember::SpecParam(self.spec_param()?))
-                }
-            }
-            Keyword(Telemetry) => {
-                if self.peek(1) == Keyword(Port) {
-                    Ok(ComponentMember::SpecPortInstance(
-                        self.spec_port_instance()?,
-                    ))
-                } else {
-                    Ok(ComponentMember::SpecTlmChannel(self.spec_tlm_channel()?))
-                }
-            }
+            Keyword(Param) if self.peek(1) == Keyword(Port) => Ok(
+                ComponentMember::SpecPortInstance(self.spec_port_instance()?),
+            ),
+            Keyword(Param | External) => Ok(ComponentMember::SpecParam(self.spec_param()?)),
+            Keyword(Telemetry) if self.peek(1) == Keyword(Port) => Ok(
+                ComponentMember::SpecPortInstance(self.spec_port_instance()?),
+            ),
+            Keyword(Telemetry) => Ok(ComponentMember::SpecTlmChannel(self.spec_tlm_channel()?)),
             Keyword(Import) => Ok(ComponentMember::SpecInterfaceImport(
                 self.spec_import_interface()?,
             )),
@@ -1686,7 +1663,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn spec_port_general(&mut self) -> ParseResult<SpecPortInstance> {
+    fn spec_port_instance_general(&mut self) -> ParseResult<SpecPortInstance> {
         let first = match self.peek_span(0) {
             Some(span) => span,
             None => {
@@ -1773,7 +1750,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn spec_port_special(&mut self) -> ParseResult<SpecPortInstance> {
+    fn spec_port_instance_special(&mut self) -> ParseResult<SpecPortInstance> {
         let first = match self.peek_span(0) {
             Some(span) => span,
             None => {
@@ -1933,11 +1910,11 @@ impl<'a> Parser<'a> {
     fn spec_port_instance(&mut self) -> ParseResult<SpecPortInstance> {
         match self.peek(0) {
             Keyword(Async) | Keyword(Guarded) | Keyword(Sync) => match self.peek(1) {
-                Keyword(Input) => self.spec_port_general(),
-                _ => self.spec_port_special(),
+                Keyword(Input) => self.spec_port_instance_general(),
+                _ => self.spec_port_instance_special(),
             },
-            Keyword(Output) => self.spec_port_general(),
-            _ => self.spec_port_special(),
+            Keyword(Output) => self.spec_port_instance_general(),
+            _ => self.spec_port_instance_special(),
         }
     }
 
@@ -2546,10 +2523,9 @@ impl<'a> Parser<'a> {
                 (token, inner_span)
             }
             _ => {
-                return Err(self.cursor.err_expected_one_of(
-                    "string literal expected",
-                    vec![LiteralString],
-                ));
+                return Err(self
+                    .cursor
+                    .err_expected_one_of("string literal expected", vec![LiteralString]));
             }
         };
 

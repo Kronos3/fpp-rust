@@ -1,9 +1,9 @@
 use crate::event::Event;
+use crate::input::Input;
 use crate::token_set::TokenSet;
 use crate::SyntaxKind::{self, *};
-use std::cell::Cell;
 use drop_bomb::DropBomb;
-use crate::input::Input;
+use std::cell::Cell;
 
 /// `Parser` struct provides the low-level API for
 /// navigating through the stream of tokens and
@@ -82,27 +82,9 @@ impl<'t> Parser<'t> {
         true
     }
 
-    pub(crate) fn eat_contextual_kw(&mut self, kind: SyntaxKind) -> bool {
-        if !self.at_contextual_kw(kind) {
-            return false;
-        }
-        self.bump_remap(kind);
-        true
-    }
-
     /// Checks if the current token is in `kinds`.
     pub(crate) fn at_ts(&self, kinds: TokenSet) -> bool {
         kinds.contains(self.current())
-    }
-
-    /// Checks if the current token is contextual keyword `kw`.
-    pub(crate) fn at_contextual_kw(&self, kw: SyntaxKind) -> bool {
-        self.inp.contextual_kind(self.pos) == kw
-    }
-
-    /// Checks if the nth token is contextual keyword `kw`.
-    pub(crate) fn nth_at_contextual_kw(&self, n: usize, kw: SyntaxKind) -> bool {
-        self.inp.contextual_kind(self.pos + n) == kw
     }
 
     /// Starts a new node in the syntax tree. All nodes and tokens

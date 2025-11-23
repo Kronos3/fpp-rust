@@ -1,6 +1,6 @@
 //! See [`Input`].
 
-use crate::SyntaxKind;
+use crate::syntax::SyntaxKind;
 
 #[allow(non_camel_case_types)]
 type bits = u64;
@@ -15,7 +15,6 @@ type bits = u64;
 pub struct Input {
     kind: Vec<SyntaxKind>,
     joint: Vec<bits>,
-    contextual_kind: Vec<SyntaxKind>,
 }
 
 /// `pub` impl used by callers to create `Tokens`.
@@ -25,16 +24,15 @@ impl Input {
         Self {
             kind: Vec::with_capacity(capacity),
             joint: Vec::with_capacity(capacity / size_of::<bits>()),
-            contextual_kind: Vec::with_capacity(capacity),
         }
     }
     #[inline]
     pub fn push(&mut self, kind: SyntaxKind) {
-        self.push_impl(kind, SyntaxKind::EOF)
+        self.push_impl(kind)
     }
     #[inline]
-    pub fn push_ident(&mut self, contextual_kind: SyntaxKind) {
-        self.push_impl(SyntaxKind::IDENT, contextual_kind)
+    pub fn push_ident(&mut self) {
+        self.push_impl(SyntaxKind::IDENT)
     }
     /// Sets jointness for the last token we've pushed.
     ///
@@ -59,13 +57,12 @@ impl Input {
         self.joint[idx] |= 1 << b_idx;
     }
     #[inline]
-    fn push_impl(&mut self, kind: SyntaxKind, contextual_kind: SyntaxKind) {
+    fn push_impl(&mut self, kind: SyntaxKind) {
         let idx = self.len();
         if idx.is_multiple_of(bits::BITS as usize) {
             self.joint.push(0);
         }
         self.kind.push(kind);
-        self.contextual_kind.push(contextual_kind);
     }
 }
 
@@ -73,12 +70,6 @@ impl Input {
 impl Input {
     pub(crate) fn kind(&self, idx: usize) -> SyntaxKind {
         self.kind.get(idx).copied().unwrap_or(SyntaxKind::EOF)
-    }
-    pub(crate) fn contextual_kind(&self, idx: usize) -> SyntaxKind {
-        self.contextual_kind
-            .get(idx)
-            .copied()
-            .unwrap_or(SyntaxKind::EOF)
     }
     pub(crate) fn is_joint(&self, n: usize) -> bool {
         let (idx, b_idx) = self.bit_index(n);

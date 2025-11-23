@@ -109,7 +109,7 @@ pub enum SyntaxKind {
     SIZE_KW,
     STACK_KW,
     STATE_KW,
-    STRING__KW,
+    STRING_KW,
     STRUCT_KW,
     SYNC_KW,
     TELEMETRY_KW,
@@ -157,9 +157,84 @@ pub enum SyntaxKind {
     ERROR,
     UNKNOWN,
 
-    // Composite Nodes
-    LIST, // `(+ 2 3)`
-    ATOM, // `+`, `15`, wraps a WORD token
+    // Definitions
+    DEF_ALIAS_TYPE,
+    DEF_ABSTRACT_TYPE,
+    DEF_ARRAY,
+    DEF_STRUCT,
+    DEF_ENUM,
+    DEF_ENUM_CONSTANT,
+    DEF_CONSTANT,
+    DEF_COMPONENT,
+    DEF_MODULE,
+    DEF_PORT,
+    DEF_INTERFACE,
+    DEF_COMPONENT_INSTANCE,
+
+    DEF_STATE_MACHINE,
+    DEF_STATE,
+    DEF_SIGNAL,
+    DEF_ACTION,
+    DEF_GUARD,
+    DEF_CHOICE,
+
+    // Specifiers
+    SPEC_COMMAND,
+    SPEC_PORT_INSTANCE_GENERAL,
+    SPEC_PORT_INSTANCE_SPECIAL,
+    SPEC_CONTAINER,
+    SPEC_RECORD,
+    SPEC_EVENT,
+    SPEC_TELEMETRY,
+    SPEC_INTERFACE_IMPORT,
+    SPEC_STATE_MACHINE_INSTANCE,
+    SPEC_INITIAL_TRANSITION,
+    SPEC_STATE_ENTRY,
+    SPEC_STATE_EXIT,
+    SPEC_STATE_TRANSITION,
+    SPEC_LOC,
+    SPEC_INIT,
+
+    // Helper nodes
+    NAME,
+    NAME_REF,
+    TYPE_NAME,
+    SIZE,
+    DEFAULT,
+    FORMAT,
+    OPCODE,
+    PRIORITY,
+    STRUCT_MEMBER_LIST,
+    STRUCT_MEMBER,
+    ENUM_MEMBER_LIST,
+    FORMAL_PARAM_LIST,
+    FORMAL_PARAM,
+    QUEUE_FULL,
+    ID,
+    DEFAULT_PRIORITY,
+    EVENT_THROTTLE,
+    EVERY,
+    SET_OPCODE,
+    SAVE_OPCODE,
+    LIMIT_SEQUENCE,
+    LIMIT,
+    MODULE_MEMBER_LIST,
+    STATE_MACHINE_MEMBER_LIST,
+    STATE_MEMBER_LIST,
+    COMPONENT_MEMBER_LIST,
+    INTERFACE_MEMBER_LIST,
+    THEN_CLAUSE,
+    ELSE_CLAUSE,
+    DO_EXPR,
+    TRANSITION_OR_DO,
+    TRANSITION_EXPR,
+    BASE_ID,
+    COMPONENT_INSTANCE_TYPE,
+    QUEUE_SIZE,
+    STACK_SIZE,
+    CPU,
+    INIT_SPEC_LIST,
+
     ROOT,
 
     #[doc(hidden)]
@@ -201,34 +276,4 @@ impl rowan::Language for FppLang {
     fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
         kind.into()
     }
-}
-
-/// GreenNode is an immutable tree, which is cheap to change,
-/// but doesn't contain offsets and parent pointers.
-use rowan::GreenNode;
-
-
-/// You can construct GreenNodes by hand, but a builder
-/// is helpful for top-down parsers: it maintains a stack
-/// of currently in-progress nodes
-use rowan::GreenNodeBuilder;
-
-
-/// The parse results are stored as a "green tree".
-/// We'll discuss working with the results later
-struct Parse {
-    green_node: GreenNode,
-    #[allow(unused)]
-    errors: Vec<String>,
-}
-
-pub(crate) struct Parser {
-    /// input tokens, including whitespace,
-    /// in *reverse* order.
-    tokens: Vec<(SyntaxKind, String)>,
-    /// the in-progress tree.
-    builder: GreenNodeBuilder<'static>,
-    /// the list of syntax errors we've accumulated
-    /// so far.
-    errors: Vec<String>,
 }
