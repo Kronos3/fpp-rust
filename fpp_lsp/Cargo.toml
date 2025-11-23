@@ -1,0 +1,18 @@
+[package]
+name = "fpp_lsp"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lsp-server = "=0.7.9"
+fpp_ast = { path = "../fpp_ast" }
+fpp_core = { path = "../fpp_core" }
+fpp_fs = { path = "../fpp_fs" }
+fpp_analysis = { path = "../fpp_analysis" }
+serde_json = "1.0.145"
+lsp-types = "0.97.0"
+rustc-hash = "2.1.1"
+log = "0.4.28"
+serde = { version = "1.0.228", features = ["derive"] }
+tracing = "0.1.41"
+anyhow = "1.0.100"

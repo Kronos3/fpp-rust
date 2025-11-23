@@ -10,12 +10,23 @@ pub struct Cursor<'a> {
     /// The lexer only tells us the length of the next tokens
     /// We need to track the current position in the file
     pos: usize,
+
+    /// File contents
     content: &'a str,
+
+    /// The source file we are parsing
     file: SourceFile,
+
+    /// The span of the `include` that brought in this file
     include_span: Option<Span>,
+
+    /// Parsing lookaheads which are ready to be consumed
+    lookaheads: VecDeque<Token>,
+
+    /// Lexing lookahead which still needs to be pulled through the cursor
     lookahead: Option<fpp_lexer::Token>,
 
-    token_queue: VecDeque<Token>,
+    /// Tracks the last consumed span for easily building spans across many tokens
     last_consumed_span: Span,
 }
 
@@ -30,7 +41,7 @@ impl<'a> Cursor<'a> {
             pos: 0,
             content,
             file: source_file,
-            token_queue: Default::default(),
+            lookaheads: Default::default(),
             last_consumed_span: Span::new(source_file, 1, 0, None),
             include_span,
             lookahead: None,
@@ -198,13 +209,15 @@ impl<'a> Cursor<'a> {
                 TokenKind::LiteralMultilineString { indent } => {
                     let text = if tok.len >= 6 {
                         let raw_text = self.content[prev + 3..(prev + 3 + tok.len - 6)].to_string();
-                        let lines: Vec<_> = raw_text.split('\n').map(|l| {
-                            if l.len() > indent as usize {
-                                l[(indent as usize)..].to_string()
-                            } else {
-                                "".to_string()
-                            }
-                        })
+                        let lines: Vec<_> = raw_text
+                            .split('\n')
+                            .map(|l| {
+                                if l.len() > indent as usize {
+                                    l[(indent as usize)..].to_string()
+                                } else {
+                                    "".to_string()
+                                }
+                            })
                             .collect();
                         lines.join("\n")
                     } else {
@@ -277,16 +290,16 @@ impl<'a> Cursor<'a> {
     }
 
     fn peek_internal(&mut self, n: usize) -> Option<&Token> {
-        if self.token_queue.len() > n {
-            Some(self.token_queue.get(n).unwrap())
+        if self.lookaheads.len() > n {
+            Some(self.lookaheads.get(n).unwrap())
         } else {
             // Queue up as many tokens as we need
-            while self.token_queue.len() <= n {
+            while self.lookaheads.len() <= n {
                 let tok = self.next_internal()?;
-                self.token_queue.push_back(tok);
+                self.lookaheads.push_back(tok);
             }
 
-            Some(self.token_queue.get(n).unwrap())
+            Some(self.lookaheads.get(n).unwrap())
         }
     }
 
@@ -358,7 +371,7 @@ impl<'a> Cursor<'a> {
     /// Returns None if EOF has been reached
     pub fn next(&mut self) -> Option<Token> {
         // Try to pull token off the queue
-        let tok = match self.token_queue.pop_front() {
+        let tok = match self.lookaheads.pop_front() {
             // No more tokens in our queue, go to the lexer
             None => self.next_internal(),
             Some(tok) => Some(tok),

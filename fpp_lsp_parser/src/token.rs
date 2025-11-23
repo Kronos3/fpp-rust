@@ -1,0 +1,234 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[allow(non_camel_case_types)]
+#[repr(u16)]
+pub enum SyntaxKind {
+    #[doc(hidden)]
+    TOMBSTONE,
+    #[doc(hidden)]
+    EOF,
+
+    IDENT,
+    POST_ANNOTATION,
+    PRE_ANNOTATION,
+
+    LITERAL_FLOAT,
+    LITERAL_INT,
+    LITERAL_STRING,
+
+    // Keywords
+    ACTION_KW,
+    ACTIVE_KW,
+    ACTIVITY_KW,
+    ALWAYS_KW,
+    ARRAY_KW,
+    ASSERT_KW,
+    ASYNC_KW,
+    AT_KW,
+    BASE_KW,
+    BLOCK_KW,
+    BOOL_KW,
+    CHANGE_KW,
+    COMMAND_KW,
+    COMPONENT_KW,
+    CONNECTIONS_KW,
+    CONSTANT_KW,
+    CONTAINER_KW,
+    CPU_KW,
+    DEFAULT_KW,
+    DIAGNOSTIC_KW,
+    DO_KW,
+    DROP_KW,
+    ELSE_KW,
+    ENTER_KW,
+    ENTRY_KW,
+    ENUM_KW,
+    EVENT_KW,
+    EVERY_KW,
+    EXIT_KW,
+    EXTERNAL_KW,
+    F32_KW,
+    F64_KW,
+    FALSE_KW,
+    FATAL_KW,
+    FORMAT_KW,
+    GET_KW,
+    GROUP_KW,
+    GUARD_KW,
+    GUARDED_KW,
+    HEALTH_KW,
+    HIGH_KW,
+    HOOK_KW,
+    I16_KW,
+    I32_KW,
+    I64_KW,
+    I8_KW,
+    ID_KW,
+    IF_KW,
+    IMPLEMENTS_KW,
+    IMPORT_KW,
+    INCLUDE_KW,
+    INITIAL_KW,
+    INPUT_KW,
+    INSTANCE_KW,
+    INTERFACE_KW,
+    INTERNAL_KW,
+    CHOICE_KW,
+    LOCATE_KW,
+    LOW_KW,
+    MACHINE_KW,
+    MATCH_KW,
+    MODULE_KW,
+    OMIT_KW,
+    ON_KW,
+    OPCODE_KW,
+    ORANGE_KW,
+    OUTPUT_KW,
+    PACKET_KW,
+    PACKETS_KW,
+    PARAM_KW,
+    PASSIVE_KW,
+    PHASE_KW,
+    PORT_KW,
+    PRIORITY_KW,
+    PRODUCT_KW,
+    QUEUE_KW,
+    QUEUED_KW,
+    RECORD_KW,
+    RECV_KW,
+    RED_KW,
+    REF_KW,
+    REG_KW,
+    REQUEST_KW,
+    RESP_KW,
+    SAVE_KW,
+    SEND_KW,
+    SERIAL_KW,
+    SET_KW,
+    SEVERITY_KW,
+    SIGNAL_KW,
+    SIZE_KW,
+    STACK_KW,
+    STATE_KW,
+    STRING__KW,
+    STRUCT_KW,
+    SYNC_KW,
+    TELEMETRY_KW,
+    TEXT_KW,
+    THROTTLE_KW,
+    TIME_KW,
+    TOPOLOGY_KW,
+    TRUE_KW,
+    TYPE_KW,
+    U16_KW,
+    U32_KW,
+    U64_KW,
+    U8_KW,
+    UNMATCHED_KW,
+    UPDATE_KW,
+    WARNING_KW,
+    WITH_KW,
+    YELLOW_KW,
+
+    // Symbols
+    COLON,
+    COMMA,
+    DOT,
+    EOL,
+    EQUALS,
+
+    LEFT_PAREN,
+    LEFT_CURLY,
+    LEFT_SQUARE,
+
+    RIGHT_PAREN,
+    RIGHT_CURLY,
+    RIGHT_SQUARE,
+
+    RIGHT_ARROW,
+    MINUS,
+    PLUS,
+    SEMI,
+    SLASH,
+    STAR,
+
+    // Special
+    WHITESPACE,
+    COMMENT,
+    ERROR,
+    UNKNOWN,
+
+    // Composite Nodes
+    LIST, // `(+ 2 3)`
+    ATOM, // `+`, `15`, wraps a WORD token
+    ROOT,
+
+    #[doc(hidden)]
+    __LAST,
+}
+
+use SyntaxKind::*;
+
+impl From<u16> for SyntaxKind {
+    #[inline]
+    fn from(d: u16) -> SyntaxKind {
+        assert!(d <= (SyntaxKind::__LAST as u16));
+        unsafe { std::mem::transmute::<u16, SyntaxKind>(d) }
+    }
+}
+
+/// Some boilerplate is needed, as rowan settled on using its own
+/// `struct SyntaxKind(u16)` internally, instead of accepting the
+/// user's `enum SyntaxKind` as a type parameter.
+///
+/// First, to easily pass the enum variants into rowan via `.into()`:
+impl From<SyntaxKind> for rowan::SyntaxKind {
+    fn from(kind: SyntaxKind) -> Self {
+        Self(kind as u16)
+    }
+}
+
+/// Second, implementing the `Language` trait teaches rowan to convert between
+/// these two SyntaxKind types, allowing for a nicer SyntaxNode API where
+/// "kinds" are values from our `enum SyntaxKind`, instead of plain u16 values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum FppLang {}
+impl rowan::Language for FppLang {
+    type Kind = SyntaxKind;
+    fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
+        assert!(raw.0 <= ROOT as u16);
+        unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
+    }
+    fn kind_to_raw(kind: Self::Kind) -> rowan::SyntaxKind {
+        kind.into()
+    }
+}
+
+/// GreenNode is an immutable tree, which is cheap to change,
+/// but doesn't contain offsets and parent pointers.
+use rowan::GreenNode;
+
+
+/// You can construct GreenNodes by hand, but a builder
+/// is helpful for top-down parsers: it maintains a stack
+/// of currently in-progress nodes
+use rowan::GreenNodeBuilder;
+
+
+/// The parse results are stored as a "green tree".
+/// We'll discuss working with the results later
+struct Parse {
+    green_node: GreenNode,
+    #[allow(unused)]
+    errors: Vec<String>,
+}
+
+pub(crate) struct Parser {
+    /// input tokens, including whitespace,
+    /// in *reverse* order.
+    tokens: Vec<(SyntaxKind, String)>,
+    /// the in-progress tree.
+    builder: GreenNodeBuilder<'static>,
+    /// the list of syntax errors we've accumulated
+    /// so far.
+    errors: Vec<String>,
+}
