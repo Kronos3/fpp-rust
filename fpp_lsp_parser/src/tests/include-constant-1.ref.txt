@@ -8,7 +8,8 @@ ROOT@0..50
     EQUALS@11..12 "="
     WHITESPACE@12..13 " "
     EXPR@13..14
-      LITERAL_INT@13..14 "1"
+      EXPR_LITERAL@13..14
+        LITERAL_INT@13..14 "1"
   EOL@14..16 "\n\n"
   SPEC_INCLUDE@16..49
     INCLUDE_KW@16..23 "include"

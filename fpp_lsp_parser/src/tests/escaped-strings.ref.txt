@@ -8,7 +8,8 @@ ROOT@0..80
     EQUALS@12..13 "="
     WHITESPACE@13..14 " "
     EXPR@14..18
-      LITERAL_STRING@14..18 "\"\\\"\""
+      EXPR_LITERAL@14..18
+        LITERAL_STRING@14..18 "\"\\\"\""
   EOL@18..19 "\n"
   DEF_CONSTANT@19..37
     CONSTANT_KW@19..27 "constant"
@@ -19,7 +20,8 @@ ROOT@0..80
     EQUALS@31..32 "="
     WHITESPACE@32..33 " "
     EXPR@33..37
-      LITERAL_STRING@33..37 "\"\\\\\""
+      EXPR_LITERAL@33..37
+        LITERAL_STRING@33..37 "\"\\\\\""
   EOL@37..38 "\n"
   DEF_CONSTANT@38..58
     CONSTANT_KW@38..46 "constant"
@@ -30,7 +32,8 @@ ROOT@0..80
     EQUALS@50..51 "="
     WHITESPACE@51..52 " "
     EXPR@52..58
-      LITERAL_STRING@52..58 "\"\\\\\\\"\""
+      EXPR_LITERAL@52..58
+        LITERAL_STRING@52..58 "\"\\\\\\\"\""
   EOL@58..59 "\n"
   DEF_CONSTANT@59..79
     CONSTANT_KW@59..67 "constant"
@@ -41,5 +44,6 @@ ROOT@0..80
     EQUALS@71..72 "="
     WHITESPACE@72..73 " "
     EXPR@73..79
-      LITERAL_STRING@73..79 "\"\\\"\\\\\""
+      EXPR_LITERAL@73..79
+        LITERAL_STRING@73..79 "\"\\\"\\\\\""
   EOL@79..80 "\n"

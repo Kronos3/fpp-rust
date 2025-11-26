@@ -10,7 +10,8 @@ ROOT@0..127
     INDEX_OR_SIZE@15..17
       LEFT_SQUARE@15..16 "["
       EXPR@16..17
-        LITERAL_INT@16..17 "3"
+        EXPR_LITERAL@16..17
+          LITERAL_INT@16..17 "3"
     RIGHT_SQUARE@17..18 "]"
     WHITESPACE@18..19 " "
     TYPE_NAME@19..22
