@@ -2,16 +2,17 @@ ROOT@0..206
   WHITESPACE@0..2 "  "
   COMMENT@2..20 "# constant =     1"
   EOL@20..22 "\n\n"
-  DEF_CONSTANT@22..34
+  DEF_CONSTANT@22..36
     CONSTANT_KW@22..30 "constant"
     WHITESPACE@30..31 " "
     NAME@31..32
       IDENT@31..32 "f"
     WHITESPACE@32..33 " "
     EQUALS@33..34 "="
-  WHITESPACE@34..35 " "
-  ERROR@35..36
-    LITERAL_INT@35..36 "1"
+    WHITESPACE@34..35 " "
+    EXPR@35..36
+      EXPR_LITERAL@35..36
+        LITERAL_INT@35..36 "1"
   EOL@36..38 "\n\n"
   ERROR@38..39
     PLUS@38..39 "+"
@@ -25,16 +26,17 @@ ROOT@0..206
   ERROR@45..46
     IDENT@45..46 "c"
   EOL@46..48 "\n\n"
-  DEF_CONSTANT@48..60
+  DEF_CONSTANT@48..62
     CONSTANT_KW@48..56 "constant"
     WHITESPACE@56..57 " "
     NAME@57..58
       IDENT@57..58 "g"
     WHITESPACE@58..59 " "
     EQUALS@59..60 "="
-  WHITESPACE@60..61 " "
-  ERROR@61..62
-    LITERAL_INT@61..62 "2"
+    WHITESPACE@60..61 " "
+    EXPR@61..62
+      EXPR_LITERAL@61..62
+        LITERAL_INT@61..62 "2"
   EOL@62..64 "\n\n"
   DEF_COMPONENT@64..206
     ACTIVE_KW@64..70 "active"
@@ -44,8 +46,8 @@ ROOT@0..206
     NAME@81..82
       IDENT@81..82 "C"
     WHITESPACE@82..83 " "
-    COMPONENT_MEMBER_LIST@83..206
-      LEFT_CURLY@83..84 "{"
+    LEFT_CURLY@83..84 "{"
+    COMPONENT_MEMBER_LIST@84..206
       EOL@84..85 "\n"
       SPEC_PORT_INSTANCE_SPECIAL@85..108
         WHITESPACE@85..89 "    "
@@ -75,25 +77,23 @@ ROOT@0..206
       ERROR@134..135
         IDENT@134..135 "d"
       EOL@135..137 "\n\n"
-      SPEC_EVENT@137..158
+      SPEC_EVENT@137..167
         WHITESPACE@137..141 "    "
         EVENT_KW@141..146 "event"
         WHITESPACE@146..147 " "
         NAME@147..148
           IDENT@147..148 "i"
         WHITESPACE@148..149 " "
-        FORMAL_PARAM_LIST@149..152
-          LEFT_PAREN@149..150 "("
-          ERROR@150..152
-            EOL@150..152 "\n\n"
+        LEFT_PAREN@149..150 "("
+        FORMAL_PARAM_LIST@150..152
+          EOL@150..152 "\n\n"
         WHITESPACE@152..156 "    "
-        ERROR@156..157
-          RIGHT_PAREN@156..157 ")"
+        RIGHT_PAREN@156..157 ")"
         WHITESPACE@157..158 " "
-        FORMAT@158..158
-      ERROR@158..166
-        SEVERITY_KW@158..166 "severity"
-      WHITESPACE@166..167 " "
+        ERROR@158..166
+          SEVERITY_KW@158..166 "severity"
+        WHITESPACE@166..167 " "
+        FORMAT@167..167
       ERROR@167..174
         WARNING_KW@167..174 "warning"
       WHITESPACE@174..175 " "
@@ -112,35 +112,20 @@ ROOT@0..206
       ERROR@203..204
         LITERAL_INT@203..204 "1"
       EOL@204..206 "\n\n"
-  ERROR@206..206
-error 35..35: expected `;`
 error 38..38: module member expected
 error 40..40: expected `;`
 error 43..43: module member expected
 error 45..45: expected `;`
-error 61..61: expected `;`
-error 84..84: component member expected
 error 125..125: expected PORT_KW
-error 128..128: expected SEMI
-error 129..129: component member expected
-error 130..130: expected SEMI
+error 129..129: expected `SEMI`
 error 131..131: component member expected
-error 133..133: expected SEMI
-error 134..134: component member expected
-error 150..150: expected formal parameter
-error 156..156: severity level expected
-error 158..158: expected SEMI
-error 158..158: component member expected
-error 166..166: expected SEMI
-error 167..167: component member expected
-error 174..174: expected SEMI
+error 134..134: expected `SEMI`
+error 158..158: severity level expected
+error 167..167: expected LITERAL_STRING
+error 167..167: expected `SEMI`
 error 175..175: component member expected
-error 178..178: expected SEMI
-error 179..179: component member expected
-error 185..185: expected SEMI
+error 179..179: expected `SEMI`
 error 186..186: component member expected
-error 193..193: expected SEMI
-error 194..194: component member expected
-error 202..202: expected SEMI
+error 194..194: expected `SEMI`
 error 203..203: component member expected
-error 206..206: expected `;`
+error 206..206: expected RIGHT_CURLY

@@ -117,7 +117,7 @@ fn member_list(
     }
 
     m.complete(p, list_kind);
-    p.bump(ket);
+    p.expect(ket);
 }
 
 fn expr_opt(p: &mut Parser, prefix: SyntaxKind, rule: SyntaxKind) {
