@@ -10,13 +10,11 @@ ROOT@0..51
     LEFT_CURLY@19..20 "{"
     COMPONENT_MEMBER_LIST@20..49
       EOL@20..22 "\n\n"
-      SPEC_INCLUDE@22..31
+      SPEC_INCLUDE@22..47
         WHITESPACE@22..24 "  "
         INCLUDE_KW@24..31 "include"
-      WHITESPACE@31..32 " "
-      ERROR@32..47
+        WHITESPACE@31..32 " "
         LITERAL_STRING@32..47 "\"constant.fppi\""
       EOL@47..49 "\n\n"
     RIGHT_CURLY@49..50 "}"
   EOL@50..51 "\n"
-error 32..32: expected `SEMI`

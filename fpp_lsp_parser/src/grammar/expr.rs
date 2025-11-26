@@ -1,9 +1,5 @@
-use crate::parser::Parser;
+use super::*;
 
 pub(super) fn expr(p: &mut Parser<'_>) {
-
-}
-
-pub(super) fn lit_string(p: &mut Parser<'_>) {
 
 }

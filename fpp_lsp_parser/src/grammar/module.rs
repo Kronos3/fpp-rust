@@ -1,5 +1,4 @@
 use super::*;
-use crate::grammar::expr::lit_string;
 
 pub(super) fn def_module(p: &mut Parser) {
     assert!(p.at(MODULE_KW));
@@ -68,7 +67,7 @@ fn spec_loc(p: &mut Parser) {
 
     qual_ident(p);
     p.expect(AT_KW);
-    lit_string(p);
+    p.expect(LITERAL_STRING);
 
     m.complete(p, SPEC_LOC);
 }
@@ -93,7 +92,7 @@ fn def_component_instance(p: &mut Parser) {
     if p.at(TYPE_KW) {
         let m = p.start();
         p.bump(TYPE_KW);
-        lit_string(p);
+        p.expect(LITERAL_STRING);
         m.complete(p, COMPONENT_INSTANCE_TYPE);
     }
 
@@ -135,7 +134,7 @@ fn spec_init(p: &mut Parser) {
     let m = p.start();
     p.expect(PHASE_KW);
     expr::expr(p);
-    lit_string(p);
+    p.expect(LITERAL_STRING);
 
     m.complete(p, SPEC_INIT);
 }

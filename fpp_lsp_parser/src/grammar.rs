@@ -181,7 +181,7 @@ fn formal_param(p: &mut Parser) {
 
 fn format_(p: &mut Parser) {
     let m = p.start();
-    expr::lit_string(p);
+    p.expect(LITERAL_STRING);
     m.complete(p, FORMAT);
 }
 
@@ -195,6 +195,6 @@ fn spec_include(p: &mut Parser) {
     assert!(p.at(INCLUDE_KW));
     let m = p.start();
     p.bump(INCLUDE_KW);
-    expr::lit_string(p);
+    p.expect(LITERAL_STRING);
     m.complete(p, SPEC_INCLUDE);
 }
