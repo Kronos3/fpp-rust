@@ -1,0 +1,581 @@
+ROOT@0..1047
+  PRE_ANNOTATION@0..17 "@ State machine M"
+  EOL@17..18 "\n"
+  DEF_STATE_MACHINE@18..480
+    STATE_KW@18..23 "state"
+    WHITESPACE@23..24 " "
+    MACHINE_KW@24..31 "machine"
+    WHITESPACE@31..32 " "
+    NAME@32..33
+      IDENT@32..33 "M"
+    WHITESPACE@33..34 " "
+    LEFT_CURLY@34..35 "{"
+    STATE_MACHINE_MEMBER_LIST@35..478
+      EOL@35..37 "\n\n"
+      WHITESPACE@37..39 "  "
+      PRE_ANNOTATION@39..50 "@ Action a1"
+      EOL@50..51 "\n"
+      DEF_ACTION@51..62
+        WHITESPACE@51..53 "  "
+        ACTION_KW@53..59 "action"
+        WHITESPACE@59..60 " "
+        NAME@60..62
+          IDENT@60..62 "a1"
+      EOL@62..64 "\n\n"
+      WHITESPACE@64..66 "  "
+      PRE_ANNOTATION@66..77 "@ Action a2"
+      EOL@77..78 "\n"
+      DEF_ACTION@78..89
+        WHITESPACE@78..80 "  "
+        ACTION_KW@80..86 "action"
+        WHITESPACE@86..87 " "
+        NAME@87..89
+          IDENT@87..89 "a2"
+      EOL@89..91 "\n\n"
+      WHITESPACE@91..93 "  "
+      PRE_ANNOTATION@93..104 "@ Action a3"
+      EOL@104..105 "\n"
+      DEF_ACTION@105..116
+        WHITESPACE@105..107 "  "
+        ACTION_KW@107..113 "action"
+        WHITESPACE@113..114 " "
+        NAME@114..116
+          IDENT@114..116 "a3"
+      EOL@116..118 "\n\n"
+      WHITESPACE@118..120 "  "
+      PRE_ANNOTATION@120..131 "@ Action a4"
+      EOL@131..132 "\n"
+      DEF_ACTION@132..148
+        WHITESPACE@132..134 "  "
+        ACTION_KW@134..140 "action"
+        WHITESPACE@140..141 " "
+        NAME@141..143
+          IDENT@141..143 "a4"
+        COLON@143..144 ":"
+        WHITESPACE@144..145 " "
+        TYPE_NAME@145..148
+          U32_KW@145..148 "U32"
+      EOL@148..150 "\n\n"
+      WHITESPACE@150..152 "  "
+      PRE_ANNOTATION@152..162 "@ Guard g1"
+      EOL@162..163 "\n"
+      DEF_GUARD@163..173
+        WHITESPACE@163..165 "  "
+        GUARD_KW@165..170 "guard"
+        WHITESPACE@170..171 " "
+        NAME@171..173
+          IDENT@171..173 "g1"
+      EOL@173..175 "\n\n"
+      WHITESPACE@175..177 "  "
+      PRE_ANNOTATION@177..187 "@ Guard g2"
+      EOL@187..188 "\n"
+      DEF_GUARD@188..203
+        WHITESPACE@188..190 "  "
+        GUARD_KW@190..195 "guard"
+        WHITESPACE@195..196 " "
+        NAME@196..198
+          IDENT@196..198 "g2"
+        COLON@198..199 ":"
+        WHITESPACE@199..200 " "
+        TYPE_NAME@200..203
+          U32_KW@200..203 "U32"
+      EOL@203..205 "\n\n"
+      WHITESPACE@205..207 "  "
+      PRE_ANNOTATION@207..218 "@ Signal s1"
+      EOL@218..219 "\n"
+      DEF_SIGNAL@219..235
+        WHITESPACE@219..221 "  "
+        SIGNAL_KW@221..227 "signal"
+        WHITESPACE@227..228 " "
+        NAME@228..230
+          IDENT@228..230 "s1"
+        COLON@230..231 ":"
+        WHITESPACE@231..232 " "
+        TYPE_NAME@232..235
+          U32_KW@232..235 "U32"
+      EOL@235..237 "\n\n"
+      WHITESPACE@237..239 "  "
+      PRE_ANNOTATION@239..250 "@ Signal s2"
+      EOL@250..251 "\n"
+      DEF_SIGNAL@251..262
+        WHITESPACE@251..253 "  "
+        SIGNAL_KW@253..259 "signal"
+        WHITESPACE@259..260 " "
+        NAME@260..262
+          IDENT@260..262 "s2"
+      EOL@262..264 "\n\n"
+      WHITESPACE@264..266 "  "
+      PRE_ANNOTATION@266..277 "@ Signal s3"
+      EOL@277..278 "\n"
+      DEF_SIGNAL@278..289
+        WHITESPACE@278..280 "  "
+        SIGNAL_KW@280..286 "signal"
+        WHITESPACE@286..287 " "
+        NAME@287..289
+          IDENT@287..289 "s3"
+      EOL@289..291 "\n\n"
+      WHITESPACE@291..293 "  "
+      PRE_ANNOTATION@293..304 "@ Signal s4"
+      EOL@304..305 "\n"
+      DEF_SIGNAL@305..316
+        WHITESPACE@305..307 "  "
+        SIGNAL_KW@307..313 "signal"
+        WHITESPACE@313..314 " "
+        NAME@314..316
+          IDENT@314..316 "s4"
+      EOL@316..318 "\n\n"
+      WHITESPACE@318..320 "  "
+      PRE_ANNOTATION@320..331 "@ Signal s5"
+      EOL@331..332 "\n"
+      DEF_SIGNAL@332..343
+        WHITESPACE@332..334 "  "
+        SIGNAL_KW@334..340 "signal"
+        WHITESPACE@340..341 " "
+        NAME@341..343
+          IDENT@341..343 "s5"
+      EOL@343..345 "\n\n"
+      WHITESPACE@345..347 "  "
+      PRE_ANNOTATION@347..358 "@ Signal s6"
+      EOL@358..359 "\n"
+      DEF_SIGNAL@359..370
+        WHITESPACE@359..361 "  "
+        SIGNAL_KW@361..367 "signal"
+        WHITESPACE@367..368 " "
+        NAME@368..370
+          IDENT@368..370 "s6"
+      EOL@370..372 "\n\n"
+      WHITESPACE@372..374 "  "
+      PRE_ANNOTATION@374..394 "@ Initial transition"
+      EOL@394..395 "\n"
+      SPEC_INITIAL_TRANSITION@395..420
+        WHITESPACE@395..397 "  "
+        INITIAL_KW@397..404 "initial"
+        WHITESPACE@404..405 " "
+        TRANSITION_EXPR@405..420
+          DO_EXPR@405..414
+            DO_KW@405..407 "do"
+            WHITESPACE@407..408 " "
+            LEFT_CURLY@408..409 "{"
+            WHITESPACE@409..410 " "
+            DO_EXPR_MEMBER_LIST@410..412
+              NAME_REF@410..412
+                IDENT@410..412 "a1"
+            WHITESPACE@412..413 " "
+            RIGHT_CURLY@413..414 "}"
+          WHITESPACE@414..415 " "
+          ENTER_KW@415..420 "enter"
+      WHITESPACE@420..421 " "
+      ERROR@421..422
+        IDENT@421..422 "C"
+      EOL@422..424 "\n\n"
+      WHITESPACE@424..426 "  "
+      PRE_ANNOTATION@426..436 "@ Choice C"
+      EOL@436..437 "\n"
+      DEF_CHOICE@437..462
+        WHITESPACE@437..439 "  "
+        CHOICE_KW@439..445 "choice"
+        WHITESPACE@445..446 " "
+        NAME@446..447
+          IDENT@446..447 "C"
+        WHITESPACE@447..448 " "
+        LEFT_CURLY@448..449 "{"
+        WHITESPACE@449..450 " "
+        IF_KW@450..452 "if"
+        WHITESPACE@452..453 " "
+        NAME_REF@453..455
+          IDENT@453..455 "g1"
+        WHITESPACE@455..456 " "
+        THEN_CLAUSE@456..461
+          TRANSITION_EXPR@456..461
+            ENTER_KW@456..461 "enter"
+        WHITESPACE@461..462 " "
+        ELSE_CLAUSE@462..462
+          TRANSITION_EXPR@462..462
+      ERROR@462..464
+        IDENT@462..464 "S1"
+      WHITESPACE@464..465 " "
+      ERROR@465..469
+        ELSE_KW@465..469 "else"
+      WHITESPACE@469..470 " "
+      ERROR@470..475
+        ENTER_KW@470..475 "enter"
+      WHITESPACE@475..476 " "
+      ERROR@476..478
+        IDENT@476..478 "S2"
+    WHITESPACE@478..479 " "
+    RIGHT_CURLY@479..480 "}"
+  EOL@480..482 "\n\n"
+  WHITESPACE@482..484 "  "
+  PRE_ANNOTATION@484..494 "@ State S1"
+  EOL@494..495 "\n"
+  DEF_STATE_MACHINE@495..505
+    WHITESPACE@495..497 "  "
+    STATE_KW@497..502 "state"
+    WHITESPACE@502..503 " "
+    NAME@503..505
+      IDENT@503..505 "S1"
+  EOL@505..507 "\n\n"
+  WHITESPACE@507..509 "  "
+  PRE_ANNOTATION@509..519 "@ State S2"
+  EOL@519..520 "\n"
+  DEF_STATE_MACHINE@520..734
+    WHITESPACE@520..522 "  "
+    STATE_KW@522..527 "state"
+    WHITESPACE@527..528 " "
+    NAME@528..530
+      IDENT@528..530 "S2"
+    WHITESPACE@530..531 " "
+    LEFT_CURLY@531..532 "{"
+    STATE_MACHINE_MEMBER_LIST@532..732
+      EOL@532..534 "\n\n"
+      WHITESPACE@534..538 "    "
+      ERROR@538..543
+        ENTRY_KW@538..543 "entry"
+      WHITESPACE@543..544 " "
+      ERROR@544..546
+        DO_KW@544..546 "do"
+      WHITESPACE@546..547 " "
+      ERROR@547..557
+        LEFT_CURLY@547..548 "{"
+        WHITESPACE@548..549 " "
+        IDENT@549..551 "a1"
+        COMMA@551..552 ","
+        WHITESPACE@552..553 " "
+        IDENT@553..555 "a2"
+        WHITESPACE@555..556 " "
+        RIGHT_CURLY@556..557 "}"
+      EOL@557..558 "\n"
+      WHITESPACE@558..562 "    "
+      ERROR@562..566
+        EXIT_KW@562..566 "exit"
+      WHITESPACE@566..567 " "
+      ERROR@567..569
+        DO_KW@567..569 "do"
+      WHITESPACE@569..570 " "
+      ERROR@570..580
+        LEFT_CURLY@570..571 "{"
+        WHITESPACE@571..572 " "
+        IDENT@572..574 "a1"
+        COMMA@574..575 ","
+        WHITESPACE@575..576 " "
+        IDENT@576..578 "a2"
+        WHITESPACE@578..579 " "
+        RIGHT_CURLY@579..580 "}"
+      EOL@580..582 "\n\n"
+      WHITESPACE@582..586 "    "
+      PRE_ANNOTATION@586..606 "@ Initial transition"
+      EOL@606..607 "\n"
+      SPEC_INITIAL_TRANSITION@607..638
+        WHITESPACE@607..611 "    "
+        INITIAL_KW@611..618 "initial"
+        WHITESPACE@618..619 " "
+        TRANSITION_EXPR@619..638
+          DO_EXPR@619..632
+            DO_KW@619..621 "do"
+            WHITESPACE@621..622 " "
+            LEFT_CURLY@622..623 "{"
+            WHITESPACE@623..624 " "
+            DO_EXPR_MEMBER_LIST@624..630
+              NAME_REF@624..626
+                IDENT@624..626 "a1"
+              COMMA@626..627 ","
+              WHITESPACE@627..628 " "
+              NAME_REF@628..630
+                IDENT@628..630 "a2"
+            WHITESPACE@630..631 " "
+            RIGHT_CURLY@631..632 "}"
+          WHITESPACE@632..633 " "
+          ENTER_KW@633..638 "enter"
+      WHITESPACE@638..639 " "
+      ERROR@639..641
+        IDENT@639..641 "S3"
+      EOL@641..643 "\n\n"
+      WHITESPACE@643..647 "    "
+      PRE_ANNOTATION@647..657 "@ Choice C"
+      EOL@657..658 "\n"
+      DEF_CHOICE@658..699
+        WHITESPACE@658..662 "    "
+        CHOICE_KW@662..668 "choice"
+        WHITESPACE@668..669 " "
+        NAME@669..670
+          IDENT@669..670 "C"
+        WHITESPACE@670..671 " "
+        LEFT_CURLY@671..672 "{"
+        WHITESPACE@672..673 " "
+        IF_KW@673..675 "if"
+        WHITESPACE@675..676 " "
+        NAME_REF@676..678
+          IDENT@676..678 "g1"
+        WHITESPACE@678..679 " "
+        THEN_CLAUSE@679..698
+          TRANSITION_EXPR@679..698
+            DO_EXPR@679..692
+              DO_KW@679..681 "do"
+              WHITESPACE@681..682 " "
+              LEFT_CURLY@682..683 "{"
+              WHITESPACE@683..684 " "
+              DO_EXPR_MEMBER_LIST@684..690
+                NAME_REF@684..686
+                  IDENT@684..686 "a1"
+                COMMA@686..687 ","
+                WHITESPACE@687..688 " "
+                NAME_REF@688..690
+                  IDENT@688..690 "a2"
+              WHITESPACE@690..691 " "
+              RIGHT_CURLY@691..692 "}"
+            WHITESPACE@692..693 " "
+            ENTER_KW@693..698 "enter"
+        WHITESPACE@698..699 " "
+        ELSE_CLAUSE@699..699
+          TRANSITION_EXPR@699..699
+      ERROR@699..701
+        IDENT@699..701 "S1"
+      WHITESPACE@701..702 " "
+      ERROR@702..706
+        ELSE_KW@702..706 "else"
+      WHITESPACE@706..707 " "
+      ERROR@707..709
+        DO_KW@707..709 "do"
+      WHITESPACE@709..710 " "
+      ERROR@710..720
+        LEFT_CURLY@710..711 "{"
+        WHITESPACE@711..712 " "
+        IDENT@712..714 "a2"
+        COMMA@714..715 ","
+        WHITESPACE@715..716 " "
+        IDENT@716..718 "a3"
+        WHITESPACE@718..719 " "
+        RIGHT_CURLY@719..720 "}"
+      WHITESPACE@720..721 " "
+      ERROR@721..726
+        ENTER_KW@721..726 "enter"
+      WHITESPACE@726..727 " "
+      ERROR@727..729
+        IDENT@727..729 "S2"
+      ERROR@729..730
+        DOT@729..730 "."
+      ERROR@730..732
+        IDENT@730..732 "S3"
+    WHITESPACE@732..733 " "
+    RIGHT_CURLY@733..734 "}"
+  EOL@734..736 "\n\n"
+  WHITESPACE@736..740 "    "
+  PRE_ANNOTATION@740..750 "@ State S3"
+  EOL@750..751 "\n"
+  DEF_STATE_MACHINE@751..763
+    WHITESPACE@751..755 "    "
+    STATE_KW@755..760 "state"
+    WHITESPACE@760..761 " "
+    NAME@761..763
+      IDENT@761..763 "S3"
+  EOL@763..765 "\n\n"
+  WHITESPACE@765..769 "    "
+  PRE_ANNOTATION@769..787 "@ Transition to S1"
+  EOL@787..788 "\n"
+  WHITESPACE@788..792 "    "
+  ERROR@792..794
+    ON_KW@792..794 "on"
+  WHITESPACE@794..795 " "
+  ERROR@795..797
+    IDENT@795..797 "s1"
+  WHITESPACE@797..798 " "
+  ERROR@798..800
+    IF_KW@798..800 "if"
+  WHITESPACE@800..801 " "
+  ERROR@801..803
+    IDENT@801..803 "g1"
+  WHITESPACE@803..804 " "
+  ERROR@804..806
+    DO_KW@804..806 "do"
+  WHITESPACE@806..807 " "
+  ERROR@807..813
+    LEFT_CURLY@807..808 "{"
+    WHITESPACE@808..809 " "
+    IDENT@809..811 "a1"
+    WHITESPACE@811..812 " "
+    RIGHT_CURLY@812..813 "}"
+  WHITESPACE@813..814 " "
+  ERROR@814..819
+    ENTER_KW@814..819 "enter"
+  WHITESPACE@819..820 " "
+  ERROR@820..821
+    IDENT@820..821 "C"
+  EOL@821..822 "\n"
+  WHITESPACE@822..826 "    "
+  ERROR@826..828
+    ON_KW@826..828 "on"
+  WHITESPACE@828..829 " "
+  ERROR@829..831
+    IDENT@829..831 "s2"
+  WHITESPACE@831..832 " "
+  ERROR@832..834
+    IF_KW@832..834 "if"
+  WHITESPACE@834..835 " "
+  ERROR@835..837
+    IDENT@835..837 "g1"
+  WHITESPACE@837..838 " "
+  ERROR@838..843
+    ENTER_KW@838..843 "enter"
+  WHITESPACE@843..844 " "
+  ERROR@844..846
+    IDENT@844..846 "S1"
+  EOL@846..848 "\n\n"
+  WHITESPACE@848..852 "    "
+  PRE_ANNOTATION@852..870 "@ Transition to S1"
+  EOL@870..871 "\n"
+  WHITESPACE@871..875 "    "
+  ERROR@875..877
+    ON_KW@875..877 "on"
+  WHITESPACE@877..878 " "
+  ERROR@878..880
+    IDENT@878..880 "s3"
+  WHITESPACE@880..881 " "
+  ERROR@881..883
+    IF_KW@881..883 "if"
+  WHITESPACE@883..884 " "
+  ERROR@884..886
+    IDENT@884..886 "g1"
+  WHITESPACE@886..887 " "
+  ERROR@887..892
+    ENTER_KW@887..892 "enter"
+  WHITESPACE@892..893 " "
+  ERROR@893..895
+    IDENT@893..895 "S1"
+  EOL@895..897 "\n\n"
+  WHITESPACE@897..901 "    "
+  PRE_ANNOTATION@901..919 "@ Transition to S1"
+  EOL@919..920 "\n"
+  WHITESPACE@920..924 "    "
+  ERROR@924..926
+    ON_KW@924..926 "on"
+  WHITESPACE@926..927 " "
+  ERROR@927..929
+    IDENT@927..929 "s4"
+  WHITESPACE@929..930 " "
+  ERROR@930..935
+    ENTER_KW@930..935 "enter"
+  WHITESPACE@935..936 " "
+  ERROR@936..938
+    IDENT@936..938 "S1"
+  EOL@938..940 "\n\n"
+  WHITESPACE@940..944 "    "
+  PRE_ANNOTATION@944..965 "@ Internal transition"
+  EOL@965..966 "\n"
+  WHITESPACE@966..970 "    "
+  ERROR@970..972
+    ON_KW@970..972 "on"
+  WHITESPACE@972..973 " "
+  ERROR@973..975
+    IDENT@973..975 "s5"
+  WHITESPACE@975..976 " "
+  ERROR@976..978
+    IF_KW@976..978 "if"
+  WHITESPACE@978..979 " "
+  ERROR@979..981
+    IDENT@979..981 "g1"
+  WHITESPACE@981..982 " "
+  ERROR@982..984
+    DO_KW@982..984 "do"
+  WHITESPACE@984..985 " "
+  ERROR@985..991
+    LEFT_CURLY@985..986 "{"
+    WHITESPACE@986..987 " "
+    IDENT@987..989 "a1"
+    WHITESPACE@989..990 " "
+    RIGHT_CURLY@990..991 "}"
+  EOL@991..993 "\n\n"
+  WHITESPACE@993..997 "    "
+  PRE_ANNOTATION@997..1018 "@ Internal transition"
+  EOL@1018..1019 "\n"
+  WHITESPACE@1019..1023 "    "
+  ERROR@1023..1025
+    ON_KW@1023..1025 "on"
+  WHITESPACE@1025..1026 " "
+  ERROR@1026..1028
+    IDENT@1026..1028 "s6"
+  WHITESPACE@1028..1029 " "
+  ERROR@1029..1031
+    DO_KW@1029..1031 "do"
+  WHITESPACE@1031..1032 " "
+  ERROR@1032..1038
+    LEFT_CURLY@1032..1033 "{"
+    WHITESPACE@1033..1034 " "
+    IDENT@1034..1036 "a1"
+    WHITESPACE@1036..1037 " "
+    RIGHT_CURLY@1037..1038 "}"
+  EOL@1038..1040 "\n\n"
+  WHITESPACE@1040..1042 "  "
+  ERROR@1042..1043
+    RIGHT_CURLY@1042..1043 "}"
+  EOL@1043..1045 "\n\n"
+  ERROR@1045..1046
+    RIGHT_CURLY@1045..1046 "}"
+  EOL@1046..1047 "\n"
+error 421..421: expected `SEMI`
+error 461..461: expected ELSE_KW
+error 462..462: expected ENTER_KW
+error 462..462: expected RIGHT_CURLY
+error 462..462: expected `SEMI`
+error 465..465: expected state machine member
+error 470..470: expected `SEMI`
+error 476..476: expected state machine member
+error 502..502: expected MACHINE_KW
+error 527..527: expected MACHINE_KW
+error 538..538: expected state machine member
+error 544..544: expected `SEMI`
+error 547..547: expected state machine member
+error 562..562: expected state machine member
+error 567..567: expected `SEMI`
+error 570..570: expected state machine member
+error 639..639: expected `SEMI`
+error 698..698: expected ELSE_KW
+error 699..699: expected ENTER_KW
+error 699..699: expected RIGHT_CURLY
+error 699..699: expected `SEMI`
+error 702..702: expected state machine member
+error 707..707: expected `SEMI`
+error 710..710: expected state machine member
+error 721..721: expected state machine member
+error 727..727: expected `SEMI`
+error 729..729: expected state machine member
+error 730..730: expected `SEMI`
+error 760..760: expected MACHINE_KW
+error 792..792: module member expected
+error 795..795: expected `;`
+error 798..798: module member expected
+error 801..801: expected `;`
+error 804..804: module member expected
+error 806..806: expected `;`
+error 807..807: expected module member
+error 814..814: module member expected
+error 820..820: expected `;`
+error 826..826: module member expected
+error 829..829: expected `;`
+error 832..832: module member expected
+error 835..835: expected `;`
+error 838..838: module member expected
+error 844..844: expected `;`
+error 875..875: module member expected
+error 878..878: expected `;`
+error 881..881: module member expected
+error 884..884: expected `;`
+error 887..887: module member expected
+error 893..893: expected `;`
+error 924..924: module member expected
+error 927..927: expected `;`
+error 930..930: module member expected
+error 936..936: expected `;`
+error 970..970: module member expected
+error 973..973: expected `;`
+error 976..976: module member expected
+error 979..979: expected `;`
+error 982..982: module member expected
+error 984..984: expected `;`
+error 985..985: expected module member
+error 1023..1023: module member expected
+error 1026..1026: expected `;`
+error 1029..1029: module member expected
+error 1031..1031: expected `;`
+error 1032..1032: expected module member
+error 1042..1042: module member expected
+error 1045..1045: module member expected

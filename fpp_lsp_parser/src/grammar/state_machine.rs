@@ -228,8 +228,9 @@ fn transition_expr(p: &mut Parser) {
 }
 
 fn do_expr(p: &mut Parser) {
-    assert!(p.at(DO_EXPR));
-    p.bump(DO_EXPR);
+    assert!(p.at(DO_KW));
+    let m = p.start();
+    p.bump(DO_KW);
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -238,10 +239,12 @@ fn do_expr(p: &mut Parser) {
             RIGHT_CURLY,
             name_ref,
             COMMA,
-            DO_EXPR,
+            DO_EXPR_MEMBER_LIST,
             "expected action name",
         )
     } else {
         p.error("expected '{'")
     }
+
+    m.complete(p, DO_EXPR);
 }
