@@ -248,8 +248,8 @@ pub enum SyntaxKind {
     STRUCT_MEMBER_LIST,
     THEN_CLAUSE,
     TRANSITION_EXPR,
-    TRANSITION_OR_DO,
     TYPE_NAME,
+    QUAL_IDENT,
 
     ROOT,
 

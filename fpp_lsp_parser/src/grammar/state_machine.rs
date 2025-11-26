@@ -190,6 +190,7 @@ fn spec_state_transition(p: &mut Parser) {
     assert!(p.at(ON_KW));
     let m = p.start();
     p.bump(ON_KW);
+    p.expect(IDENT);
 
     if p.eat(IF_KW) {
         name_ref(p);
@@ -206,12 +207,20 @@ fn transition_or_do(p: &mut Parser) {
 
         if p.eat(ENTER_KW) {
             qual_ident(p);
+            m.complete(p, TRANSITION_EXPR);
+        } else {
+            // Do expr
+            m.abandon(p);
         }
     } else {
-        qual_ident(p);
+        if p.eat(ENTER_KW) {
+            qual_ident(p);
+            m.complete(p, TRANSITION_EXPR);
+        } else {
+            m.abandon(p);
+            p.error("expected transition or do expression")
+        }
     }
-
-    m.complete(p, TRANSITION_OR_DO);
 }
 
 fn transition_expr(p: &mut Parser) {

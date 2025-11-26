@@ -73,7 +73,18 @@ fn error_block(p: &mut Parser<'_>, message: &str) {
     m.complete(p, ERROR);
 }
 
-pub(super) fn qual_ident(p: &mut Parser) {}
+pub(super) fn qual_ident(p: &mut Parser) {
+    let m = p.start();
+    p.expect(IDENT);
+    while p.at(DOT) {
+        p.bump(DOT);
+        if p.expect(IDENT) {
+            break;
+        }
+    }
+
+    m.complete(p, QUAL_IDENT);
+}
 
 fn member_list(
     p: &mut Parser,

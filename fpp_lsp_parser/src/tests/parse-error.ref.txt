@@ -58,7 +58,7 @@ ROOT@0..206
         NAME@104..108
           IDENT@104..108 "pOut"
       EOL@108..110 "\n\n"
-      SPEC_PORT_INSTANCE_GENERAL@110..128
+      SPEC_PORT_INSTANCE_GENERAL@110..130
         WHITESPACE@110..114 "    "
         ASYNC_KW@114..119 "async"
         WHITESPACE@119..120 " "
@@ -67,9 +67,9 @@ ROOT@0..206
         NAME@126..127
           IDENT@126..127 "i"
         COLON@127..128 ":"
-      WHITESPACE@128..129 " "
-      ERROR@129..130
-        IDENT@129..130 "d"
+        WHITESPACE@128..129 " "
+        QUAL_IDENT@129..130
+          IDENT@129..130 "d"
       WHITESPACE@130..131 " "
       ERROR@131..133
         RIGHT_ARROW@131..133 "->"
@@ -117,9 +117,8 @@ error 40..40: expected `;`
 error 43..43: module member expected
 error 45..45: expected `;`
 error 125..125: expected PORT_KW
-error 129..129: expected `SEMI`
-error 131..131: component member expected
-error 134..134: expected `SEMI`
+error 131..131: expected `SEMI`
+error 134..134: component member expected
 error 158..158: severity level expected
 error 167..167: expected LITERAL_STRING
 error 167..167: expected `SEMI`
