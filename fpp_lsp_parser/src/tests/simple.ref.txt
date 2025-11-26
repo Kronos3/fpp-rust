@@ -1,0 +1,12 @@
+ROOT@0..13
+  DEF_MODULE@0..12
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..8
+      IDENT@7..8 "F"
+    WHITESPACE@8..9 " "
+    LEFT_CURLY@9..10 "{"
+    MODULE_MEMBER_LIST@10..11
+      EOL@10..11 "\n"
+    RIGHT_CURLY@11..12 "}"
+  EOL@12..13 "\n"

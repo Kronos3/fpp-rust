@@ -1,0 +1,3 @@
+ROOT@0..2
+  UNKNOWN@0..1 "\t"
+  EOL@1..2 "\n"

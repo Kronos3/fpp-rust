@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn def_component(p: &mut Parser) {
+pub(super) fn def_component(p: &mut Parser) {
     let m = p.start();
     match p.current() {
         ACTIVE_KW | PASSIVE_KW | QUEUED_KW => {

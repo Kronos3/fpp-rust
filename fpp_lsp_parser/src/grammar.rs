@@ -1,9 +1,10 @@
 mod component;
 mod expr;
 mod module;
-mod types;
 mod state_machine;
 mod topology;
+mod types;
+pub(crate) mod entry;
 
 use crate::token_set::TokenSet;
 use crate::{parser::Parser, SyntaxKind, SyntaxKind::*};
@@ -11,6 +12,7 @@ use crate::{parser::Parser, SyntaxKind, SyntaxKind::*};
 pub(super) const MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
     EOL,
     SEMI,
+    RIGHT_CURLY,
     TYPE_KW,
     ARRAY_KW,
     ASYNC_KW,
@@ -83,8 +85,9 @@ fn member_list(
     expected_error_msg: &'static str,
 ) {
     assert!(p.at(bra));
-    let m = p.start();
     p.bump(bra);
+
+    let m = p.start();
 
     while !p.at(ket) && !p.at(EOF) {
         if p.at(bra) {
@@ -92,18 +95,31 @@ fn member_list(
             continue;
         }
 
+        // Eat up delims and EOLs before items
+        while p.at(EOL) || p.at(delim) {
+            p.bump_any();
+        }
+
+        if p.at(ket) {
+            break;
+        }
+
         member(p);
 
-        if !p.at(ket) {
-            if p.at(EOL) {
-                p.bump(EOL);
-            } else {
-                p.expect(delim);
+        match p.current() {
+            // Valid items after member
+            EOL => {}
+            t if t == delim => {}
+            t if t == ket => {}
+
+            _ => {
+                p.err_recover(&format!("expected `{:?}`", delim), MEMBER_RECOVERY_SET);
             }
         }
     }
 
     m.complete(p, list_kind);
+    p.bump(ket);
 }
 
 fn expr_opt(p: &mut Parser, prefix: SyntaxKind, rule: SyntaxKind) {
@@ -175,4 +191,10 @@ fn format_opt(p: &mut Parser) {
     }
 }
 
-fn spec_include(p: &mut Parser) {}
+fn spec_include(p: &mut Parser) {
+    assert!(p.at(INCLUDE_KW));
+    let m = p.start();
+    p.bump(INCLUDE_KW);
+    expr::lit_string(p);
+    m.complete(p, SPEC_INCLUDE);
+}

@@ -42,7 +42,7 @@ pub(super) fn module_member(p: &mut Parser) {
         LOCATE_KW => spec_loc(p),
 
         _ => {
-            p.err_recover("module member expected", MEMBER_RECOVERY_SET);
+            p.err_and_bump("module member expected");
         }
     }
 }

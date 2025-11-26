@@ -210,6 +210,8 @@ name = "fpp_lsp_parser"
 version = "0.1.0"
 dependencies = [
  "drop_bomb",
+ "fpp_lexer",
+ "pretty_assertions",
  "rowan",
 ]
 

@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+fpp_lexer = { path = "../fpp_lexer" }
+pretty_assertions = "1.4.1"
+
 rowan = "0.16.1"
 drop_bomb = "0.1.5"
