@@ -49,18 +49,6 @@ impl Input {
     pub(crate) fn kind(&self, idx: usize) -> SyntaxKind {
         self.kind.get(idx).copied().unwrap_or(SyntaxKind::EOF)
     }
-    pub(crate) fn is_joint(&self, n: usize) -> bool {
-        let (idx, b_idx) = self.bit_index(n);
-        self.joint[idx] & (1 << b_idx) != 0
-    }
-}
-
-impl Input {
-    fn bit_index(&self, n: usize) -> (usize, usize) {
-        let idx = n / (bits::BITS as usize);
-        let b_idx = n % (bits::BITS as usize);
-        (idx, b_idx)
-    }
     fn len(&self) -> usize {
         self.kind.len()
     }

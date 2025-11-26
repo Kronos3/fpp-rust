@@ -9,63 +9,56 @@
 //! be cheaply stored, and which can be resolved to a real [`SyntaxNode`] when
 //! necessary.
 
-use std::{
-    hash::{Hash, Hasher},
-    marker::PhantomData,
-};
+use std::hash::{Hash, Hasher};
 
 use rowan::TextRange;
 
-use crate::ast::Either;
-use crate::{FppLanguage, AstNode, SyntaxNode, SyntaxKind};
+use crate::{FppLanguage, SyntaxKind, SyntaxNode};
 
 /// A "pointer" to a [`SyntaxNode`], via location in the source code.
 pub type SyntaxNodePtr = rowan::ast::SyntaxNodePtr<FppLanguage>;
 
 /// Like `SyntaxNodePtr`, but remembers the type of node.
-pub struct AstPtr<N: AstNode> {
+pub struct AstPtr {
     raw: SyntaxNodePtr,
-    _ty: PhantomData<fn() -> N>,
 }
 
-impl<N: AstNode> std::fmt::Debug for AstPtr<N> {
+impl std::fmt::Debug for AstPtr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("AstPtr").field(&self.raw).finish()
     }
 }
 
-impl<N: AstNode> Copy for AstPtr<N> {}
-impl<N: AstNode> Clone for AstPtr<N> {
-    fn clone(&self) -> AstPtr<N> {
+impl Copy for AstPtr {}
+impl Clone for AstPtr {
+    fn clone(&self) -> AstPtr {
         *self
     }
 }
 
-impl<N: AstNode> Eq for AstPtr<N> {}
+impl Eq for AstPtr {}
 
-impl<N: AstNode> PartialEq for AstPtr<N> {
-    fn eq(&self, other: &AstPtr<N>) -> bool {
+impl PartialEq for AstPtr {
+    fn eq(&self, other: &AstPtr) -> bool {
         self.raw == other.raw
     }
 }
 
-impl<N: AstNode> Hash for AstPtr<N> {
+impl Hash for AstPtr {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.raw.hash(state);
     }
 }
 
-impl<N: AstNode> AstPtr<N> {
-    pub fn new(node: &N) -> AstPtr<N> {
+impl AstPtr {
+    pub fn new(node: &SyntaxNode) -> AstPtr {
         AstPtr {
-            raw: SyntaxNodePtr::new(node.syntax()),
-            _ty: PhantomData,
+            raw: SyntaxNodePtr::new(node),
         }
     }
 
-    pub fn to_node(&self, root: &SyntaxNode) -> N {
-        let syntax_node = self.raw.to_node(root);
-        N::cast(syntax_node).unwrap()
+    pub fn to_node(&self, root: &SyntaxNode) -> SyntaxNode {
+        self.raw.to_node(root)
     }
 
     pub fn syntax_node_ptr(&self) -> SyntaxNodePtr {
@@ -76,61 +69,7 @@ impl<N: AstNode> AstPtr<N> {
         self.raw.text_range()
     }
 
-    pub fn cast<U: AstNode>(self) -> Option<AstPtr<U>> {
-        if !U::can_cast(self.raw.kind()) {
-            return None;
-        }
-        Some(AstPtr {
-            raw: self.raw,
-            _ty: PhantomData,
-        })
-    }
-
     pub fn kind(&self) -> SyntaxKind {
         self.raw.kind()
-    }
-
-    pub fn upcast<M: AstNode>(self) -> AstPtr<M>
-    where
-        N: Into<M>,
-    {
-        AstPtr {
-            raw: self.raw,
-            _ty: PhantomData,
-        }
-    }
-
-    /// Like `SyntaxNodePtr::cast` but the trait bounds work out.
-    pub fn try_from_raw(raw: SyntaxNodePtr) -> Option<AstPtr<N>> {
-        N::can_cast(raw.kind()).then_some(AstPtr {
-            raw,
-            _ty: PhantomData,
-        })
-    }
-
-    pub fn wrap_left<R>(self) -> AstPtr<Either<N, R>>
-    where
-        Either<N, R>: AstNode,
-    {
-        AstPtr {
-            raw: self.raw,
-            _ty: PhantomData,
-        }
-    }
-
-    pub fn wrap_right<L>(self) -> AstPtr<Either<L, N>>
-    where
-        Either<L, N>: AstNode,
-    {
-        AstPtr {
-            raw: self.raw,
-            _ty: PhantomData,
-        }
-    }
-}
-
-impl<N: AstNode> From<AstPtr<N>> for SyntaxNodePtr {
-    fn from(ptr: AstPtr<N>) -> SyntaxNodePtr {
-        ptr.raw
     }
 }

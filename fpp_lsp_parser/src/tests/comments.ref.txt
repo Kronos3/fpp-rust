@@ -1,16 +1,16 @@
 ROOT@0..196
   COMMENT@0..9 "# comment"
   EOL@9..10 "\n"
-  DEF_CONSTANT@10..22
+  DEF_CONSTANT@10..24
     CONSTANT_KW@10..18 "constant"
     WHITESPACE@18..19 " "
     NAME@19..20
       IDENT@19..20 "a"
     WHITESPACE@20..21 " "
     EQUALS@21..22 "="
-  WHITESPACE@22..23 " "
-  ERROR@23..24
-    LITERAL_INT@23..24 "1"
+    WHITESPACE@22..23 " "
+    EXPR@23..24
+      LITERAL_INT@23..24 "1"
   WHITESPACE@24..25 " "
   COMMENT@25..34 "# comment"
   EOL@34..35 "\n"
@@ -18,30 +18,31 @@ ROOT@0..196
   EOL@44..45 "\n"
   COMMENT@45..54 "# comment"
   EOL@54..55 "\n"
-  DEF_CONSTANT@55..67
+  DEF_CONSTANT@55..69
     CONSTANT_KW@55..63 "constant"
     WHITESPACE@63..64 " "
     NAME@64..65
       IDENT@64..65 "b"
     WHITESPACE@65..66 " "
     EQUALS@66..67 "="
-  WHITESPACE@67..68 " "
-  ERROR@68..69
-    LITERAL_INT@68..69 "2"
+    WHITESPACE@67..68 " "
+    EXPR@68..69
+      LITERAL_INT@68..69 "2"
   WHITESPACE@69..70 " "
   COMMENT@70..79 "# comment"
   EOL@79..80 "\n"
   COMMENT@80..89 "# comment"
   EOL@89..91 "\n\n"
-  DEF_CONSTANT@91..103
+  DEF_CONSTANT@91..113
     CONSTANT_KW@91..99 "constant"
     WHITESPACE@99..100 " "
     NAME@100..101
       IDENT@100..101 "c"
     WHITESPACE@101..102 " "
     EQUALS@102..103 "="
-  WHITESPACE@103..104 " "
-  COMMENT@104..113 "# comment"
+    WHITESPACE@103..104 " "
+    COMMENT@104..113 "# comment"
+    EXPR@113..113
   EOL@113..114 "\n"
   WHITESPACE@114..116 "  "
   ERROR@116..117
@@ -54,6 +55,7 @@ ROOT@0..196
       IDENT@128..129 "d"
     WHITESPACE@129..130 " "
     EQUALS@130..131 "="
+    EXPR@131..131
   EOL@131..132 "\n"
   WHITESPACE@132..134 "  "
   COMMENT@134..143 "# comment"
@@ -66,21 +68,20 @@ ROOT@0..196
   EOL@159..160 "\n"
   COMMENT@160..169 "# comment"
   EOL@169..170 "\n"
-  DEF_CONSTANT@170..182
+  DEF_CONSTANT@170..184
     CONSTANT_KW@170..178 "constant"
     WHITESPACE@178..179 " "
     NAME@179..180
       IDENT@179..180 "e"
     WHITESPACE@180..181 " "
     EQUALS@181..182 "="
-  WHITESPACE@182..183 " "
-  ERROR@183..184
-    LITERAL_INT@183..184 "0"
+    WHITESPACE@182..183 " "
+    EXPR@183..184
+      LITERAL_INT@183..184 "0"
   EOL@184..186 "\n\n"
   COMMENT@186..195 "# comment"
   EOL@195..196 "\n"
-error 23..23: expected `;`
-error 68..68: expected `;`
+error 113..113: expected expression
 error 116..116: module member expected
+error 131..131: expected expression
 error 146..146: module member expected
-error 183..183: expected `;`

@@ -1,10 +1,10 @@
 mod component;
+pub(crate) mod entry;
 mod expr;
 mod module;
 mod state_machine;
 mod topology;
 mod types;
-pub(crate) mod entry;
 
 use crate::token_set::TokenSet;
 use crate::{parser::Parser, SyntaxKind, SyntaxKind::*};
@@ -73,7 +73,7 @@ fn error_block(p: &mut Parser<'_>, message: &str) {
     m.complete(p, ERROR);
 }
 
-pub(super) fn qual_ident(p: &mut Parser<'_>) {}
+pub(super) fn qual_ident(p: &mut Parser) {}
 
 fn member_list(
     p: &mut Parser,
@@ -95,8 +95,8 @@ fn member_list(
             continue;
         }
 
-        // Eat up delims and EOLs before items
-        while p.at(EOL) || p.at(delim) {
+        // Eat up EOLs before items
+        while p.at(EOL) {
             p.bump_any();
         }
 
@@ -106,14 +106,12 @@ fn member_list(
 
         member(p);
 
-        match p.current() {
-            // Valid items after member
-            EOL => {}
-            t if t == delim => {}
-            t if t == ket => {}
-
-            _ => {
-                p.err_recover(&format!("expected `{:?}`", delim), MEMBER_RECOVERY_SET);
+        // Check for end delim
+        if !p.eat(delim) {
+            if !p.eat(EOL) {
+                if !p.at(ket) {
+                    p.err_recover(&format!("expected `{:?}`", delim), MEMBER_RECOVERY_SET);
+                }
             }
         }
     }
@@ -131,18 +129,18 @@ fn expr_opt(p: &mut Parser, prefix: SyntaxKind, rule: SyntaxKind) {
     }
 }
 
-fn size(p: &mut Parser) {
+fn index_or_size(p: &mut Parser) {
     assert!(p.at(LEFT_SQUARE));
     let m = p.start();
     p.bump(LEFT_SQUARE);
     expr::expr(p);
-    m.complete(p, SIZE);
+    m.complete(p, INDEX_OR_SIZE);
     p.expect(RIGHT_SQUARE);
 }
 
-fn size_opt(p: &mut Parser) {
+fn index_or_size_opt(p: &mut Parser) {
     if p.at(LEFT_SQUARE) {
-        size(p);
+        index_or_size(p);
     }
 }
 
@@ -156,7 +154,7 @@ fn formal_param_list(p: &mut Parser) {
             COMMA,
             FORMAL_PARAM_LIST,
             "expected formal parameter",
-        )
+        );
     }
 }
 

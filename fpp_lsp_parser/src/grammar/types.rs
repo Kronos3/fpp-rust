@@ -28,7 +28,7 @@ pub(super) fn def_array(p: &mut Parser) {
     }
 
     if p.at(LEFT_SQUARE) {
-        size(p);
+        index_or_size(p);
     } else {
         p.err_and_bump("expected `[`")
     }
@@ -71,7 +71,7 @@ pub(super) fn struct_field(p: &mut Parser) {
         name(p);
         p.expect(COLON);
 
-        size_opt(p);
+        index_or_size_opt(p);
         type_name(p);
         format_opt(p);
 

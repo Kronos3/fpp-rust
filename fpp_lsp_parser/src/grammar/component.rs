@@ -131,7 +131,7 @@ fn spec_port_instance_general(p: &mut Parser) {
     p.expect(PORT_KW);
     name(p);
     p.expect(COLON);
-    size_opt(p);
+    index_or_size_opt(p);
 
     if p.at(SERIAL_KW) {
         p.bump(SERIAL_KW);

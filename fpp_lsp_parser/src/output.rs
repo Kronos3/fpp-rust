@@ -52,7 +52,6 @@ impl Output {
     const TOKEN_EVENT: u8 = 0;
     const ENTER_EVENT: u8 = 1;
     const EXIT_EVENT: u8 = 2;
-    const SPLIT_EVENT: u8 = 3;
 
     pub fn iter(&self) -> impl Iterator<Item = Step<'_>> {
         self.event.iter().map(|&event| {

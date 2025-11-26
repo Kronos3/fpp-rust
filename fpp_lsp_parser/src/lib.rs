@@ -7,7 +7,6 @@ mod input;
 mod grammar;
 mod lexed_str;
 mod shortcuts;
-mod ast;
 mod ptr;
 mod syntax_error;
 mod syntax_node;
@@ -21,7 +20,6 @@ pub use lexed_str::*;
 pub use shortcuts::*;
 
 pub use crate::{
-    ast::AstNode,
     ptr::{AstPtr, SyntaxNodePtr},
     syntax_error::SyntaxError,
     syntax_node::{
@@ -171,19 +169,6 @@ impl Parse {
         match self.errors() {
             errors if !errors.is_empty() => Err(errors),
             _ => Ok(self.syntax_node()),
-        }
-    }
-}
-
-impl Parse {
-    pub fn cast<N: AstNode>(self) -> Option<Parse> {
-        if N::cast(self.syntax_node()).is_some() {
-            Some(Parse {
-                green: self.green,
-                errors: self.errors,
-            })
-        } else {
-            None
         }
     }
 }
