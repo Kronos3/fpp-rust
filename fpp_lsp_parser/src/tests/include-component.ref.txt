@@ -1,5 +1,5 @@
-ROOT@0..51
-  DEF_COMPONENT@0..50
+ROOT@0..50
+  DEF_COMPONENT@0..49
     ACTIVE_KW@0..6 "active"
     WHITESPACE@6..7 " "
     COMPONENT_KW@7..16 "component"
@@ -8,13 +8,12 @@ ROOT@0..51
       IDENT@17..18 "C"
     WHITESPACE@18..19 " "
     LEFT_CURLY@19..20 "{"
-    COMPONENT_MEMBER_LIST@20..49
-      EOL@20..22 "\n\n"
-      SPEC_INCLUDE@22..47
+    COMPONENT_MEMBER_LIST@20..47
+      SPEC_INCLUDE@20..31
+        INCLUDE_KW@20..22 "\n\n"
         WHITESPACE@22..24 "  "
-        INCLUDE_KW@24..31 "include"
-        WHITESPACE@31..32 " "
-        LITERAL_STRING@32..47 "\"constant.fppi\""
-      EOL@47..49 "\n\n"
-    RIGHT_CURLY@49..50 "}"
-  EOL@50..51 "\n"
+        LITERAL_STRING@24..31 "include"
+      WHITESPACE@31..32 " "
+      EOL@32..47 "\"constant.fppi\""
+    RIGHT_CURLY@47..49 "\n\n"
+  EOL@49..50 "}"

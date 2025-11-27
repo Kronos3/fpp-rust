@@ -1,4 +1,4 @@
-ROOT@0..206
+ROOT@0..203
   WHITESPACE@0..2 "  "
   COMMENT@2..20 "# constant =     1"
   EOL@20..22 "\n\n"
@@ -38,7 +38,7 @@ ROOT@0..206
       EXPR_LITERAL@61..62
         LITERAL_INT@61..62 "2"
   EOL@62..64 "\n\n"
-  DEF_COMPONENT@64..206
+  DEF_COMPONENT@64..202
     ACTIVE_KW@64..70 "active"
     WHITESPACE@70..71 " "
     COMPONENT_KW@71..80 "component"
@@ -47,84 +47,82 @@ ROOT@0..206
       IDENT@81..82 "C"
     WHITESPACE@82..83 " "
     LEFT_CURLY@83..84 "{"
-    COMPONENT_MEMBER_LIST@84..206
-      EOL@84..85 "\n"
-      SPEC_PORT_INSTANCE_SPECIAL@85..108
+    COMPONENT_MEMBER_LIST@84..202
+      SPEC_PORT_INSTANCE_SPECIAL@84..103
+        TELEMETRY_KW@84..85 "\n"
         WHITESPACE@85..89 "    "
-        TELEMETRY_KW@89..98 "telemetry"
+        PORT_KW@89..98 "telemetry"
         WHITESPACE@98..99 " "
-        PORT_KW@99..103 "port"
-        WHITESPACE@103..104 " "
-        NAME@104..108
-          IDENT@104..108 "pOut"
-      EOL@108..110 "\n\n"
-      SPEC_PORT_INSTANCE_GENERAL@110..130
+        NAME@99..103
+          IDENT@99..103 "port"
+      WHITESPACE@103..104 " "
+      EOL@104..108 "pOut"
+      SPEC_PORT_INSTANCE_GENERAL@108..128
+        ASYNC_KW@108..110 "\n\n"
         WHITESPACE@110..114 "    "
-        ASYNC_KW@114..119 "async"
+        INPUT_KW@114..119 "async"
         WHITESPACE@119..120 " "
-        INPUT_KW@120..125 "input"
+        NAME@120..125
+          IDENT@120..125 "input"
         WHITESPACE@125..126 " "
-        NAME@126..127
-          IDENT@126..127 "i"
-        COLON@127..128 ":"
-        WHITESPACE@128..129 " "
-        QUAL_IDENT@129..130
-          IDENT@129..130 "d"
+        COLON@126..127 "i"
+        QUAL_IDENT@127..128
+          IDENT@127..128 ":"
+      WHITESPACE@128..129 " "
+      ERROR@129..130
+        RIGHT_ARROW@129..130 "d"
       WHITESPACE@130..131 " "
       ERROR@131..133
-        RIGHT_ARROW@131..133 "->"
+        IDENT@131..133 "->"
       WHITESPACE@133..134 " "
-      ERROR@134..135
-        IDENT@134..135 "d"
-      EOL@135..137 "\n\n"
-      SPEC_EVENT@137..167
+      EOL@134..135 "d"
+      SPEC_EVENT@135..156
+        EVENT_KW@135..137 "\n\n"
         WHITESPACE@137..141 "    "
-        EVENT_KW@141..146 "event"
+        NAME@141..146
+          IDENT@141..146 "event"
         WHITESPACE@146..147 " "
-        NAME@147..148
-          IDENT@147..148 "i"
+        LEFT_PAREN@147..148 "i"
         WHITESPACE@148..149 " "
-        LEFT_PAREN@149..150 "("
-        FORMAL_PARAM_LIST@150..152
-          EOL@150..152 "\n\n"
+        FORMAL_PARAM_LIST@149..149
+        RIGHT_PAREN@149..150 "("
+        ERROR@150..152
+          SEVERITY_KW@150..152 "\n\n"
         WHITESPACE@152..156 "    "
-        RIGHT_PAREN@156..157 ")"
-        WHITESPACE@157..158 " "
-        ERROR@158..166
-          SEVERITY_KW@158..166 "severity"
-        WHITESPACE@166..167 " "
-        FORMAT@167..167
+        FORMAT@156..156
+      ERROR@156..157
+        WARNING_KW@156..157 ")"
+      WHITESPACE@157..158 " "
+      ERROR@158..166
+        LOW_KW@158..166 "severity"
+      WHITESPACE@166..167 " "
       ERROR@167..174
-        WARNING_KW@167..174 "warning"
+        FORMAT_KW@167..174 "warning"
       WHITESPACE@174..175 " "
       ERROR@175..178
-        LOW_KW@175..178 "low"
+        LITERAL_STRING@175..178 "low"
       WHITESPACE@178..179 " "
       ERROR@179..185
-        FORMAT_KW@179..185 "format"
+        THROTTLE_KW@179..185 "format"
       WHITESPACE@185..186 " "
       ERROR@186..193
-        LITERAL_STRING@186..193 "\"hello\""
+        LITERAL_INT@186..193 "\"hello\""
       WHITESPACE@193..194 " "
-      ERROR@194..202
-        THROTTLE_KW@194..202 "throttle"
-      WHITESPACE@202..203 " "
-      ERROR@203..204
-        LITERAL_INT@203..204 "1"
-      EOL@204..206 "\n\n"
+      EOL@194..202 "throttle"
+  WHITESPACE@202..203 " "
 error 38..38: module member expected
 error 40..40: expected `;`
 error 43..43: module member expected
 error 45..45: expected `;`
-error 125..125: expected PORT_KW
-error 131..131: expected `SEMI`
-error 134..134: component member expected
-error 158..158: severity level expected
-error 167..167: expected LITERAL_STRING
+error 119..119: expected PORT_KW
+error 129..129: expected `SEMI`
+error 131..131: component member expected
+error 150..150: severity level expected
+error 156..156: expected LITERAL_STRING
+error 156..156: expected `SEMI`
+error 158..158: component member expected
 error 167..167: expected `SEMI`
 error 175..175: component member expected
 error 179..179: expected `SEMI`
 error 186..186: component member expected
-error 194..194: expected `SEMI`
-error 203..203: component member expected
-error 206..206: expected RIGHT_CURLY
+error 202..202: expected RIGHT_CURLY

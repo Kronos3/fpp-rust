@@ -170,6 +170,7 @@ pub enum SyntaxKind {
     DEF_MODULE,
     DEF_PORT,
     DEF_STRUCT,
+    DEF_TOPOLOGY,
 
     DEF_ACTION,
     DEF_CHOICE,
@@ -195,6 +196,11 @@ pub enum SyntaxKind {
     SPEC_STATE_MACHINE_INSTANCE,
     SPEC_STATE_TRANSITION,
     SPEC_TELEMETRY,
+    SPEC_INSTANCE,
+    SPEC_TOP_PORT,
+    SPEC_TLM_PACKET,
+    SPEC_CONNECTION_GRAPH_PATTERN,
+    SPEC_CONNECTION_GRAPH_DIRECT,
 
     // Helper nodes
     EXPR,
@@ -226,6 +232,7 @@ pub enum SyntaxKind {
     FORMAL_PARAM,
     FORMAL_PARAM_LIST,
     FORMAT,
+    GROUP,
     ID,
     INIT_SPEC_LIST,
     INTERFACE_MEMBER_LIST,
@@ -250,6 +257,20 @@ pub enum SyntaxKind {
     TRANSITION_EXPR,
     TYPE_NAME,
     QUAL_IDENT,
+    IMPLEMENTS_CLAUSE,
+    TOPOLOGY_MEMBER_LIST,
+    PORT_INSTANCE_IDENTIFIER,
+    TLM_PACKET_SET_MEMBER_LIST,
+    TLM_PACKET_SET,
+    TLM_PACKET_MEMBER_LIST,
+    TLM_CHANNEL_IDENTIFIER,
+    TLM_PACKET_OMIT,
+    TLM_PACKET_OMIT_MEMBER_LIST,
+    PATTERN_TARGET_MEMBER_LIST,
+    CONNECTION_MEMBER_LIST,
+    CONNECTION,
+    CONNECTION_FROM,
+    CONNECTION_TO,
 
     ROOT,
 
@@ -280,11 +301,25 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 
 impl SyntaxKind {
     #[inline]
-    pub fn is_trivia(self) -> bool {
+    pub fn is_trivia(self, last: SyntaxKind) -> bool {
         matches!(
             self,
             WHITESPACE | COMMENT | PRE_ANNOTATION | POST_ANNOTATION | UNKNOWN
-        )
+        ) || (self == EOL
+            && matches!(
+                last,
+                STAR | RIGHT_ARROW
+                    | SLASH
+                    | MINUS
+                    | PLUS
+                    | EQUALS
+                    | SEMI
+                    | COMMA
+                    | COLON
+                    | LEFT_PAREN
+                    | LEFT_CURLY
+                    | LEFT_SQUARE
+            ))
     }
 
     #[inline]

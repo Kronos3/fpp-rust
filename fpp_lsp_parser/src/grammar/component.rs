@@ -10,7 +10,7 @@ pub(super) fn def_component(p: &mut Parser) {
     }
 
     p.expect(COMPONENT_KW);
-    name_r(p, MEMBER_RECOVERY_SET);
+    name(p);
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -57,7 +57,7 @@ pub(super) fn component_member(p: &mut Parser) {
         TELEMETRY_KW => spec_telemetry(p),
         IMPORT_KW => module::spec_import_interface(p),
         _ => {
-            p.err_recover("component member expected", MEMBER_RECOVERY_SET);
+            p.err_and_bump("component member expected");
         }
     }
 }
@@ -236,7 +236,7 @@ fn spec_record(p: &mut Parser) {
     assert!(p.at(PRODUCT_KW));
     let m = p.start();
     p.bump(PRODUCT_KW);
-    p.bump(CONTAINER_KW);
+    p.bump(RECORD_KW);
 
     name(p);
     p.expect(COLON);

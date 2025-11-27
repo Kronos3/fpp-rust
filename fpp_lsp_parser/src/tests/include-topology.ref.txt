@@ -1,0 +1,17 @@
+ROOT@0..42
+  DEF_TOPOLOGY@0..41
+    TOPOLOGY_KW@0..8 "topology"
+    WHITESPACE@8..9 " "
+    NAME@9..10
+      IDENT@9..10 "T"
+    WHITESPACE@10..11 " "
+    LEFT_CURLY@11..12 "{"
+    TOPOLOGY_MEMBER_LIST@12..39
+      SPEC_INCLUDE@12..23
+        INCLUDE_KW@12..14 "\n\n"
+        WHITESPACE@14..16 "  "
+        LITERAL_STRING@16..23 "include"
+      WHITESPACE@23..24 " "
+      EOL@24..39 "\"instance.fppi\""
+    RIGHT_CURLY@39..41 "\n\n"
+  EOL@41..42 "}"
