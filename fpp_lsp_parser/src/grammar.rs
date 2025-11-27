@@ -78,7 +78,7 @@ pub(super) fn qual_ident(p: &mut Parser) {
     p.expect(IDENT);
     while p.at(DOT) {
         p.bump(DOT);
-        if p.expect(IDENT) {
+        if !p.expect(IDENT) {
             break;
         }
     }
@@ -189,13 +189,15 @@ fn formal_param(p: &mut Parser) {
 }
 
 fn format_(p: &mut Parser) {
+    assert!(p.at(FORMAT_KW));
     let m = p.start();
+    p.bump(FORMAT_KW);
     p.expect(LITERAL_STRING);
     m.complete(p, FORMAT);
 }
 
 fn format_opt(p: &mut Parser) {
-    if p.eat(FORMAT_KW) {
+    if p.at(FORMAT_KW) {
         format_(p);
     }
 }

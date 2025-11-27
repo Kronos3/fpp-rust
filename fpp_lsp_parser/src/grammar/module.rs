@@ -96,6 +96,13 @@ fn def_component_instance(p: &mut Parser) {
         m.complete(p, COMPONENT_INSTANCE_TYPE);
     }
 
+    if p.at(AT_KW) {
+        let m = p.start();
+        p.bump(AT_KW);
+        p.expect(LITERAL_STRING);
+        m.complete(p, COMPONENT_INSTANCE_FILE);
+    }
+
     if p.at(QUEUE_KW) {
         let m = p.start();
         p.bump(QUEUE_KW);
@@ -143,6 +150,7 @@ fn def_interface(p: &mut Parser) {
     assert!(p.at(INTERFACE_KW));
     let m = p.start();
     p.bump(INTERFACE_KW);
+    name(p);
 
     if p.at(LEFT_CURLY) {
         member_list(
@@ -155,14 +163,8 @@ fn def_interface(p: &mut Parser) {
             "expected interface member",
         )
     }
-    name(p);
-    formal_param_list(p);
 
-    if p.eat(RIGHT_ARROW) {
-        types::type_name(p);
-    }
-
-    m.complete(p, DEF_PORT);
+    m.complete(p, DEF_INTERFACE);
 }
 
 fn interface_member(p: &mut Parser) {

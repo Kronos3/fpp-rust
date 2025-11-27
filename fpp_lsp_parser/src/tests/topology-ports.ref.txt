@@ -1,32 +1,33 @@
-ROOT@0..48
-  DEF_TOPOLOGY@0..47
+ROOT@0..49
+  DEF_TOPOLOGY@0..48
     TOPOLOGY_KW@0..8 "topology"
     WHITESPACE@8..9 " "
     NAME@9..10
       IDENT@9..10 "T"
     WHITESPACE@10..11 " "
     LEFT_CURLY@11..12 "{"
-    TOPOLOGY_MEMBER_LIST@12..46
-      SPEC_INSTANCE@12..25
-        INSTANCE_KW@12..13 "\n"
-        WHITESPACE@13..17 "    "
-        QUAL_IDENT@17..25
-          IDENT@17..25 "instance"
-      WHITESPACE@25..26 " "
-      EOL@26..27 "i"
-      SPEC_TOP_PORT@27..45
-        PORT_KW@27..29 "\n\n"
-        WHITESPACE@29..33 "    "
-        NAME@33..37
-          IDENT@33..37 "port"
+    EOL@12..13 "\n"
+    WHITESPACE@13..17 "    "
+    TOPOLOGY_MEMBER_LIST@17..47
+      SPEC_INSTANCE@17..27
+        INSTANCE_KW@17..25 "instance"
+        WHITESPACE@25..26 " "
+        QUAL_IDENT@26..27
+          IDENT@26..27 "i"
+      EOL@27..29 "\n\n"
+      WHITESPACE@29..33 "    "
+      SPEC_TOP_PORT@33..46
+        PORT_KW@33..37 "port"
         WHITESPACE@37..38 " "
-        EQUALS@38..40 "p1"
+        NAME@38..40
+          IDENT@38..40 "p1"
         WHITESPACE@40..41 " "
-        PORT_INSTANCE_IDENTIFIER@41..45
-          IDENT@41..42 "="
-          WHITESPACE@42..43 " "
-          DOT@43..44 "i"
-          IDENT@44..45 "."
-      EOL@45..46 "p"
-    RIGHT_CURLY@46..47 "\n"
-  EOL@47..48 "}"
+        EQUALS@41..42 "="
+        WHITESPACE@42..43 " "
+        PORT_INSTANCE_IDENTIFIER@43..46
+          IDENT@43..44 "i"
+          DOT@44..45 "."
+          IDENT@45..46 "p"
+      EOL@46..47 "\n"
+    RIGHT_CURLY@47..48 "}"
+  EOL@48..49 "\n"

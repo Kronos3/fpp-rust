@@ -27,11 +27,9 @@ pub enum StrStep<'a> {
 impl LexedStr<'_> {
     pub fn to_input(&self) -> crate::Input {
         let mut res = crate::Input::with_capacity(self.len());
-        let mut last = EOF;
         for i in 0..self.len() {
             let kind = self.kind(i);
-            if !kind.is_trivia(last) {
-                last = kind;
+            if !kind.is_trivia(if i > 0 { self.kind(i - 1) } else { EOF }) {
                 res.push(kind);
             }
         }
@@ -115,12 +113,11 @@ impl Builder<'_, '_> {
             State::Normal => (),
         }
 
-        let mut last = EOF;
         let n_trivias = (self.pos..self.lexed.len())
             .take_while(|&it| {
-                let out = self.lexed.kind(it).is_trivia(last);
-                last = self.lexed.kind(it);
-                out
+                self.lexed
+                    .kind(it)
+                    .is_trivia(if it > 0 { self.lexed.kind(it - 1) } else { EOF })
             })
             .count();
         let leading_trivias = self.pos..self.pos + n_trivias;
@@ -144,23 +141,27 @@ impl Builder<'_, '_> {
     }
 
     fn eat_trivias(&mut self) {
-        let mut last = EOF;
         while self.pos < self.lexed.len() {
             let kind = self.lexed.kind(self.pos);
-            if !kind.is_trivia(last) {
+            if !kind.is_trivia(if self.pos > 0 {
+                self.lexed.kind(self.pos - 1)
+            } else {
+                EOF
+            }) {
                 break;
             }
-            last = kind;
             self.do_token(kind, 1);
         }
     }
 
     fn eat_n_trivias(&mut self, n: usize) {
-        let mut last = EOF;
         for _ in 0..n {
             let kind = self.lexed.kind(self.pos);
-            assert!(kind.is_trivia(last));
-            last = kind;
+            assert!(kind.is_trivia(if self.pos > 0 {
+                self.lexed.kind(self.pos - 1)
+            } else {
+                EOF
+            }));
             self.do_token(kind, 1);
         }
     }

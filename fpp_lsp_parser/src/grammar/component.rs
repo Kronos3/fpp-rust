@@ -38,10 +38,10 @@ pub(super) fn component_member(p: &mut Parser) {
         STATE_KW if p.nth_at(2, INSTANCE_KW) => spec_state_machine_instance(p),
         STATE_KW => state_machine::def_state_machine(p),
         STRUCT_KW => types::def_struct(p),
-        ASYNC_KW | GUARD_KW | SYNC_KW if p.nth_at(1, COMMAND_KW) => {
+        ASYNC_KW | GUARDED_KW | SYNC_KW if p.nth_at(1, COMMAND_KW) => {
             spec_command(p);
         }
-        ASYNC_KW | GUARD_KW | SYNC_KW | OUTPUT_KW | COMMAND_KW | TEXT_KW | TIME_KW => {
+        ASYNC_KW | GUARDED_KW | SYNC_KW | OUTPUT_KW | COMMAND_KW | TEXT_KW | TIME_KW => {
             spec_port_instance(p);
         }
         PRODUCT_KW if p.nth_at(1, CONTAINER_KW) => spec_container(p),
@@ -50,6 +50,7 @@ pub(super) fn component_member(p: &mut Parser) {
         EVENT_KW if p.nth_at(1, PORT_KW) => spec_port_instance(p),
         EVENT_KW => spec_event(p),
         INCLUDE_KW => spec_include(p),
+        INTERNAL_KW => spec_internal_port(p),
         MATCH_KW => spec_port_matching(p),
         PARAM_KW if p.nth_at(1, PORT_KW) => spec_port_instance(p),
         EXTERNAL_KW | PARAM_KW => spec_param(p),
@@ -214,6 +215,19 @@ fn spec_port_instance_special(p: &mut Parser) {
     m.complete(p, SPEC_PORT_INSTANCE_SPECIAL);
 }
 
+fn spec_internal_port(p: &mut Parser) {
+    assert!(p.at(INTERNAL_KW));
+    let m = p.start();
+    p.bump(INTERNAL_KW);
+    p.expect(PORT_KW);
+    name(p);
+    formal_param_list(p);
+    expr_opt(p, PRIORITY_KW, PRIORITY);
+    queue_full_opt(p);
+
+    m.complete(p, SPEC_PORT_INSTANCE_INTERNAL);
+}
+
 fn spec_container(p: &mut Parser) {
     assert!(p.at(PRODUCT_KW));
     let m = p.start();
@@ -255,6 +269,7 @@ fn spec_event(p: &mut Parser) {
     name(p);
     formal_param_list(p);
 
+    p.expect(SEVERITY_KW);
     match p.current() {
         ACTIVITY_KW | WARNING_KW => {
             p.bump_any();
@@ -336,13 +351,14 @@ fn spec_telemetry(p: &mut Parser) {
     expr_opt(p, ID_KW, ID);
 
     if p.eat(UPDATE_KW) {
-        match p.current() {
-            ALWAYS_KW | ON_KW => {
-                p.bump_any();
-            }
-            _ => {}
+        if p.eat(ON_KW) {
+            p.expect(CHANGE_KW);
+        } else if !p.eat(ALWAYS_KW) {
+            p.error("expected `on change` or `always`");
         }
     }
+
+    format_opt(p);
 
     if p.eat(LOW_KW) {
         limit_sequence(p);
@@ -352,7 +368,6 @@ fn spec_telemetry(p: &mut Parser) {
         limit_sequence(p);
     }
 
-    format_opt(p);
     m.complete(p, SPEC_TELEMETRY);
 }
 
@@ -378,7 +393,7 @@ fn limit(p: &mut Parser) {
         ORANGE_KW | RED_KW | YELLOW_KW => {
             p.bump_any();
         }
-        _ => p.err_and_bump("expected telemetry channel limit `orange`, `red` or `yellow`"),
+        _ => p.error("expected telemetry channel limit `orange`, `red` or `yellow`"),
     }
 
     expr::expr(p);
