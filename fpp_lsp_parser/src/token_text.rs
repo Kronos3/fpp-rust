@@ -16,6 +16,7 @@ impl<'a> TokenText<'a> {
         TokenText(Repr::Borrowed(text))
     }
 
+    #[allow(dead_code)]
     pub(crate) fn owned(green: GreenToken) -> Self {
         TokenText(Repr::Owned(green))
     }

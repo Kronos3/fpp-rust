@@ -259,6 +259,7 @@ impl CompletedMarker {
     }
 
     /// Extends this completed marker *to the left* up to `m`.
+    #[allow(dead_code)]
     pub(crate) fn extend_to(self, p: &mut Parser<'_>, mut m: Marker) -> CompletedMarker {
         m.bomb.defuse();
         let idx = m.pos as usize;
@@ -271,10 +272,12 @@ impl CompletedMarker {
         self
     }
 
+    #[allow(dead_code)]
     pub(crate) fn kind(&self) -> SyntaxKind {
         self.kind
     }
 
+    #[allow(dead_code)]
     pub(crate) fn last_token(&self, p: &Parser<'_>) -> Option<SyntaxKind> {
         let end_pos = self.end_pos as usize;
         debug_assert_eq!(p.events[end_pos - 1], Event::Finish);
