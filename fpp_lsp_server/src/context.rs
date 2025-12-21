@@ -17,7 +17,7 @@ impl LspContext {
 }
 
 pub struct LspDiagnosticsEmitter {
-    diagnostics: FxHashMap<Uri, Vec<Diagnostic>>,
+    pub diagnostics: FxHashMap<Uri, Vec<Diagnostic>>,
 }
 
 impl LspDiagnosticsEmitter {

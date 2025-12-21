@@ -1,5 +1,5 @@
 [package]
-name = "fpp_lsp"
+name = "fpp_lsp_server"
 version = "0.1.0"
 edition = "2024"
 
@@ -16,3 +16,5 @@ log = "0.4.28"
 serde = { version = "1.0.228", features = ["derive"] }
 tracing = "0.1.41"
 anyhow = "1.0.100"
+threadpool = "1.8.1"
+notify = "8.2.0"

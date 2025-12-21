@@ -7,7 +7,7 @@ members = [
     "fpp_errors",
     "fpp_fs",
     "fpp_lexer",
-    "fpp_lsp",
+    "fpp_lsp_server",
     "fpp_lsp_parser",
     "fpp_macros",
     "fpp_parser",

@@ -4,20 +4,9 @@ use std::{
     panic, thread,
 };
 
-use ide_db::base_db::{
-    salsa::{self, Cancelled},
-    DbPanicContext,
-};
-use lsp_server::{ExtractError, Response, ResponseError};
 use serde::{de::DeserializeOwned, Serialize};
-use stdx::thread::ThreadIntent;
 
-use crate::{
-    global_state::{GlobalState, GlobalStateSnapshot},
-    lsp::LspError,
-    main_loop::Task,
-    version::version,
-};
+use crate::global_state::{GlobalState, GlobalStateSnapshot};
 
 /// A visitor for routing a raw JSON request to an appropriate handler function.
 ///
@@ -96,7 +85,7 @@ impl RequestDispatcher<'_> {
 
     /// Dispatches a non-latency-sensitive request onto the thread pool. When the VFS is marked not
     /// ready this will return a default constructed [`R::Result`].
-    pub(crate) fn on<const ALLOW_RETRYING: bool, R>(
+    pub(crate) fn on<R>(
         &mut self,
         f: fn(GlobalStateSnapshot, R::Params) -> anyhow::Result<R::Result>,
     ) -> &mut Self
@@ -106,117 +95,43 @@ impl RequestDispatcher<'_> {
                 Result: Serialize + Default,
             > + 'static,
     {
-        if !self.global_state.vfs_done {
-            if let Some(lsp_server::Request { id, .. }) =
-                self.req.take_if(|it| it.method == R::METHOD)
-            {
-                self.global_state
-                    .respond(lsp_server::Response::new_ok(id, R::Result::default()));
-            }
-            return self;
-        }
-        self.on_with_thread_intent::<false, ALLOW_RETRYING, R>(
-            ThreadIntent::Worker,
-            f,
-            Self::content_modified_error,
-        )
-    }
+        // Try to grab the request
+        let req = match self.req.take() {
+            Some(it) => it,
+            None => return self,
+        };
 
-    /// Dispatches a non-latency-sensitive request onto the thread pool. When the VFS is marked not
-    /// ready this will return a `default` constructed [`R::Result`].
-    pub(crate) fn on_with_vfs_default<R>(
-        &mut self,
-        f: fn(GlobalStateSnapshot, R::Params) -> anyhow::Result<R::Result>,
-        default: impl FnOnce() -> R::Result,
-        on_cancelled: fn() -> ResponseError,
-    ) -> &mut Self
-    where
-        R: lsp_types::request::Request<
-                Params: DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
-                Result: Serialize,
-            > + 'static,
-    {
-        if !self.global_state.vfs_done || self.global_state.incomplete_crate_graph {
-            if let Some(lsp_server::Request { id, .. }) =
-                self.req.take_if(|it| it.method == R::METHOD)
-            {
-                self.global_state
-                    .respond(lsp_server::Response::new_ok(id, default()));
-            }
-            return self;
-        }
-        self.on_with_thread_intent::<false, false, R>(ThreadIntent::Worker, f, on_cancelled)
-    }
+        let _guard = tracing::info_span!("request", method = ?req.method).entered();
 
-    /// Dispatches a non-latency-sensitive request onto the thread pool. When the VFS is marked not
-    /// ready this will return the parameter as is.
-    pub(crate) fn on_identity<const ALLOW_RETRYING: bool, R, Params>(
-        &mut self,
-        f: fn(GlobalStateSnapshot, Params) -> anyhow::Result<R::Result>,
-    ) -> &mut Self
-    where
-        R: lsp_types::request::Request<Params = Params, Result = Params> + 'static,
-        Params: Serialize + DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
-    {
-        if !self.global_state.vfs_done {
-            if let Some((request, params)) = self.parse::<R>() {
-                self.global_state
-                    .respond(lsp_server::Response::new_ok(request.id, &params))
+        let (req_id, params) = match req.extract::<R::Params>(R::METHOD) {
+            Ok(it) => it,
+            Err(lsp_server::ExtractError::JsonError { method, error }) => {
+                panic!("Invalid request\nMethod: {method}\n error: {error}",)
             }
-            return self;
-        }
-        self.on_with_thread_intent::<false, ALLOW_RETRYING, R>(
-            ThreadIntent::Worker,
-            f,
-            Self::content_modified_error,
-        )
-    }
-
-    /// Dispatches a latency-sensitive request onto the thread pool. When the VFS is marked not
-    /// ready this will return a default constructed [`R::Result`].
-    pub(crate) fn on_latency_sensitive<const ALLOW_RETRYING: bool, R>(
-        &mut self,
-        f: fn(GlobalStateSnapshot, R::Params) -> anyhow::Result<R::Result>,
-    ) -> &mut Self
-    where
-        R: lsp_types::request::Request<
-                Params: DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
-                Result: Serialize + Default,
-            > + 'static,
-    {
-        if !self.global_state.vfs_done {
-            if let Some(lsp_server::Request { id, .. }) =
-                self.req.take_if(|it| it.method == R::METHOD)
-            {
-                self.global_state
-                    .respond(lsp_server::Response::new_ok(id, R::Result::default()));
+            Err(lsp_server::ExtractError::MethodMismatch(req)) => {
+                // Give the request back to the dispatcher
+                self.req = Some(req);
+                return self;
             }
-            return self;
-        }
-        self.on_with_thread_intent::<false, ALLOW_RETRYING, R>(
-            ThreadIntent::LatencySensitive,
-            f,
-            Self::content_modified_error,
-        )
-    }
+        };
 
-    /// Formatting requests should never block on waiting a for task thread to open up, editors will wait
-    /// on the response and a late formatting update might mess with the document and user.
-    /// We can't run this on the main thread though as we invoke rustfmt which may take arbitrary time to complete!
-    pub(crate) fn on_fmt_thread<R>(
-        &mut self,
-        f: fn(GlobalStateSnapshot, R::Params) -> anyhow::Result<R::Result>,
-    ) -> &mut Self
-    where
-        R: lsp_types::request::Request + 'static,
-        R::Params: DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
-        R::Result: Serialize,
-    {
-        self.on_with_thread_intent::<true, false, R>(
-            ThreadIntent::LatencySensitive,
-            f,
-            Self::content_modified_error,
-        )
+        tracing::debug!(?params);
+        let snapshot = self.global_state.snapshot();
+        let sender = self.global_state.get_sender();
+        self.global_state.task_pool.execute(move || {
+            let result = f(snapshot, params);
+            let response = result_to_response::<R>(req_id, result);
+            match response {
+                Ok(msg) => if let Err(err) = sender.send(lsp_server::Message::Response(msg)) {
+                    tracing::event!(tracing::Level::ERROR, err = %err, "failed to response to request");
+                },
+                Err(_) => {
+                    //
+                }
+            };
+        });
+
+        self
     }
 
     pub(crate) fn finish(&mut self) {
@@ -231,60 +146,13 @@ impl RequestDispatcher<'_> {
         }
     }
 
-    fn on_with_thread_intent<const RUSTFMT: bool, const ALLOW_RETRYING: bool, R>(
-        &mut self,
-        intent: ThreadIntent,
-        f: fn(GlobalStateSnapshot, R::Params) -> anyhow::Result<R::Result>,
-        on_cancelled: fn() -> ResponseError,
-    ) -> &mut Self
-    where
-        R: lsp_types::request::Request + 'static,
-        R::Params: DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
-        R::Result: Serialize,
-    {
-        let (req, params, panic_context) = match self.parse::<R>() {
-            Some(it) => it,
-            None => return self,
-        };
-        let _guard =
-            tracing::info_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
-        tracing::debug!(?params);
-
-        let world = self.global_state.snapshot();
-        if RUSTFMT {
-            &mut self.global_state.fmt_pool.handle
-        } else {
-            &mut self.global_state.task_pool.handle
-        }
-        .spawn(intent, move || {
-            let result = panic::catch_unwind(move || {
-                let _pctx = DbPanicContext::enter(panic_context);
-                f(world, params)
-            });
-            match thread_result_to_response::<R>(req.id.clone(), result) {
-                Ok(response) => Task::Response(response),
-                Err(_cancelled) if ALLOW_RETRYING => Task::Retry(req),
-                Err(_cancelled) => {
-                    let error = on_cancelled();
-                    Task::Response(Response {
-                        id: req.id,
-                        result: None,
-                        error: Some(error),
-                    })
-                }
-            }
-        });
-
-        self
-    }
-
     fn parse<R>(&mut self) -> Option<(lsp_server::Request, R::Params)>
     where
         R: lsp_types::request::Request,
         R::Params: DeserializeOwned + fmt::Debug,
     {
         let req = self.req.take_if(|it| it.method == R::METHOD)?;
-        let res = crate::from_json(R::METHOD, &req.params);
+        let res = crate::util::from_json(R::METHOD, &req.params);
         match res {
             Ok(params) => Some((req, params)),
             Err(err) => {
@@ -299,8 +167,8 @@ impl RequestDispatcher<'_> {
         }
     }
 
-    fn content_modified_error() -> ResponseError {
-        ResponseError {
+    fn content_modified_error() -> lsp_server::ResponseError {
+        lsp_server::ResponseError {
             code: lsp_server::ErrorCode::ContentModified as i32,
             message: "content modified".to_owned(),
             data: None,
@@ -402,6 +270,7 @@ impl NotificationDispatcher<'_> {
         N: lsp_types::notification::Notification,
         N::Params: DeserializeOwned + Send + Debug,
     {
+        // Try to grab the notification
         let not = match self.not.take() {
             Some(it) => it,
             None => return self,
@@ -411,10 +280,11 @@ impl NotificationDispatcher<'_> {
 
         let params = match not.extract::<N::Params>(N::METHOD) {
             Ok(it) => it,
-            Err(ExtractError::JsonError { method, error }) => {
+            Err(lsp_server::ExtractError::JsonError { method, error }) => {
                 panic!("Invalid request\nMethod: {method}\n error: {error}",)
             }
-            Err(ExtractError::MethodMismatch(not)) => {
+            Err(lsp_server::ExtractError::MethodMismatch(not)) => {
+                // Give the notification back to the dispatcher
                 self.not = Some(not);
                 return self;
             }
@@ -422,11 +292,6 @@ impl NotificationDispatcher<'_> {
 
         tracing::debug!(?params);
 
-        let _pctx = DbPanicContext::enter(format!(
-            "\nversion: {}\nnotification: {}",
-            version(),
-            N::METHOD
-        ));
         if let Err(e) = f(self.global_state, params) {
             tracing::error!(handler = %N::METHOD, error = %e, "notification handler failed");
         }

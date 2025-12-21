@@ -1,9 +1,13 @@
 mod context;
 mod dispatcher;
-mod handlers;
-mod reader;
-mod semantic_tokens;
 mod global_state;
+mod handlers;
+mod lsp_ext;
+mod progress;
+mod reader;
+mod request;
+mod semantic_tokens;
+mod util;
 
 use crate::context::{LspContext, LspDiagnosticsEmitter};
 use fpp_analysis::Analysis;
@@ -12,7 +16,8 @@ use fpp_core::{CompilerContext, SourceFile};
 use fpp_fs::FsReader;
 use lsp_server::{Connection, Message, Request as ServerRequest, RequestId, Response};
 use lsp_types::notification::{
-    DidChangeTextDocument, DidChangeWatchedFiles, DidOpenTextDocument, Notification,
+    DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
+    Notification,
 };
 use lsp_types::request::*;
 use lsp_types::{
@@ -26,6 +31,7 @@ use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::error::Error;
 use std::rc::Rc;
+use std::sync::Arc;
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // transport
@@ -76,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 
     let init_params = connection.initialize(init_value)?;
 
-    let diagnostics = Rc::new(RefCell::new(LspDiagnosticsEmitter::new()));
+    let diagnostics = Arc::new(RefCell::new(LspDiagnosticsEmitter::new()));
     let mut compiler_ctx = CompilerContext::new(diagnostics.clone());
     let mut lsp_ctx = LspContext::new(diagnostics.clone());
 
@@ -116,13 +122,6 @@ fn main_loop(
     }
 
     Ok(())
-}
-
-enum Reprocess {
-    /// Shutdown the server
-    Shutdown,
-
-    Remove,
 }
 
 fn main_loop_ast(
@@ -175,6 +174,7 @@ fn handle_notification(
             let uri = p.text_document.uri;
             publish_dummy_diag(conn, &uri)?;
         }
+        DidCloseTextDocument::METHOD => {}
         DidChangeTextDocument::METHOD => {
             let p: DidChangeTextDocumentParams = serde_json::from_value(note.params.clone())?;
             if let Some(change) = p.content_changes.into_iter().next() {
