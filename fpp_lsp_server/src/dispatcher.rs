@@ -1,8 +1,5 @@
 //! See [RequestDispatcher].
-use std::{
-    fmt::{self, Debug},
-    panic, thread,
-};
+use std::{fmt::Debug, panic, thread};
 
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -37,7 +34,7 @@ impl RequestDispatcher<'_> {
     ) -> &mut Self
     where
         R: lsp_types::request::Request,
-        R::Params: DeserializeOwned + panic::UnwindSafe + fmt::Debug,
+        R::Params: DeserializeOwned + panic::UnwindSafe + Debug,
         R::Result: Serialize,
     {
         let (req, params) = match self.parse::<R>() {
@@ -48,7 +45,7 @@ impl RequestDispatcher<'_> {
             tracing::info_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
         tracing::debug!(?params);
         let result = f(self.global_state, params);
-        if let Ok(response) = result_to_response::<R>(req.id, result) {
+        if let Some(response) = result_to_response::<R>(req.id, result) {
             self.global_state.respond(response);
         }
 
@@ -62,7 +59,7 @@ impl RequestDispatcher<'_> {
     ) -> &mut Self
     where
         R: lsp_types::request::Request,
-        R::Params: DeserializeOwned + panic::UnwindSafe + fmt::Debug,
+        R::Params: DeserializeOwned + panic::UnwindSafe + Debug,
         R::Result: Serialize,
     {
         let (req, params) = match self.parse::<R>() {
@@ -76,7 +73,7 @@ impl RequestDispatcher<'_> {
 
         let result = panic::catch_unwind(move || f(global_state_snapshot, params));
 
-        if let Ok(response) = thread_result_to_response::<R>(req.id, result) {
+        if let Some(response) = thread_result_to_response::<R>(req.id, result) {
             self.global_state.respond(response);
         }
 
@@ -91,7 +88,7 @@ impl RequestDispatcher<'_> {
     ) -> &mut Self
     where
         R: lsp_types::request::Request<
-                Params: DeserializeOwned + panic::UnwindSafe + Send + fmt::Debug,
+                Params: DeserializeOwned + panic::UnwindSafe + Send + Debug,
                 Result: Serialize + Default,
             > + 'static,
     {
@@ -120,15 +117,9 @@ impl RequestDispatcher<'_> {
         let sender = self.global_state.get_sender();
         self.global_state.task_pool.execute(move || {
             let result = f(snapshot, params);
-            let response = result_to_response::<R>(req_id, result);
-            match response {
-                Ok(msg) => if let Err(err) = sender.send(lsp_server::Message::Response(msg)) {
-                    tracing::event!(tracing::Level::ERROR, err = %err, "failed to response to request");
-                },
-                Err(_) => {
-                    //
-                }
-            };
+            if let Some(response) = result_to_response::<R>(req_id, result) {
+                sender.send(lsp_server::Message::Response(response))
+            }
         });
 
         self
@@ -149,7 +140,7 @@ impl RequestDispatcher<'_> {
     fn parse<R>(&mut self) -> Option<(lsp_server::Request, R::Params)>
     where
         R: lsp_types::request::Request,
-        R::Params: DeserializeOwned + fmt::Debug,
+        R::Params: DeserializeOwned + Debug,
     {
         let req = self.req.take_if(|it| it.method == R::METHOD)?;
         let res = crate::util::from_json(R::METHOD, &req.params);
@@ -176,29 +167,10 @@ impl RequestDispatcher<'_> {
     }
 }
 
-#[derive(Debug)]
-enum HandlerCancelledError {
-    Inner(salsa::Cancelled),
-}
-
-impl std::error::Error for HandlerCancelledError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            HandlerCancelledError::Inner(cancelled) => Some(cancelled),
-        }
-    }
-}
-
-impl fmt::Display for HandlerCancelledError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Cancelled")
-    }
-}
-
 fn thread_result_to_response<R>(
     id: lsp_server::RequestId,
     result: thread::Result<anyhow::Result<R::Result>>,
-) -> Result<lsp_server::Response, HandlerCancelledError>
+) -> Option<lsp_server::Response>
 where
     R: lsp_types::request::Request,
     R::Params: DeserializeOwned,
@@ -216,12 +188,9 @@ where
             if let Some(panic_message) = panic_message {
                 message.push_str(": ");
                 message.push_str(panic_message);
-            } else if let Ok(cancelled) = panic.downcast::<Cancelled>() {
-                tracing::error!("Cancellation propagated out of salsa! This is a bug");
-                return Err(HandlerCancelledError::Inner(*cancelled));
             };
 
-            Ok(lsp_server::Response::new_err(
+            Some(lsp_server::Response::new_err(
                 id,
                 lsp_server::ErrorCode::InternalError as i32,
                 message,
@@ -233,27 +202,21 @@ where
 fn result_to_response<R>(
     id: lsp_server::RequestId,
     result: anyhow::Result<R::Result>,
-) -> Result<lsp_server::Response, HandlerCancelledError>
+) -> Option<lsp_server::Response>
 where
     R: lsp_types::request::Request,
     R::Params: DeserializeOwned,
     R::Result: Serialize,
 {
-    let res = match result {
-        Ok(resp) => lsp_server::Response::new_ok(id, &resp),
-        Err(e) => match e.downcast::<LspError>() {
-            Ok(lsp_error) => lsp_server::Response::new_err(id, lsp_error.code, lsp_error.message),
-            Err(e) => match e.downcast::<Cancelled>() {
-                Ok(cancelled) => return Err(HandlerCancelledError::Inner(cancelled)),
-                Err(e) => lsp_server::Response::new_err(
-                    id,
-                    lsp_server::ErrorCode::InternalError as i32,
-                    e.to_string(),
-                ),
-            },
-        },
-    };
-    Ok(res)
+    match result {
+        // TODO(tumbar) Handle cancellation errors and return None
+        Ok(resp) => Some(lsp_server::Response::new_ok(id, &resp)),
+        Err(e) => Some(lsp_server::Response::new_err(
+            id,
+            lsp_server::ErrorCode::InternalError as i32,
+            e.to_string(),
+        )),
+    }
 }
 
 pub(crate) struct NotificationDispatcher<'a> {
@@ -292,8 +255,8 @@ impl NotificationDispatcher<'_> {
 
         tracing::debug!(?params);
 
-        if let Err(e) = f(self.global_state, params) {
-            tracing::error!(handler = %N::METHOD, error = %e, "notification handler failed");
+        if let Err(err) = f(self.global_state, params) {
+            tracing::error!(handler = %N::METHOD, err = %err, "notification handler failed");
         }
         self
     }

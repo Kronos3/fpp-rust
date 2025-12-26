@@ -37,9 +37,9 @@ pub(crate) fn run_test(file_path: &str) {
 
         let mut ast = fpp_parser::parse(src, |p| p.trans_unit(), None);
         let mut a = crate::Analysis::new();
-        let _ = crate::passes::check_semantics(&mut a, Box::new(file_reader), &mut ast);
-    })
-    .expect("compiler_error");
+        let _ = crate::resolve_includes(&mut a, file_reader, &mut ast);
+        let _ = crate::check_semantics(&mut a, vec![&ast]);
+    });
 
     let output = String::from_utf8(diagnostics_str)
         .expect("failed to convert error message to string")
@@ -58,3 +58,173 @@ pub(crate) fn run_test(file_path: &str) {
         }
     }
 }
+
+mod cycles {
+    mod test;
+}
+
+mod defs {
+    mod test;
+}
+
+// mod interface {
+//     mod test;
+// }
+
+mod types {
+    mod test;
+}
+
+// mod port_matching {
+//     mod test;
+// }
+
+// mod record {
+//     mod test;
+// }
+
+// mod port_numbering {
+//     mod test;
+// }
+
+mod array {
+    mod test;
+}
+
+// mod tlm_packets {
+//     mod test;
+// }
+
+mod enums {
+    mod test;
+}
+
+// mod tlm_channel {
+//     mod test;
+// }
+
+// mod framework_defs {
+//     mod test;
+// }
+
+mod expr {
+    mod test;
+}
+
+// mod component {
+//     mod test;
+// }
+
+// mod param {
+//     mod test;
+// }
+
+// mod container {
+//     mod test;
+// }
+
+// mod component_instance_def {
+//     mod test;
+// }
+
+// mod port_instance {
+//     mod test;
+// }
+
+mod constant {
+    mod test;
+}
+
+mod structs {
+    mod test;
+}
+
+mod invalid_symbols {
+    mod test;
+}
+
+mod redef {
+    mod test;
+}
+
+// mod unconnected {
+//     mod test;
+// }
+
+// mod command {
+//     mod test;
+// }
+
+// mod port {
+//     mod test;
+// }
+
+// mod instance_spec {
+//     mod test;
+// }
+
+// mod connection_direct {
+//     mod test;
+// }
+
+// mod spec_init {
+//     mod test;
+// }
+
+// mod event {
+//     mod test;
+// }
+
+// mod spec_loc {
+//     mod test;
+// }
+
+// mod top_import {
+//     mod test;
+// }
+
+// mod state_machine_instance {
+//     mod test;
+// }
+
+// mod connection_pattern {
+//     mod test;
+// }
+
+// mod internal_port {
+//     mod test;
+// }
+
+// mod top_ports {
+//     mod test;
+// }
+
+// mod state_machine {
+//     mod types {
+//         mod test;
+//     }
+
+//     mod initial_transitions {
+//         mod test;
+//     }
+
+//     mod transition_graph {
+//         mod test;
+//     }
+
+//     mod signal_uses {
+//         mod test;
+//     }
+
+//     mod redef {
+//         mod test;
+//     }
+
+//     mod typed_elements {
+//         mod test;
+//     }
+
+//     mod undef {
+//         mod test;
+//     }
+// }

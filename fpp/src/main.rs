@@ -14,7 +14,8 @@ fn compiler_main() -> String {
 
     let mut a = fpp_analysis::Analysis::new();
 
-    let _ = fpp_analysis::passes::check_semantics(&mut a, Box::new(fpp_fs::FsReader {}), &mut ast);
+    let _ = fpp_analysis::resolve_includes(&mut a, fpp_fs::FsReader {}, &mut ast);
+    let _ = fpp_analysis::check_semantics(&mut a, vec![&ast]);
 
     format!("{:#?}", ast)
 }
@@ -22,7 +23,7 @@ fn compiler_main() -> String {
 fn main() {
     let diagnostics = Rc::new(RefCell::new(fpp_errors::ConsoleEmitter::color()));
     let mut ctx = fpp_core::CompilerContext::new(diagnostics.clone());
-    let out = fpp_core::run(&mut ctx, compiler_main).expect("Failed to run compiler");
+    let out = fpp_core::run(&mut ctx, compiler_main);
 
     if diagnostics.borrow().has_errors() {
         exit(1)

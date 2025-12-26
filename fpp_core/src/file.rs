@@ -5,7 +5,30 @@ use std::fmt::{Debug, Display, Formatter};
 
 pub trait FileReader {
     /// Read a file given the current FPP source file and the included FPP source file
-    fn include(&self, current: SourceFile, include: &str) -> Result<SourceFile, Error>;
+    fn include(&self, current: SourceFile, include: &str) -> Result<SourceFile, Error> {
+        let current_path = if current.uri() == "<stdin>" {
+            // Read from relative to the current directory
+            return self.read(include);
+        } else {
+            current.uri()
+        };
+
+        let parent_file_path = std::path::Path::new(&current_path).canonicalize()?;
+        match parent_file_path.parent() {
+            None => Err(format!("Cannot resolve parent directory of {}", &current_path).into()),
+            Some(parent_dir) => {
+                let final_path = parent_dir.join(include);
+                match final_path.as_path().to_str() {
+                    None => Err(format!(
+                        "Failed to resolve path {} relative to {:?}",
+                        include, parent_dir
+                    )
+                        .into()),
+                    Some(file_path) => self.read(file_path),
+                }
+            }
+        }
+    }
 
     /// Read a file given its path
     fn read(&self, path: &str) -> Result<SourceFile, Error>;

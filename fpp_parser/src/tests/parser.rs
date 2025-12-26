@@ -36,11 +36,9 @@ fn run_test(file_path: &str) {
         // Parse the source
         let mut ast = parse(src, |p| p.trans_unit(), None);
         let mut source_files = Default::default();
-        let _ = ResolveIncludes::new(Box::new(file_reader))
-            .visit_trans_unit(&mut source_files, &mut ast);
+        let _ = ResolveIncludes::new(file_reader).visit_trans_unit(&mut source_files, &mut ast);
         format!("{:#?}", ast)
-    })
-    .expect("compiler_error");
+    });
 
     let output = if diagnostics_str.is_empty() {
         ast

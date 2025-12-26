@@ -116,6 +116,18 @@ pub trait Visitor<'ast>: Sized {
         ControlFlow::Continue(())
     }
 
+    fn visit_trans_units<I: Iterator<Item = &'ast crate::TransUnit>>(
+        &self,
+        a: &mut Self::State,
+        i: I,
+    ) -> ControlFlow<Self::Break> {
+        for item in i {
+            self.visit_trans_unit(a, item)?;
+        }
+
+        ControlFlow::Continue(())
+    }
+
     visit_signatures!(
         (TransUnit, visit_trans_unit),
         /* Definitions */

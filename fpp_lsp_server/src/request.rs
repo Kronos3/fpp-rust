@@ -1,11 +1,11 @@
-use lsp_server::Request;
 use crate::dispatcher::RequestDispatcher;
 use crate::global_state::GlobalState;
 use crate::{handlers, lsp_ext};
+use lsp_server::Request;
 
 impl GlobalState {
     /// Handles a request.
-    fn on_request(&mut self, req: Request) {
+    pub(crate) fn on_request(&mut self, req: Request) {
         let mut dispatcher = RequestDispatcher {
             req: Some(req),
             global_state: self,
@@ -32,6 +32,7 @@ impl GlobalState {
 
         use lsp_types::request as lsp_request;
 
+        #[rustfmt::skip]
         dispatcher
             // Request handlers that must run on the main thread
             // because they mutate GlobalState:
@@ -40,9 +41,7 @@ impl GlobalState {
             .on::<lsp_request::Completion>(handlers::handle_completion)
             .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)
             .on::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
-            .on::<lsp_request::SemanticTokensFullDeltaRequest>(
-                handlers::handle_semantic_tokens_full_delta,
-            )
+            .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
             .on::<lsp_request::SemanticTokensRangeRequest>(handlers::handle_semantic_tokens_range)
             // .on_with_vfs_default::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics, empty_diagnostic_report, || lsp_server::ResponseError {
             //     code: lsp_server::ErrorCode::ServerCancelled as i32,

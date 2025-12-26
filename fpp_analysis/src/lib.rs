@@ -1,7 +1,14 @@
 mod analysis;
 mod errors;
 
+use crate::passes::{
+    CheckExprTypes, CheckTypeUses, CheckUseDefCycles, CheckUses, EnterSymbols, EvalConstantExprs,
+    EvalImpliedEnumConsts, FinalizeTypeDefs,
+};
 pub use analysis::*;
+use fpp_ast::{MutVisitor, Visitor};
+use fpp_core::FileReader;
+use std::ops::ControlFlow;
 
 pub mod analyzers {
     pub(crate) mod analyzer;
@@ -11,9 +18,6 @@ pub mod analyzers {
 }
 
 pub mod passes {
-    mod check;
-    pub use check::*;
-
     mod enter_symbols;
     pub use enter_symbols::*;
 
@@ -73,176 +77,25 @@ pub mod semantics {
 }
 
 #[cfg(test)]
-mod test {
-    mod lib;
+mod test;
 
-    mod cycles {
-        mod test;
-    }
+pub fn resolve_includes<Reader: FileReader>(
+    a: &mut Analysis,
+    reader: Reader,
+    ast: &mut fpp_ast::TransUnit,
+) -> ControlFlow<()> {
+    fpp_parser::ResolveIncludes::new(reader).visit_trans_unit(&mut a.included_file_set, ast)
+}
 
-    mod defs {
-        mod test;
-    }
+pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {
+    EnterSymbols::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckUses::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckUseDefCycles::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckTypeUses::new().visit_trans_units(a, ast.iter().cloned())?;
+    CheckExprTypes::new().visit_trans_units(a, ast.iter().cloned())?;
+    EvalImpliedEnumConsts::new().visit_trans_units(a, ast.iter().cloned())?;
+    EvalConstantExprs::new().visit_trans_units(a, ast.iter().cloned())?;
+    FinalizeTypeDefs::new().visit_trans_units(a, ast.iter().cloned())?;
 
-    // mod interface {
-    //     mod test;
-    // }
-
-    mod types {
-        mod test;
-    }
-
-    // mod port_matching {
-    //     mod test;
-    // }
-
-    // mod record {
-    //     mod test;
-    // }
-
-    // mod port_numbering {
-    //     mod test;
-    // }
-
-    mod array {
-        mod test;
-    }
-
-    // mod tlm_packets {
-    //     mod test;
-    // }
-
-    mod enums {
-        mod test;
-    }
-
-    // mod tlm_channel {
-    //     mod test;
-    // }
-
-    // mod framework_defs {
-    //     mod test;
-    // }
-
-    mod expr {
-        mod test;
-    }
-
-    // mod component {
-    //     mod test;
-    // }
-
-    // mod param {
-    //     mod test;
-    // }
-
-    // mod container {
-    //     mod test;
-    // }
-
-    // mod component_instance_def {
-    //     mod test;
-    // }
-
-    // mod port_instance {
-    //     mod test;
-    // }
-
-    mod constant {
-        mod test;
-    }
-
-    mod structs {
-        mod test;
-    }
-
-    mod invalid_symbols {
-        mod test;
-    }
-
-    mod redef {
-        mod test;
-    }
-
-    // mod unconnected {
-    //     mod test;
-    // }
-
-    // mod command {
-    //     mod test;
-    // }
-
-    // mod port {
-    //     mod test;
-    // }
-
-    // mod instance_spec {
-    //     mod test;
-    // }
-
-    // mod connection_direct {
-    //     mod test;
-    // }
-
-    // mod spec_init {
-    //     mod test;
-    // }
-
-    // mod event {
-    //     mod test;
-    // }
-
-    // mod spec_loc {
-    //     mod test;
-    // }
-
-    // mod top_import {
-    //     mod test;
-    // }
-
-    // mod state_machine_instance {
-    //     mod test;
-    // }
-
-    // mod connection_pattern {
-    //     mod test;
-    // }
-
-    // mod internal_port {
-    //     mod test;
-    // }
-
-    // mod top_ports {
-    //     mod test;
-    // }
-
-    // mod state_machine {
-    //     mod types {
-    //         mod test;
-    //     }
-
-    //     mod initial_transitions {
-    //         mod test;
-    //     }
-
-    //     mod transition_graph {
-    //         mod test;
-    //     }
-
-    //     mod signal_uses {
-    //         mod test;
-    //     }
-
-    //     mod redef {
-    //         mod test;
-    //     }
-
-    //     mod typed_elements {
-    //         mod test;
-    //     }
-
-    //     mod undef {
-    //         mod test;
-    //     }
-    // }
+    ControlFlow::Continue(())
 }

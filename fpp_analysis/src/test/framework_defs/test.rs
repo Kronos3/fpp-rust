@@ -1,4 +1,4 @@
-use crate::test::lib::run_test;
+use crate::test::run_test;
 
 #[test]
 fn fw_size_type_not_unsigned() {

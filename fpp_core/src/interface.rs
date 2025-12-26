@@ -1,5 +1,4 @@
 use crate::context::CompilerContext;
-use crate::error::Error;
 use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
 use std::cell::{Cell, Ref, RefCell};
 
@@ -166,7 +165,7 @@ scoped_tls::scoped_thread_local!(static TLV: Cell<*const ()>);
 ///
 /// * `ctx`: Context to attach to the core compiler
 /// * `f`: Function closure to run
-pub fn run<F, T, E>(ctx: &mut CompilerContext<E>, f: F) -> Result<T, Error>
+pub fn run<F, T, E>(ctx: &mut CompilerContext<E>, f: F) -> T
 where
     F: FnOnce() -> T,
     E: DiagnosticEmitter,
@@ -175,16 +174,16 @@ where
     run1(&container, f)
 }
 
-fn run1<F, T>(interface: &dyn CompilerInterface, f: F) -> Result<T, Error>
+fn run1<F, T>(interface: &dyn CompilerInterface, f: F) -> T
 where
     F: FnOnce() -> T,
 {
     if TLV.is_set() {
-        Err(Error::from("fpp_core already running"))
-    } else {
-        let ptr: *const () = (&raw const interface) as _;
-        TLV.set(&Cell::new(ptr), || Ok(f()))
+        panic!("fpp_core already running");
     }
+
+    let ptr: *const () = (&raw const interface) as _;
+    TLV.set(&Cell::new(ptr), || f())
 }
 
 /// Execute the given function with access the [`CompilerInterface`].

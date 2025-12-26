@@ -5,12 +5,12 @@ use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
 use rustc_hash::FxHashSet as HashSet;
 use std::ops::ControlFlow;
 
-pub struct ResolveIncludes {
-    reader: Box<dyn FileReader>,
+pub struct ResolveIncludes<Reader: FileReader> {
+    reader: Reader,
 }
 
-impl ResolveIncludes {
-    pub fn new(reader: Box<dyn FileReader>) -> ResolveIncludes {
+impl<Reader: FileReader> ResolveIncludes<Reader> {
+    pub fn new(reader: Reader) -> ResolveIncludes<Reader> {
         ResolveIncludes { reader }
     }
 
@@ -56,7 +56,7 @@ impl ResolveIncludes {
         a: &mut HashSet<SourceFile>,
         spec_include: &SpecInclude,
         parser: fn(&mut Parser) -> Vec<T>,
-        transformer: fn(&ResolveIncludes, &mut HashSet<SourceFile>, T, &mut Vec<T>),
+        transformer: fn(&ResolveIncludes<Reader>, &mut HashSet<SourceFile>, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
         let file = match self
@@ -204,7 +204,7 @@ impl ResolveIncludes {
     }
 }
 
-impl MutVisitor for ResolveIncludes {
+impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
     type Break = ();
     type State = HashSet<SourceFile>;
 

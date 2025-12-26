@@ -3,34 +3,33 @@ mod dispatcher;
 mod global_state;
 mod handlers;
 mod lsp_ext;
+mod notification;
 mod progress;
-mod reader;
 mod request;
 mod semantic_tokens;
 mod util;
+mod task;
+
+mod vfs;
+
+pub use vfs::*;
 
 use crate::context::{LspContext, LspDiagnosticsEmitter};
-use fpp_analysis::Analysis;
-use fpp_ast::TransUnit;
-use fpp_core::{CompilerContext, SourceFile};
-use fpp_fs::FsReader;
-use lsp_server::{Connection, Message, Request as ServerRequest, RequestId, Response};
+use fpp_core::CompilerContext;
+use lsp_server::{Connection, Response};
 use lsp_types::notification::{
-    DidChangeTextDocument, DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
+    DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
     Notification,
 };
-use lsp_types::request::*;
 use lsp_types::{
     CompletionItem, CompletionOptions, DidChangeTextDocumentParams, DidOpenTextDocumentParams,
     DocumentLinkOptions, HoverProviderCapability, InitializeParams, OneOf, SemanticTokenType,
-    SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities,
-    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind,
-    TypeDefinitionProviderCapability, Uri,
+    SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TypeDefinitionProviderCapability, Uri,
 };
-use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::error::Error;
-use std::rc::Rc;
 use std::sync::Arc;
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
@@ -68,7 +67,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
                     token_modifiers: vec![],
                 },
                 range: None,
-                full: None,
+                full: Some(SemanticTokensFullOptions::Bool(true)),
             },
         )),
         // document_formatting_provider: Some(OneOf::Left(true)),
@@ -92,181 +91,5 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 
     io_thread.join()?;
     log::error!("shutting down server");
-    Ok(())
-}
-
-// =====================================================================
-// event loop
-// =====================================================================
-
-fn main_loop(
-    ctx: &mut LspContext,
-    connection: Connection,
-    params: serde_json::Value,
-) -> Result<(), Box<dyn Error + Sync + Send>> {
-    let init: InitializeParams = serde_json::from_value(params)?;
-    log::info!(
-        "[lsp] initializing with options: {:?}",
-        init.initialization_options
-    );
-
-    // Keep track of the ASTs we have cached
-    let mut docs: FxHashMap<SourceFile, fpp_ast::TransUnit> = Default::default();
-    loop {
-        match main_loop_ast(&connection, &mut docs)? {
-            None => break,
-            Some(reprocess) => {
-                docs.remove(&reprocess);
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn main_loop_ast(
-    connection: &Connection,
-    docs: &FxHashMap<SourceFile, TransUnit>,
-) -> Result<Option<SourceFile>, Box<dyn Error + Sync + Send>> {
-    let mut analysis = Analysis::new();
-
-    // Combine all translation units into a single unit
-    let mut tu = TransUnit(docs.values().map(|v| v.0).flatten().collect());
-
-    let reader = Box::new(FsReader {});
-    let _ = fpp_analysis::passes::check_semantics(&mut analysis, reader, &mut tu);
-
-    for msg in &connection.receiver {
-        match msg {
-            Message::Request(req) => {
-                if connection.handle_shutdown(&req)? {
-                    break;
-                }
-                if let Err(err) = handle_request(&connection, &req, &mut docs) {
-                    log::error!("[lsp] request {} failed: {err}", &req.method);
-                }
-            }
-            Message::Notification(note) => {
-                if let Err(err) = handle_notification(&connection, &note, &mut docs) {
-                    log::error!("[lsp] notification {} failed: {err}", note.method);
-                }
-            }
-            Message::Response(resp) => log::error!("[lsp] response: {resp:?}"),
-        }
-    }
-
-    // Shutdown
-    Ok(None)
-}
-
-// =====================================================================
-// notifications
-// =====================================================================
-
-fn handle_notification(
-    conn: &Connection,
-    note: &lsp_server::Notification,
-    ctx: &mut LspContext,
-) -> Result<(), E> {
-    match note.method.as_str() {
-        DidOpenTextDocument::METHOD => {
-            let p: DidOpenTextDocumentParams = serde_json::from_value(note.params.clone())?;
-            let uri = p.text_document.uri;
-            publish_dummy_diag(conn, &uri)?;
-        }
-        DidCloseTextDocument::METHOD => {}
-        DidChangeTextDocument::METHOD => {
-            let p: DidChangeTextDocumentParams = serde_json::from_value(note.params.clone())?;
-            if let Some(change) = p.content_changes.into_iter().next() {
-                let uri = p.text_document.uri;
-                ctx.update(&uri, change.text);
-                publish_dummy_diag(conn, &uri)?;
-            }
-        }
-        DidChangeWatchedFiles::METHOD => {}
-        _ => {}
-    }
-    Ok(())
-}
-
-fn handle_request(
-    conn: &Connection,
-    req: &ServerRequest,
-    docs: &mut FxHashMap<Uri, String>,
-) -> Result<()> {
-    match req.method.as_str() {
-        GotoDefinition::METHOD => {
-            send_ok(
-                conn,
-                req.id.clone(),
-                &lsp_types::GotoDefinitionResponse::Array(Vec::new()),
-            )?;
-        }
-        Completion::METHOD => {
-            let item = CompletionItem {
-                label: "HelloFromLSP".into(),
-                kind: Some(CompletionItemKind::FUNCTION),
-                detail: Some("dummy completion".into()),
-                ..Default::default()
-            };
-            send_ok(conn, req.id.clone(), &CompletionResponse::Array(vec![item]))?;
-        }
-        HoverRequest::METHOD => {
-            let hover = Hover {
-                contents: HoverContents::Scalar(MarkedString::String(
-                    "Hello from *minimal_lsp*".into(),
-                )),
-                range: None,
-            };
-            send_ok(conn, req.id.clone(), &hover)?;
-        }
-        Formatting::METHOD => {
-            let p: DocumentFormattingParams = serde_json::from_value(req.params.clone())?;
-            let uri = p.text_document.uri;
-            let text = docs
-                .get(&uri)
-                .ok_or_else(|| anyhow!("document not in cache – did you send DidOpen?"))?;
-            let formatted = run_rustfmt(text)?;
-            let edit = TextEdit {
-                range: full_range(text),
-                new_text: formatted,
-            };
-            send_ok(conn, req.id.clone(), &vec![edit])?;
-        }
-        _ => send_err(
-            conn,
-            req.id.clone(),
-            lsp_server::ErrorCode::MethodNotFound,
-            "unhandled method",
-        )?,
-    }
-    Ok(())
-}
-
-// =====================================================================
-// diagnostics
-// =====================================================================
-fn publish_dummy_diag(conn: &Connection, uri: &Url) -> Result<()> {
-    let diag = Diagnostic {
-        range: Range::new(Position::new(0, 0), Position::new(0, 1)),
-        severity: Some(DiagnosticSeverity::INFORMATION),
-        code: None,
-        code_description: None,
-        source: Some("minimal_lsp".into()),
-        message: "dummy diagnostic".into(),
-        related_information: None,
-        tags: None,
-        data: None,
-    };
-    let params = PublishDiagnosticsParams {
-        uri: uri.clone(),
-        diagnostics: vec![diag],
-        version: None,
-    };
-    conn.sender
-        .send(Message::Notification(lsp_server::Notification::new(
-            PublishDiagnostics::METHOD.to_owned(),
-            params,
-        )))?;
     Ok(())
 }
