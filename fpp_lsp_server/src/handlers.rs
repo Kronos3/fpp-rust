@@ -1,13 +1,14 @@
 use crate::context::LspDiagnosticsEmitter;
 use crate::global_state::Task::IndexWorkspace;
-use crate::global_state::{Event, GlobalState};
-use crate::vfs;
+use crate::global_state::{GlobalState, GlobalStateSnapshot};
+use crate::{semantic_tokens, vfs};
 use anyhow::Result;
 use fpp_analysis::Analysis;
 use fpp_ast::ModuleMember;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    SemanticTokensResult,
 };
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
@@ -17,7 +18,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(String, String)>> {
-    let vfs_c_1 = vfs.clone();
+    let mut vfs_c_1 = vfs.clone();
     let workspace_locs_1 = workspace_locs.clone();
 
     let mut locs: Vec<String> = fpp_parser::parse(
@@ -46,7 +47,7 @@ async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(St
     for file in locs {
         let mut path: PathBuf = locs_dir.into();
         path.push(file);
-        let vfs_c = vfs.clone();
+        let mut vfs_c = vfs.clone();
         loc_files_futures.spawn(async move {
             (
                 path.to_string_lossy().to_string(),
@@ -114,10 +115,7 @@ pub fn handle_workspace_reload(state: &mut GlobalState, _: ()) -> Result<()> {
         match read_future.await {
             // Successfully read from the filesystem
             // Send the results back to the main_loop for processing
-            Ok(files) => sender.send_inbox(Event::Task(IndexWorkspace((
-                progress.with_total(files.len()),
-                files,
-            )))),
+            Ok(files) => sender.task(IndexWorkspace((progress.with_total(files.len()), files))),
             Err(e) => {
                 progress.finish(None);
                 sender.send_notification::<lsp_types::notification::ShowMessage>(
@@ -162,4 +160,18 @@ pub fn handle_did_close_text_document(
 pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
     state.shutdown_requested = true;
     Ok(())
+}
+
+pub fn handle_semantic_tokens_full(
+    state: GlobalStateSnapshot,
+    request: lsp_types::SemanticTokensParams,
+) -> Result<Option<SemanticTokensResult>> {
+    // TODO(tumbar) We probably don't need to run a reparse here
+    let text = state
+        .vfs
+        .read_sync(&request.text_document.uri.path().to_string().into())?;
+
+    Ok(Some(SemanticTokensResult::Tokens(
+        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)),
+    )))
 }

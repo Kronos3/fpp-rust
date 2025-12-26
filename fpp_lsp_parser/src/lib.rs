@@ -11,6 +11,7 @@ mod ptr;
 mod syntax_error;
 mod syntax_node;
 mod token_text;
+mod visitor;
 
 use std::sync::Arc;
 pub use input::*;
@@ -18,6 +19,7 @@ pub use output::*;
 pub use syntax::*;
 pub use lexed_str::*;
 pub use shortcuts::*;
+pub use visitor::*;
 
 pub use crate::{
     ptr::{AstPtr, SyntaxNodePtr},

@@ -25,20 +25,20 @@ impl SpanData {
     }
 }
 
-#[derive(Debug)]
-pub struct SourceFileData {
-    pub handle: usize,
-    pub uri: String,
-    pub content: String,
-    pub lines: Vec<BytePos>,
+#[derive(Default)]
+pub struct RawFilePosition {
+    pub pos: usize,
+    pub line: u32,
+    pub column: u32,
 }
 
-impl SourceFileData {
-    fn new(handle: usize, uri: String, content: String) -> SourceFileData {
-        // Compute the newline position
+pub struct RawFileLines(Vec<BytePos>);
+
+impl RawFileLines {
+    pub fn new(file: &str) -> RawFileLines {
         let lines = {
             let mut out = vec![0];
-            for (i, c) in content.chars().enumerate() {
+            for (i, c) in file.chars().enumerate() {
                 if c == '\n' {
                     out.push(BytePos::from(i))
                 }
@@ -46,6 +46,40 @@ impl SourceFileData {
 
             out
         };
+
+        RawFileLines(lines)
+    }
+
+    pub fn position(&self, offset: usize) -> RawFilePosition {
+        let line = match self.0.binary_search(&offset) {
+            // End of the line, it's actually on the line before
+            Ok(line_idx) => match line_idx {
+                0 => 0,
+                _ => line_idx - 1,
+            },
+            // Somewhere in the middle of the last
+            Err(line_insertion_point) => line_insertion_point - 1,
+        };
+        let line_offset = *self.0.get(line).unwrap();
+
+        RawFilePosition {
+            pos: offset,
+            line: line as u32,
+            column: (offset - line_offset) as u32,
+        }
+    }
+}
+
+pub struct SourceFileData {
+    pub handle: usize,
+    pub uri: String,
+    pub content: String,
+    pub lines: RawFileLines,
+}
+
+impl SourceFileData {
+    fn new(handle: usize, uri: String, content: String) -> SourceFileData {
+        let lines = RawFileLines::new(&content);
 
         SourceFileData {
             handle,
@@ -56,21 +90,11 @@ impl SourceFileData {
     }
 
     pub fn position(&self, offset: BytePos) -> Position {
-        let line = match self.lines.binary_search(&offset) {
-            // End of the line, it's actually on the line before
-            Ok(line_idx) => match line_idx {
-                0 => 0,
-                _ => line_idx - 1,
-            },
-            // Somewhere in the middle of the last
-            Err(line_insertion_point) => line_insertion_point - 1,
-        };
-        let line_offset = *self.lines.get(line).unwrap();
-
+        let raw_position = self.lines.position(offset);
         Position {
-            pos: offset,
-            line: line as u32,
-            column: (offset - line_offset) as u32,
+            pos: raw_position.pos,
+            line: raw_position.line,
+            column: raw_position.column,
             source_file: SourceFile {
                 handle: self.handle,
             },
@@ -89,7 +113,7 @@ impl SourceFileData {
 
     pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet {
         // Find the line start of the start/end
-        let first_line = match self.lines.binary_search(&span.start) {
+        let first_line = match self.lines.0.binary_search(&span.start) {
             // The span start is a newline
             Ok(newline_idx) => match newline_idx {
                 0 => 0,
@@ -100,11 +124,12 @@ impl SourceFileData {
 
         let last_line = self
             .lines
+            .0
             .binary_search(&(span.start + span.length))
             .unwrap_or_else(|line_insert| line_insert);
 
-        let first = *self.lines.get(first_line).unwrap();
-        let last = match self.lines.get(last_line) {
+        let first = *self.lines.0.get(first_line).unwrap();
+        let last = match self.lines.0.get(last_line) {
             None => self.content.len(),
             Some(last) => *last + 1,
         };

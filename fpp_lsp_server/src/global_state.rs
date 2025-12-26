@@ -1,12 +1,12 @@
 use crate::context::LspDiagnosticsEmitter;
 use crate::progress::{CancellationToken, Progress};
 use crate::vfs;
+use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
 use fpp_core::CompilerContext;
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 use std::time::Instant;
 use threadpool::ThreadPool;
@@ -28,20 +28,14 @@ pub enum Task {
     IndexWorkspace((Progress, Vec<(String, String)>)),
 }
 
-pub enum Event {
-    Lsp(lsp_server::Message),
-    Task(Task),
-    Vfs(vfs::Message),
-}
-
 pub struct GlobalState {
     sender: Sender<lsp_server::Message>,
     req_queue: ReqQueue,
 
-    inbox: Receiver<Event>,
+    task_inbox: Receiver<Task>,
 
     pub(crate) cancellable: FxHashMap<lsp_types::ProgressToken, CancellationToken>,
-    pub(crate) inbox_tx: Sender<Event>,
+    pub(crate) task_tx: Sender<Task>,
 
     pub(crate) vfs: vfs::Vfs,
 
@@ -60,25 +54,27 @@ pub struct GlobalState {
 
 impl GlobalState {
     pub fn new(sender: Sender<lsp_server::Message>) -> GlobalState {
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, rx) = crossbeam_channel::unbounded();
         let task_pool = Arc::new(ThreadPool::new(10));
+
+        let diagnostics = Rc::new(RefCell::new(LspDiagnosticsEmitter {
+            diagnostics: Default::default(),
+        }));
 
         GlobalState {
             sender,
             req_queue: Default::default(),
             cancellable: Default::default(),
-            inbox: rx,
-            inbox_tx: tx.clone(),
+            task_inbox: rx,
+            task_tx: tx,
             vfs: vfs::Vfs::new(),
             task_pool: task_pool.clone(),
             shutdown_requested: false,
             refresh_semantics: false,
             workspace: "".to_string(),
             workspace_locs: "".to_string(),
-            diagnostics: Rc::new(RefCell::new(LspDiagnosticsEmitter {
-                diagnostics: Default::default(),
-            })),
-            context: (),
+            diagnostics: diagnostics.clone(),
+            context: CompilerContext::new(diagnostics),
             asts: Default::default(),
             analysis: Arc::new(Analysis::new()),
         }
@@ -90,7 +86,7 @@ impl GlobalState {
 
     pub(crate) fn get_sender(&self) -> GlobalComm {
         GlobalComm {
-            tx: self.inbox_tx.clone(),
+            tx: self.task_tx.clone(),
             sender: self.sender.clone(),
         }
     }
@@ -127,41 +123,57 @@ impl GlobalState {
         GlobalStateSnapshot {
             analysis: self.analysis.clone(),
             asts: self.asts.clone(),
-            inbox_tx: self.inbox_tx.clone(),
+            vfs: self.vfs.clone(),
+            task_tx: self.task_tx.clone(),
         }
     }
 
-    fn main_loop(&mut self, inbox: Receiver<Event>) {
-        for event in inbox {
-            match event {
-                Event::Lsp(lsp_server::Message::Request(req)) => {
-                    self.on_request(req);
-                }
-                Event::Lsp(lsp_server::Message::Response(res)) => {
-                    match self.req_queue.outgoing.complete(res.id.clone()) {
-                        None => {}
-                        Some(handler) => handler(self, res),
-                    }
-                }
-                Event::Lsp(lsp_server::Message::Notification(not)) => {
-                    self.on_notification(not);
-                }
-                Event::Task(task) => self.on_task(task),
-                Event::Vfs(msg) => self.vfs.on_message(msg),
+    fn on_message(&mut self, msg: lsp_server::Message) {
+        match msg {
+            lsp_server::Message::Request(req) => {
+                self.on_request(req);
             }
-
-            if self.shutdown_requested {
-                tracing::info!("shutdown requested, exiting main loop");
-                break;
+            lsp_server::Message::Response(res) => {
+                match self.req_queue.outgoing.complete(res.id.clone()) {
+                    None => {}
+                    Some(handler) => handler(self, res),
+                }
+            }
+            lsp_server::Message::Notification(not) => {
+                self.on_notification(not);
             }
         }
     }
+
+    pub fn main_loop(&mut self, inbox: Receiver<lsp_server::Message>) {
+        loop {
+            crossbeam_channel::select! {
+                recv(inbox) -> msg => {
+                    if let Ok(msg) = msg { self.on_message(msg) }
+                }
+                recv(self.task_inbox) -> msg => {
+                    if let Ok(msg) = msg { self.on_task(msg) }
+                }
+            }
+        }
+    }
+
+    // for event in inbox {
+    //     match event {
+    //         Event::Task(task) => self.on_task(task),
+    //     }
+    //
+    //     if self.shutdown_requested {
+    //         tracing::info!("shutdown requested, exiting main loop");
+    //         break;
+    //     }
+    // }
 }
 
 #[derive(Clone)]
 pub struct GlobalComm {
     // Message channel to main event loop
-    tx: Sender<Event>,
+    tx: Sender<Task>,
     // Message channel to IDE client
     sender: Sender<lsp_server::Message>,
 }
@@ -184,20 +196,26 @@ impl GlobalComm {
         self.send(not.into());
     }
 
-    pub(crate) fn send_inbox(&self, ev: Event) {
-        self.tx.send(ev).unwrap();
+    pub(crate) fn task(&self, task: Task) {
+        match self.tx.send(task) {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!(err = %e, "failed to queue task")
+            }
+        }
     }
 }
 
 pub struct GlobalStateSnapshot {
     pub analysis: Arc<Analysis>,
     pub asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
-    inbox_tx: Sender<Event>,
+    pub vfs: vfs::Vfs,
+    task_tx: Sender<Task>,
 }
 
 impl GlobalStateSnapshot {
     pub(crate) fn task(&self, task: Task) {
-        match self.inbox_tx.send(Event::Task(task)) {
+        match self.task_tx.send(task) {
             Ok(_) => {}
             Err(e) => {
                 tracing::error!(err = %e, "failed to queue task")

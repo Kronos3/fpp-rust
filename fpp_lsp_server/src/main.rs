@@ -7,30 +7,21 @@ mod notification;
 mod progress;
 mod request;
 mod semantic_tokens;
-mod util;
 mod task;
+mod util;
 
 mod vfs;
 
 pub use vfs::*;
 
-use crate::context::{LspContext, LspDiagnosticsEmitter};
-use fpp_core::CompilerContext;
-use lsp_server::{Connection, Response};
-use lsp_types::notification::{
-    DidChangeWatchedFiles, DidCloseTextDocument, DidOpenTextDocument,
-    Notification,
-};
+use crate::global_state::GlobalState;
+use lsp_server::Connection;
 use lsp_types::{
-    CompletionItem, CompletionOptions, DidChangeTextDocumentParams, DidOpenTextDocumentParams,
-    DocumentLinkOptions, HoverProviderCapability, InitializeParams, OneOf, SemanticTokenType,
-    SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions,
-    SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TypeDefinitionProviderCapability, Uri,
+    SemanticTokenModifier, SemanticTokenType, SemanticTokensFullOptions, SemanticTokensLegend,
+    SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities,
+    TextDocumentSyncCapability, TextDocumentSyncKind,
 };
-use std::cell::RefCell;
 use std::error::Error;
-use std::sync::Arc;
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // transport
@@ -39,11 +30,11 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // advertised capabilities
     let caps = ServerCapabilities {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
-        completion_provider: Some(CompletionOptions::default()),
-        definition_provider: Some(OneOf::Left(true)),
-        type_definition_provider: Some(TypeDefinitionProviderCapability::Simple(true)),
-        hover_provider: Some(HoverProviderCapability::Simple(true)),
-        references_provider: Some(OneOf::Left(true)),
+        // completion_provider: Some(CompletionOptions::default()),
+        // definition_provider: Some(OneOf::Left(true)),
+        // type_definition_provider: Some(TypeDefinitionProviderCapability::Simple(true)),
+        // hover_provider: Some(HoverProviderCapability::Simple(true)),
+        // references_provider: Some(OneOf::Left(true)),
         semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
             SemanticTokensOptions {
                 work_done_progress_options: Default::default(),
@@ -59,12 +50,17 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
                         SemanticTokenType::VARIABLE,
                         SemanticTokenType::ENUM_MEMBER,
                         SemanticTokenType::FUNCTION,
+                        SemanticTokenType::EVENT,
+                        SemanticTokenType::MODIFIER,
                         SemanticTokenType::KEYWORD,
                         SemanticTokenType::COMMENT,
                         SemanticTokenType::STRING,
                         SemanticTokenType::NUMBER,
                     ],
-                    token_modifiers: vec![],
+                    token_modifiers: vec![
+                        SemanticTokenModifier::READONLY,
+                        SemanticTokenModifier::DOCUMENTATION,
+                    ],
                 },
                 range: None,
                 full: Some(SemanticTokensFullOptions::Bool(true)),
@@ -79,15 +75,11 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
         "offsetEncoding": ["utf-8"],
     });
 
-    let init_params = connection.initialize(init_value)?;
-
-    let diagnostics = Arc::new(RefCell::new(LspDiagnosticsEmitter::new()));
-    let mut compiler_ctx = CompilerContext::new(diagnostics.clone());
-    let mut lsp_ctx = LspContext::new(diagnostics.clone());
-
-    fpp_core::run(&mut compiler_ctx, || {
-        main_loop(&mut lsp_ctx, connection, init_params)
-    })??;
+    let _ = connection.initialize(init_value)?;
+    {
+        let mut state = GlobalState::new(connection.sender.clone());
+        state.main_loop(connection.receiver);
+    }
 
     io_thread.join()?;
     log::error!("shutting down server");

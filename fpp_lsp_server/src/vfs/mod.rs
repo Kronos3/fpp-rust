@@ -9,10 +9,6 @@ use rustc_hash::FxHashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-pub enum Message {
-    Add((String, File)),
-}
-
 #[derive(Clone)]
 pub struct Vfs {
     files: Arc<RwLock<FxHashMap<String, File>>>,
@@ -22,11 +18,23 @@ impl Vfs {
     pub fn new() -> Vfs {
         Vfs {
             files: Default::default(),
-            // tx,
         }
     }
 
-    pub(crate) fn read(self, path: &PathBuf) -> anyhow::Result<String> {
+    pub(crate) fn read_sync(&self, path: &PathBuf) -> anyhow::Result<String> {
+        let key = path.to_string_lossy().to_string();
+        match self.files.read().unwrap().get(&key) {
+            None => Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("file not in vfs: {}", key),
+            )
+            .into()),
+            Some(File::Fs(f)) => Ok(f.text.clone()),
+            Some(File::Lsp(f)) => Ok(f.text.clone()),
+        }
+    }
+
+    pub(crate) fn read(&mut self, path: &PathBuf) -> anyhow::Result<String> {
         let key = path.to_string_lossy().to_string();
         match self.files.read().unwrap().get(&key) {
             None => {}
@@ -111,7 +119,7 @@ impl Vfs {
                 );
 
                 // Read the file asynchronously
-                let this = self.clone();
+                let mut this = self.clone();
                 tokio::task::spawn_blocking(move || {
                     let path: PathBuf = lsp.uri.path().to_string().into();
                     match this.read(&path) {
@@ -129,19 +137,12 @@ impl Vfs {
             }
         };
     }
-
-    pub fn on_message(&mut self, msg: Message) {
-        match msg {
-            Message::Add((key, file)) => {
-                self.files.write().unwrap().insert(key, file);
-            }
-        }
-    }
 }
 
 impl fpp_core::FileReader for &Vfs {
     fn read(&self, path: &str) -> Result<SourceFile, Error> {
-        match Vfs::read((*self).clone(), &path.clone().into()) {
+        let mut this = (*self).clone();
+        match Vfs::read(&mut this, &path.clone().into()) {
             Ok(text) => Ok(SourceFile::new(path, text)),
             Err(e) => Err(e.to_string().into()),
         }

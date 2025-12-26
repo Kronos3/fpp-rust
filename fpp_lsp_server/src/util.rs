@@ -1,5 +1,4 @@
 use serde::de::DeserializeOwned;
-use crate::global_state::GlobalState;
 
 pub fn from_json<T: DeserializeOwned>(
     what: &'static str,

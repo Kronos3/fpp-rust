@@ -1,5 +1,5 @@
 use crate::interface::with;
-use crate::{Error, Span};
+use crate::{Error, RawFileLines, Span};
 use std::cell::Ref;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -97,7 +97,7 @@ impl SourceFile {
         })
     }
 
-    pub fn lines(&self) -> Ref<'_, Vec<BytePos>> {
+    pub fn lines(&self) -> Ref<'_, RawFileLines> {
         with(|w| w.file_lines(self))
     }
 
