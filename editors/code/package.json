@@ -1,0 +1,196 @@
+{
+    "name": "fpp",
+    "displayName": "FPP",
+    "description": "FPrime-Prime Language Support",
+    "author": {
+        "name": "Andrei Tumbar",
+        "email": "andrei.tumbar@jpl.nasa.gov"
+    },
+    "publisher": "jet-propulsion-laboratory",
+    "repository": {
+        "url": "https://github.com/fprime-community/vscode-fpp",
+        "type": "git"
+    },
+    "version": "1.0.32",
+    "icon": "fprime-logo.png",
+    "engines": {
+        "vscode": "^1.81.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "fpp.reload",
+                "title": "FPP: Reload Project"
+            },
+            {
+                "command": "fpp.restartLsp",
+                "title": "FPP: Restart Language Server"
+            },
+            {
+                "command": "fpp.select",
+                "title": "FPP: Select Locs file inside workspace"
+            },
+            {
+                "command": "fpp.close",
+                "title": "FPP: Close Project"
+            },
+            {
+                "command": "fpp.open",
+                "title": "FPP: Open Project"
+            },
+            {
+                "command": "fpp.load",
+                "title": "FPP: Load Locs File as Project"
+            },
+            {
+                "command": "fpp.diagram.open",
+                "title": "FPP: Open Diagram",
+                "icon": "$(telescope)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.fit",
+                "title": "FPP: Fit Diagram",
+                "icon": "$(arrow-both)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.center",
+                "title": "FPP: Center Diagram",
+                "icon": "$(layout-centered)",
+                "category": "FPP Diagram"
+            },
+            {
+                "command": "fpp.diagram.export",
+                "title": "FPP: Export Diagram",
+                "icon": "$(desktop-download)",
+                "category": "FPP Diagram"
+            }
+        ],
+        "languages": [
+            {
+                "id": "fpp",
+                "aliases": [
+                    "FPrimePrime",
+                    "fpp"
+                ],
+                "extensions": [
+                    ".fpp",
+                    ".fppi"
+                ],
+                "configuration": "./syntax/language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "fpp",
+                "scopeName": "source.fpp",
+                "path": "./syntax/fpp.tmLanguage.json"
+            }
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "fpp.components",
+                    "name": "FPP Components"
+                }
+            ]
+        },
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "editorLangId == 'fpp'",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.fit",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.center",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                },
+                {
+                    "command": "fpp.diagram.export",
+                    "when": "fppDiagrams-focused == true",
+                    "group": "navigation"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "fpp.diagram.open",
+                    "when": "resourceExtname == '.fpp'",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "FPP",
+            "type": "object",
+            "properties": {
+                "fpp.serverPath": {
+                    "type": "string",
+                    "markdownDescription": "Path to the FPP LSP server, use `<default>` for bundled binary"
+                },
+                "fpp.locsSearch": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "markdownDescription": "Glob patterns in order of priority to search for an `locs.fpp` on project startup if no other locs is selected",
+                    "default": [
+                        "**/build-fprime-automatic-native/locs.fpp",
+                        "**/build-fprime-*/locs.fpp"
+                    ]
+                },
+                "fpp.locsExclude": {
+                    "type": "string",
+                    "markdownDescription": "Glob pattern path to exclude from `locs.fpp` search"
+                },
+                "fpp.enableCodeLens": {
+                    "type": "boolean",
+                    "default": true
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "rm -rf dist && yarn package",
+        "package": "webpack --mode production",
+        "build": "webpack --mode development",
+        "watch": "webpack --mode development --watch"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22",
+        "@types/vscode": "^1.81.0",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.4.5",
+        "umd-compat-loader": "^2.1.2",
+        "webpack": "^5.100.2",
+        "webpack-cli": "^6.0.1"
+    }
+}

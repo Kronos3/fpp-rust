@@ -82,6 +82,17 @@ impl GlobalState {
         }
     }
 
+    pub(crate) fn register_request(
+        &mut self,
+        request: &lsp_server::Request,
+        request_received: Instant,
+    ) {
+        self.req_queue.incoming.register(
+            request.id.clone(),
+            (request.method.clone(), request_received),
+        );
+    }
+
     pub(crate) fn send_request<R: lsp_types::request::Request>(
         &mut self,
         params: R::Params,
@@ -107,6 +118,8 @@ impl GlobalState {
             let duration = start.elapsed();
             tracing::debug!(name: "message response", method, %response.id, duration = format_args!("{:0.2?}", duration));
             self.send(response.into());
+        } else {
+            tracing::warn!(%response.id, "invalid response id")
         }
     }
 
@@ -119,10 +132,18 @@ impl GlobalState {
         }
     }
 
-    fn on_message(&mut self, msg: lsp_server::Message) {
+    /// Registers and handles a request. This should only be called once per incoming request.
+    fn on_new_request(&mut self, request_received: Instant, req: lsp_server::Request) {
+        let _p =
+            tracing::span!(tracing::Level::INFO, "GlobalState::on_new_request", req.method = ?req.method).entered();
+        self.register_request(&req, request_received);
+        self.on_request(req);
+    }
+
+    fn on_message(&mut self, start: Instant, msg: lsp_server::Message) {
         match msg {
             lsp_server::Message::Request(req) => {
-                self.on_request(req);
+                self.on_new_request(start, req);
             }
             lsp_server::Message::Response(res) => {
                 match self.req_queue.outgoing.complete(res.id.clone()) {
@@ -136,17 +157,24 @@ impl GlobalState {
         }
     }
 
-    pub fn main_loop(&mut self, inbox: Receiver<lsp_server::Message>) {
-        loop {
-            crossbeam_channel::select! {
-                recv(inbox) -> msg => {
-                    if let Ok(msg) = msg { self.on_message(msg) }
-                }
+    fn main_loop(&mut self, receiver: Receiver<lsp_server::Message>) {
+        while !self.shutdown_requested {
+            let loop_start = Instant::now();
+
+            crossbeam_channel::select_biased! {
                 recv(self.task_inbox) -> msg => {
                     if let Ok(msg) = msg { self.on_task(msg) }
                 }
+                recv(receiver) -> msg => {
+                    if let Ok(msg) = msg { self.on_message(loop_start, msg) }
+                }
             }
         }
+    }
+
+    pub fn run(connection: lsp_server::Connection) {
+        let mut state = GlobalState::new(connection.sender);
+        state.main_loop(connection.receiver);
     }
 
     // for event in inbox {

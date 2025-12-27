@@ -1,0 +1,11 @@
+# Ignore everything and then selectively bring things back in
+.*
+**/*
+
+!syntax/*
+!dist/*
+!fprime-logo.png
+!CHANGELOG.md
+!README.md
+!package.json
+!LICENSE.txt

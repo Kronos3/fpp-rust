@@ -17,7 +17,6 @@ Thumbs.db
 
 # IDE-specific files
 .idea/
-.vscode/
 *.swp
 *.swo
 

@@ -23,7 +23,32 @@ use lsp_types::{
 };
 use std::error::Error;
 
+use tracing_subscriber::{
+    layer::SubscriberExt, util::SubscriberInitExt, Layer,
+};
+
+fn setup_stderr_logging() -> anyhow::Result<()> {
+    let stderr_log_level = tracing_subscriber::filter::LevelFilter::DEBUG;
+    let stderr_layer = tracing_subscriber::fmt::layer()
+    .with_writer(std::io::stderr);
+
+    tracing_subscriber::registry()
+        .with(
+            stderr_layer
+            .with_ansi(false)
+            .without_time()
+            .with_file(true)
+            .with_line_number(true)
+            .with_filter(stderr_log_level),
+        )
+        .try_init()?;
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
+    setup_stderr_logging()?;
+
     // transport
     let (connection, io_thread) = Connection::stdio();
 
@@ -76,12 +101,11 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     });
 
     let _ = connection.initialize(init_value)?;
-    {
-        let mut state = GlobalState::new(connection.sender.clone());
-        state.main_loop(connection.receiver);
-    }
 
+    tracing::info!("server is starting up");
+    GlobalState::run(connection);
     io_thread.join()?;
-    log::error!("shutting down server");
+    log::info!("shutting down server");
+
     Ok(())
 }

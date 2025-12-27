@@ -10,30 +10,15 @@ impl GlobalState {
             req: Some(req),
             global_state: self,
         };
-        dispatcher.on_sync_mut::<lsp_types::request::Shutdown>(|s, ()| {
-            s.shutdown_requested = true;
-            Ok(())
-        });
-
-        match &mut dispatcher {
-            RequestDispatcher {
-                req: Some(req),
-                global_state: this,
-            } if this.shutdown_requested => {
-                this.respond(lsp_server::Response::new_err(
-                    req.id.clone(),
-                    lsp_server::ErrorCode::InvalidRequest as i32,
-                    "Shutdown already requested.".to_owned(),
-                ));
-                return;
-            }
-            _ => (),
-        }
 
         use lsp_types::request as lsp_request;
 
         #[rustfmt::skip]
         dispatcher
+            .on_sync_mut::<lsp_request::Shutdown>(|s, ()| {
+                s.shutdown_requested = true;
+                Ok(())
+            })
             // Request handlers that must run on the main thread
             // because they mutate GlobalState:
             .on_sync_mut::<lsp_ext::ReloadWorkspace>(handlers::handle_workspace_reload)
