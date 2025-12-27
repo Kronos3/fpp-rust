@@ -92,20 +92,6 @@ impl Progress {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-enum ProgressState {
-    Begin,
-    Report,
-    End,
-}
-
-impl ProgressState {
-    fn fraction(done: usize, total: usize) -> f64 {
-        assert!(done <= total);
-        done as f64 / total.max(1) as f64
-    }
-}
-
 impl GlobalState {
     fn create_cancellation_token(
         &mut self,

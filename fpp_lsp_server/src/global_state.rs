@@ -15,13 +15,6 @@ pub(crate) type ReqHandler = fn(&mut GlobalState, lsp_server::Response);
 type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
 
 #[derive(Debug)]
-pub struct ProcessFile {
-    pub key: String,
-    pub content: String,
-    pub progress: Option<Progress>,
-}
-
-#[derive(Debug)]
 pub enum Task {
     // Response(lsp_server::Response),
     // Retry(lsp_server::Request),
@@ -43,7 +36,6 @@ pub struct GlobalState {
     pub(crate) shutdown_requested: bool,
     pub(crate) refresh_semantics: bool,
 
-    pub(crate) workspace: String,
     pub(crate) workspace_locs: String,
 
     pub(crate) diagnostics: Rc<RefCell<LspDiagnosticsEmitter>>,
@@ -71,7 +63,6 @@ impl GlobalState {
             task_pool: task_pool.clone(),
             shutdown_requested: false,
             refresh_semantics: false,
-            workspace: "".to_string(),
             workspace_locs: "".to_string(),
             diagnostics: diagnostics.clone(),
             context: CompilerContext::new(diagnostics),

@@ -142,7 +142,7 @@ impl Vfs {
 impl fpp_core::FileReader for &Vfs {
     fn read(&self, path: &str) -> Result<SourceFile, Error> {
         let mut this = (*self).clone();
-        match Vfs::read(&mut this, &path.clone().into()) {
+        match Vfs::read(&mut this, &path.into()) {
             Ok(text) => Ok(SourceFile::new(path, text)),
             Err(e) => Err(e.to_string().into()),
         }
