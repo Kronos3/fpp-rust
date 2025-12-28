@@ -135,6 +135,7 @@ pub fn handle_did_open_text_document(
     state: &mut GlobalState,
     not: DidOpenTextDocumentParams,
 ) -> Result<()> {
+    tracing::info!(uri = %not.text_document.uri.as_str(), "DidOpenTextDocument");
     state.vfs.did_open(not);
     Ok(())
 }
@@ -143,6 +144,7 @@ pub fn handle_did_change_text_document(
     state: &mut GlobalState,
     not: DidChangeTextDocumentParams,
 ) -> Result<()> {
+    tracing::info!(uri = %not.text_document.uri.as_str(), "DidChangeTextDocument");
     state.vfs.did_change(not);
     state.refresh_semantics = true;
     Ok(())
@@ -152,6 +154,7 @@ pub fn handle_did_close_text_document(
     state: &mut GlobalState,
     not: DidCloseTextDocumentParams,
 ) -> Result<()> {
+    tracing::info!(uri = %not.text_document.uri.as_str(), "DidCloseTextDocument");
     state.vfs.did_close(not);
     state.refresh_semantics = true;
     Ok(())
@@ -166,6 +169,8 @@ pub fn handle_semantic_tokens_full(
     state: GlobalStateSnapshot,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
+    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
+
     // TODO(tumbar) We probably don't need to run a reparse here
     let text = state
         .vfs

@@ -17,9 +17,7 @@ pub use vfs::*;
 use crate::global_state::GlobalState;
 use lsp_server::Connection;
 use lsp_types::{
-    SemanticTokenModifier, SemanticTokenType, SemanticTokensFullOptions, SemanticTokensLegend,
-    SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities,
-    TextDocumentSyncCapability, TextDocumentSyncKind,
+    CompletionOptions, HoverProviderCapability, OneOf, SemanticTokenModifier, SemanticTokenType, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind
 };
 use std::error::Error;
 
@@ -28,7 +26,7 @@ use tracing_subscriber::{
 };
 
 fn setup_stderr_logging() -> anyhow::Result<()> {
-    let stderr_log_level = tracing_subscriber::filter::LevelFilter::DEBUG;
+    let stderr_log_level = tracing_subscriber::filter::LevelFilter::INFO;
     let stderr_layer = tracing_subscriber::fmt::layer()
     .with_writer(std::io::stderr);
 
@@ -57,7 +55,6 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
         text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
         // completion_provider: Some(CompletionOptions::default()),
         // definition_provider: Some(OneOf::Left(true)),
-        // type_definition_provider: Some(TypeDefinitionProviderCapability::Simple(true)),
         // hover_provider: Some(HoverProviderCapability::Simple(true)),
         // references_provider: Some(OneOf::Left(true)),
         semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
@@ -95,12 +92,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
         ..Default::default()
     };
 
-    let init_value = serde_json::json!({
-        "capabilities": caps,
-        "offsetEncoding": ["utf-8"],
-    });
-
-    let _ = connection.initialize(init_value)?;
+    let _ = connection.initialize(serde_json::to_value(caps).unwrap())?;
 
     tracing::info!("server is starting up");
     GlobalState::run(connection);

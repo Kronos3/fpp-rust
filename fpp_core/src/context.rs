@@ -25,7 +25,7 @@ impl SpanData {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RawFilePosition {
     pub pos: usize,
     pub line: u32,
@@ -40,7 +40,7 @@ impl RawFileLines {
             let mut out = vec![0];
             for (i, c) in file.chars().enumerate() {
                 if c == '\n' {
-                    out.push(BytePos::from(i))
+                    out.push(BytePos::from(i) + 1)
                 }
             }
 

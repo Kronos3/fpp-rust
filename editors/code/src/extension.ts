@@ -57,7 +57,7 @@ class FppExtension implements vscode.Disposable {
         };
 
         const clientOptions: LanguageClientOptions = {
-            documentSelector: [{ scheme: "file", language: "fpp" }],
+            documentSelector: [{ language: "fpp" }],
             diagnosticCollectionName: "fpp",
             synchronize: {
                 fileEvents: [
@@ -72,7 +72,6 @@ class FppExtension implements vscode.Disposable {
         try {
             this.client = new LanguageClient("fpp", "F Prime Prime", serverOptions, clientOptions);
             await this.client.start();
-            vscode.window.showInformationMessage("FPP Server activated");
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to start language server: ${e}`);
         }
@@ -80,6 +79,7 @@ class FppExtension implements vscode.Disposable {
 
     async deactivate() {
         await this.client?.stop();
+        await this.client?.dispose();
         this.client = undefined;
     }
 

@@ -136,6 +136,8 @@ impl SemanticTokensState {
         let (token_type, token_modifiers_bitset) = kind.type_and_modifier();
         let length = end.column - start.column;
 
+        tracing::info!(?start, %delta_line, %delta_start, %length, ?kind, "token");
+
         self.last = end;
         self.tokens.data.push(SemanticToken {
             delta_line,

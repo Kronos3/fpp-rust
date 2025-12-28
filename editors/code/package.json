@@ -76,8 +76,8 @@
             {
                 "id": "fpp",
                 "aliases": [
-                    "FPrimePrime",
-                    "fpp"
+                    "fpp",
+                    "FPrimePrime"
                 ],
                 "extensions": [
                     ".fpp",
