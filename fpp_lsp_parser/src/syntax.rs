@@ -303,28 +303,6 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 
 impl SyntaxKind {
     #[inline]
-    pub fn is_trivia(self, last: SyntaxKind) -> bool {
-        matches!(
-            self,
-            WHITESPACE | COMMENT | PRE_ANNOTATION | POST_ANNOTATION | UNKNOWN
-        ) || (self == EOL
-            && matches!(
-                last,
-                STAR | RIGHT_ARROW
-                    | SLASH
-                    | MINUS
-                    | PLUS
-                    | EQUALS
-                    | SEMI
-                    | COMMA
-                    | COLON
-                    | LEFT_PAREN
-                    | LEFT_CURLY
-                    | LEFT_SQUARE
-            ))
-    }
-
-    #[inline]
     pub fn is_def(self) -> bool {
         matches!(
             self,

@@ -131,7 +131,7 @@ impl SourceFileData {
         let first = *self.lines.0.get(first_line).unwrap();
         let last = match self.lines.0.get(last_line) {
             None => self.content.len(),
-            Some(last) => *last + 1,
+            Some(last) => *last,
         };
 
         // Collect all the include locations

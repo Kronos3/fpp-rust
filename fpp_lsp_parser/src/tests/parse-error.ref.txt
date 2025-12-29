@@ -1,7 +1,5 @@
 ROOT@0..206
-  WHITESPACE@0..2 "  "
-  COMMENT@2..20 "# constant =     1"
-  EOL@20..22 "\n\n"
+  EOL@0..22 "  # constant =     1\n\n"
   DEF_CONSTANT@22..36
     CONSTANT_KW@22..30 "constant"
     WHITESPACE@30..31 " "
@@ -14,15 +12,15 @@ ROOT@0..206
       EXPR_LITERAL@35..36
         LITERAL_INT@35..36 "1"
   EOL@36..38 "\n\n"
-  ERROR@38..39
+  ERROR@38..40
     PLUS@38..39 "+"
-  WHITESPACE@39..40 " "
+    WHITESPACE@39..40 " "
   ERROR@40..41
     IDENT@40..41 "c"
   EOL@41..43 "\n\n"
-  ERROR@43..44
+  ERROR@43..45
     PLUS@43..44 "+"
-  WHITESPACE@44..45 " "
+    WHITESPACE@44..45 " "
   ERROR@45..46
     IDENT@45..46 "c"
   EOL@46..48 "\n\n"
@@ -57,9 +55,8 @@ ROOT@0..206
         WHITESPACE@103..104 " "
         NAME@104..108
           IDENT@104..108 "pOut"
-      EOL@108..110 "\n\n"
-      SPEC_PORT_INSTANCE_GENERAL@110..130
-        WHITESPACE@110..114 "    "
+      EOL@108..114 "\n\n    "
+      SPEC_PORT_INSTANCE_GENERAL@114..130
         ASYNC_KW@114..119 "async"
         WHITESPACE@119..120 " "
         INPUT_KW@120..125 "input"
@@ -71,14 +68,13 @@ ROOT@0..206
         QUAL_IDENT@129..130
           IDENT@129..130 "d"
       WHITESPACE@130..131 " "
-      ERROR@131..133
+      ERROR@131..134
         RIGHT_ARROW@131..133 "->"
-      WHITESPACE@133..134 " "
+        WHITESPACE@133..134 " "
       ERROR@134..135
         IDENT@134..135 "d"
-      EOL@135..137 "\n\n"
-      SPEC_EVENT@137..204
-        WHITESPACE@137..141 "    "
+      EOL@135..141 "\n\n    "
+      SPEC_EVENT@141..204
         EVENT_KW@141..146 "event"
         WHITESPACE@146..147 " "
         NAME@147..148

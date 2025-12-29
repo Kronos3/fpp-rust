@@ -30,13 +30,13 @@ ROOT@0..127
         NAME@36..44
           IDENT@36..44 "$command"
       COMMA@44..45 ","
-      DEF_ENUM_CONSTANT@45..52
-        WHITESPACE@45..46 " "
+      WHITESPACE@45..46 " "
+      DEF_ENUM_CONSTANT@46..52
         NAME@46..52
           IDENT@46..52 "$event"
       COMMA@52..53 ","
-      DEF_ENUM_CONSTANT@53..64
-        WHITESPACE@53..54 " "
+      WHITESPACE@53..54 " "
+      DEF_ENUM_CONSTANT@54..64
         NAME@54..64
           IDENT@54..64 "$telemetry"
     WHITESPACE@64..65 " "

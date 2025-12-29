@@ -3,8 +3,8 @@
         name: Ident {
             data: "x",
             node_id: Span {
-                start: [ local path prefix ]/subdir/constant.fppi:2:11,
-                end: [ local path prefix ]/subdir/constant.fppi:2:12,
+                start: [ local path prefix ]/subdir/constant.fppi:2:10,
+                end: [ local path prefix ]/subdir/constant.fppi:2:11,
             },
         },
         value: Expr {
@@ -12,13 +12,13 @@
                 "0",
             ),
             node_id: Span {
-                start: [ local path prefix ]/subdir/constant.fppi:2:15,
-                end: [ local path prefix ]/subdir/constant.fppi:2:16,
+                start: [ local path prefix ]/subdir/constant.fppi:2:14,
+                end: [ local path prefix ]/subdir/constant.fppi:2:15,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/subdir/constant.fppi:2:2,
-            end: [ local path prefix ]/subdir/constant.fppi:2:16,
+            start: [ local path prefix ]/subdir/constant.fppi:1:21,
+            end: [ local path prefix ]/subdir/constant.fppi:2:15,
         },
         pre_annotation: [
             "Included constant",

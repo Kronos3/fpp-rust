@@ -35,11 +35,7 @@ pub(crate) fn diagnostic_to_snippet_group(diagnostic: &'_ DiagnosticData) -> Gro
     Group::with_level(diagnostic_level(diagnostic.level))
         .element(
             Snippet::source(snippet.file_content.clone())
-                .line_start(if snippet.line_offset == 0 {
-                    1
-                } else {
-                    snippet.line_offset
-                })
+                .line_start(snippet.line_offset + 1)
                 .path(snippet.uri.clone())
                 .annotation(diagnostic_snippet_to_annotation(
                     diagnostic.message.clone(),
@@ -59,11 +55,7 @@ pub(crate) fn diagnostic_to_snippet_group(diagnostic: &'_ DiagnosticData) -> Gro
                 Some(span) => {
                     let snippet = span.snippet();
                     Snippet::source(snippet.file_content.clone())
-                        .line_start(if snippet.line_offset == 0 {
-                            1
-                        } else {
-                            snippet.line_offset
-                        })
+                        .line_start(snippet.line_offset + 1)
                         .path(snippet.uri.clone())
                         .annotation(diagnostic_snippet_to_annotation(
                             child.message.clone(),

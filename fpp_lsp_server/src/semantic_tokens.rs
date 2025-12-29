@@ -163,6 +163,21 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
             keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
             SyntaxKind::COMMENT => SemanticTokenKind::Comment,
 
+            SyntaxKind::NAME_REF => {
+                if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
+                    match parent_node_kind {
+                        SyntaxKind::FORMAL_PARAM => SemanticTokenKind::FormalParameter,
+                        SyntaxKind::TYPE_NAME => SemanticTokenKind::Type,
+
+                        // We do not recognize this name's parent rule
+                        _ => return VisitorResult::Next,
+                    }
+                } else {
+                    // Top level names should not exist
+                    return VisitorResult::Next;
+                }
+            }
+
             // These are typed by definitions above them
             SyntaxKind::NAME => {
                 if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {

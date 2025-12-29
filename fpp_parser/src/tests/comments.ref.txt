@@ -3,8 +3,8 @@
         name: Ident {
             data: "a",
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:2:11,
-                end: [ local path prefix ]/comments.fpp:2:12,
+                start: [ local path prefix ]/comments.fpp:2:10,
+                end: [ local path prefix ]/comments.fpp:2:11,
             },
         },
         value: Expr {
@@ -12,21 +12,21 @@
                 "1",
             ),
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:2:15,
-                end: [ local path prefix ]/comments.fpp:2:16,
+                start: [ local path prefix ]/comments.fpp:2:14,
+                end: [ local path prefix ]/comments.fpp:2:15,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:2:2,
-            end: [ local path prefix ]/comments.fpp:2:16,
+            start: [ local path prefix ]/comments.fpp:1:11,
+            end: [ local path prefix ]/comments.fpp:2:15,
         },
     },
     DefConstant {
         name: Ident {
             data: "b",
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:5:11,
-                end: [ local path prefix ]/comments.fpp:5:12,
+                start: [ local path prefix ]/comments.fpp:5:10,
+                end: [ local path prefix ]/comments.fpp:5:11,
             },
         },
         value: Expr {
@@ -34,21 +34,21 @@
                 "2",
             ),
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:5:15,
-                end: [ local path prefix ]/comments.fpp:5:16,
+                start: [ local path prefix ]/comments.fpp:5:14,
+                end: [ local path prefix ]/comments.fpp:5:15,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:5:2,
-            end: [ local path prefix ]/comments.fpp:5:16,
+            start: [ local path prefix ]/comments.fpp:4:11,
+            end: [ local path prefix ]/comments.fpp:5:15,
         },
     },
     DefConstant {
         name: Ident {
             data: "c",
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:8:11,
-                end: [ local path prefix ]/comments.fpp:8:12,
+                start: [ local path prefix ]/comments.fpp:8:10,
+                end: [ local path prefix ]/comments.fpp:8:11,
             },
         },
         value: Expr {
@@ -56,21 +56,21 @@
                 "0",
             ),
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:9:4,
-                end: [ local path prefix ]/comments.fpp:9:5,
+                start: [ local path prefix ]/comments.fpp:9:3,
+                end: [ local path prefix ]/comments.fpp:9:4,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:8:2,
-            end: [ local path prefix ]/comments.fpp:9:5,
+            start: [ local path prefix ]/comments.fpp:7:2,
+            end: [ local path prefix ]/comments.fpp:9:4,
         },
     },
     DefConstant {
         name: Ident {
             data: "d",
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:11:11,
-                end: [ local path prefix ]/comments.fpp:11:12,
+                start: [ local path prefix ]/comments.fpp:11:10,
+                end: [ local path prefix ]/comments.fpp:11:11,
             },
         },
         value: Expr {
@@ -78,21 +78,21 @@
                 "0",
             ),
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:13:4,
-                end: [ local path prefix ]/comments.fpp:13:5,
+                start: [ local path prefix ]/comments.fpp:13:3,
+                end: [ local path prefix ]/comments.fpp:13:4,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:11:2,
-            end: [ local path prefix ]/comments.fpp:13:5,
+            start: [ local path prefix ]/comments.fpp:10:2,
+            end: [ local path prefix ]/comments.fpp:13:4,
         },
     },
     DefConstant {
         name: Ident {
             data: "e",
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:17:11,
-                end: [ local path prefix ]/comments.fpp:17:12,
+                start: [ local path prefix ]/comments.fpp:17:10,
+                end: [ local path prefix ]/comments.fpp:17:11,
             },
         },
         value: Expr {
@@ -100,13 +100,13 @@
                 "0",
             ),
             node_id: Span {
-                start: [ local path prefix ]/comments.fpp:17:15,
-                end: [ local path prefix ]/comments.fpp:17:16,
+                start: [ local path prefix ]/comments.fpp:17:14,
+                end: [ local path prefix ]/comments.fpp:17:15,
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:17:2,
-            end: [ local path prefix ]/comments.fpp:17:16,
+            start: [ local path prefix ]/comments.fpp:16:11,
+            end: [ local path prefix ]/comments.fpp:17:15,
         },
         pre_annotation: [
             "Constant",
