@@ -69,7 +69,7 @@ impl LexedStr<'_> {
                             // This is actually a newline delimiter
                             TriviaRegion::Replace(after - i, EOL)
                         }
-                    }
+                    };
                 }
 
                 // Tokens that eat newlines after them
@@ -80,15 +80,11 @@ impl LexedStr<'_> {
                     }
 
                     let after = self.eat_newlines(i + 1);
-                    return TriviaRegion::RemoveAfter(after - i - 1, self.kind(i))
+                    return TriviaRegion::RemoveAfter(after - i - 1, self.kind(i));
                 }
 
-                k if skip == 0 => {
-                    return TriviaRegion::Keep(k)
-                },
-                _ => {
-                    return TriviaRegion::Remove(skip)
-                }
+                k if skip == 0 => return TriviaRegion::Keep(k),
+                _ => return TriviaRegion::Remove(skip),
             }
         }
 
@@ -260,26 +256,36 @@ impl Builder<'_, '_> {
     }
 
     fn eat_whitespace_outer(&mut self) {
-        loop {
-            let kind = self.lexed.kind(self.pos);
-            match kind {
-                WHITESPACE | EOL | COMMENT => {
-                    self.do_token(kind, 1);
+        match self.lexed.as_trivia(self.pos) {
+            TriviaRegion::Remove(n) => {
+                for _ in 0..n {
+                    let kind = self.lexed.kind(self.pos);
+                    match kind {
+                        WHITESPACE | COMMENT => {
+                            self.do_token(kind, 1);
+                        }
+                        _ => break,
+                    }
                 }
-                _ => break,
             }
+            _ => (),
         }
     }
 
     fn eat_whitespace_inner(&mut self) {
-        loop {
-            let kind = self.lexed.kind(self.pos);
-            match kind {
-                WHITESPACE | EOL | PRE_ANNOTATION | POST_ANNOTATION => {
-                    self.do_token(kind, 1);
+        match self.lexed.as_trivia(self.pos) {
+            TriviaRegion::Remove(n) => {
+                for _ in 0..n {
+                    let kind = self.lexed.kind(self.pos);
+                    match kind {
+                        WHITESPACE | PRE_ANNOTATION | POST_ANNOTATION => {
+                            self.do_token(kind, 1);
+                        }
+                        _ => break,
+                    }
                 }
-                _ => break,
             }
+            _ => (),
         }
     }
 
@@ -289,27 +295,3 @@ impl Builder<'_, '_> {
         (self.sink)(StrStep::Token { kind, text });
     }
 }
-
-// fn n_attached_trivias<'a>(
-//     kind: SyntaxKind,
-//     trivias: impl Iterator<Item = (SyntaxKind, &'a str)>,
-// ) -> usize {
-//     if kind.is_def() || kind.is_spec() {
-//         let mut res = 0;
-//         let mut trivias = trivias.enumerate().peekable();
-//
-//         while let Some((i, (kind, _))) = trivias.next() {
-//             match kind {
-//                 // TODO(tumbar) Take another look at this
-//                 COMMENT | WHITESPACE | PRE_ANNOTATION => {
-//                     res = i + 1;
-//                 }
-//                 POST_ANNOTATION => break,
-//                 _ => (),
-//             }
-//         }
-//         res
-//     } else {
-//         0
-//     }
-// }

@@ -297,7 +297,7 @@ ROOT@0..6806
               IDENT@1177..1178 "C"
             LEFT_PAREN@1178..1179 "("
             FORMAL_PARAM_LIST@1179..1193
-              DEF_ENUM_CONSTANT@1179..1185
+              FORMAL_PARAM@1179..1185
                 NAME@1179..1180
                   IDENT@1179..1180 "a"
                 COLON@1180..1181 ":"
@@ -306,7 +306,7 @@ ROOT@0..6806
                   U32_KW@1182..1185 "U32"
               COMMA@1185..1186 ","
               WHITESPACE@1186..1187 " "
-              DEF_ENUM_CONSTANT@1187..1193
+              FORMAL_PARAM@1187..1193
                 NAME@1187..1188
                   IDENT@1187..1188 "b"
                 COLON@1188..1189 ":"
@@ -628,7 +628,7 @@ ROOT@0..6806
               IDENT@2542..2543 "E"
             LEFT_PAREN@2543..2544 "("
             FORMAL_PARAM_LIST@2544..2558
-              DEF_ENUM_CONSTANT@2544..2550
+              FORMAL_PARAM@2544..2550
                 NAME@2544..2545
                   IDENT@2544..2545 "a"
                 COLON@2545..2546 ":"
@@ -637,7 +637,7 @@ ROOT@0..6806
                   U32_KW@2547..2550 "U32"
               COMMA@2550..2551 ","
               WHITESPACE@2551..2552 " "
-              DEF_ENUM_CONSTANT@2552..2558
+              FORMAL_PARAM@2552..2558
                 NAME@2552..2553
                   IDENT@2552..2553 "b"
                 COLON@2553..2554 ":"
@@ -678,7 +678,7 @@ ROOT@0..6806
               IDENT@2699..2701 "ET"
             LEFT_PAREN@2701..2702 "("
             FORMAL_PARAM_LIST@2702..2716
-              DEF_ENUM_CONSTANT@2702..2708
+              FORMAL_PARAM@2702..2708
                 NAME@2702..2703
                   IDENT@2702..2703 "a"
                 COLON@2703..2704 ":"
@@ -687,7 +687,7 @@ ROOT@0..6806
                   U32_KW@2705..2708 "U32"
               COMMA@2708..2709 ","
               WHITESPACE@2709..2710 " "
-              DEF_ENUM_CONSTANT@2710..2716
+              FORMAL_PARAM@2710..2716
                 NAME@2710..2711
                   IDENT@2710..2711 "b"
                 COLON@2711..2712 ":"
@@ -745,7 +745,7 @@ ROOT@0..6806
               IDENT@2871..2872 "I"
             LEFT_PAREN@2872..2873 "("
             FORMAL_PARAM_LIST@2873..2887
-              DEF_ENUM_CONSTANT@2873..2879
+              FORMAL_PARAM@2873..2879
                 NAME@2873..2874
                   IDENT@2873..2874 "a"
                 COLON@2874..2875 ":"
@@ -754,7 +754,7 @@ ROOT@0..6806
                   U32_KW@2876..2879 "U32"
               COMMA@2879..2880 ","
               WHITESPACE@2880..2881 " "
-              DEF_ENUM_CONSTANT@2881..2887
+              FORMAL_PARAM@2881..2887
                 NAME@2881..2882
                   IDENT@2881..2882 "b"
                 COLON@2882..2883 ":"
@@ -967,7 +967,7 @@ ROOT@0..6806
           IDENT@3825..3826 "P"
         LEFT_PAREN@3826..3827 "("
         FORMAL_PARAM_LIST@3827..3841
-          DEF_ENUM_CONSTANT@3827..3833
+          FORMAL_PARAM@3827..3833
             NAME@3827..3828
               IDENT@3827..3828 "a"
             COLON@3828..3829 ":"
@@ -976,7 +976,7 @@ ROOT@0..6806
               U32_KW@3830..3833 "U32"
           COMMA@3833..3834 ","
           WHITESPACE@3834..3835 " "
-          DEF_ENUM_CONSTANT@3835..3841
+          FORMAL_PARAM@3835..3841
             NAME@3835..3836
               IDENT@3835..3836 "b"
             COLON@3836..3837 ":"

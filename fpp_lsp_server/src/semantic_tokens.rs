@@ -1,5 +1,5 @@
 use fpp_core::{RawFileLines, RawFilePosition};
-use fpp_lsp_parser::{SyntaxKind, SyntaxNode, VisitorResult};
+use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokens};
 
 #[derive(Debug, Copy, Clone)]
@@ -103,47 +103,71 @@ impl SemanticTokenKind {
 
 struct SemanticTokensState {
     lines: RawFileLines,
-    tokens: SemanticTokens,
-    last: RawFilePosition,
+    raw: Vec<(TextRange, SemanticTokenKind)>,
 }
 
 impl SemanticTokensState {
     fn new(text: &str) -> SemanticTokensState {
         SemanticTokensState {
             lines: RawFileLines::new(text),
-            tokens: Default::default(),
-            last: Default::default(),
+            raw: Default::default(),
         }
     }
 
-    fn add(&mut self, node: &SyntaxNode, kind: SemanticTokenKind) {
-        let range = node.text_range();
-        let start = self.lines.position(range.start().into());
-        let end = self.lines.position(range.end().into());
+    fn finish(mut self) -> SemanticTokens {
+        let mut tokens = SemanticTokens::default();
+        self.raw.sort_by(|a, b| a.0.ordering(b.0));
 
-        // We only support single line tokens
-        assert_eq!(start.line, end.line);
-
-        let delta_line = start.line - self.last.line;
-        let delta_start = if delta_line == 0 {
-            // Same line, offset the start position
-            start.column - self.last.column
-        } else {
-            // Token is on a different line, don't alter the column
-            start.column
+        let mut last: RawFilePosition = RawFilePosition {
+            pos: 0,
+            line: 0,
+            column: 0,
         };
 
-        let (token_type, token_modifiers_bitset) = kind.type_and_modifier();
-        let length = end.column - start.column;
+        for (range, kind) in self.raw {
+            // TODO(tumbar) This can be heavily optimized
+            let start = self.lines.position(range.start().into());
+            let end = self.lines.position(range.end().into());
 
-        self.last = end;
-        self.tokens.data.push(SemanticToken {
-            delta_line,
-            delta_start,
-            length,
-            token_type,
-            token_modifiers_bitset,
-        });
+            // We only support single line tokens
+            assert_eq!(start.line, end.line);
+
+            let delta_line = start.line - last.line;
+            let delta_start = if delta_line == 0 {
+                // Same line, offset the start position
+                start.column - last.column
+            } else {
+                // Token is on a different line, don't alter the column
+                start.column
+            };
+
+            let (token_type, token_modifiers_bitset) = kind.type_and_modifier();
+            let length = end.column - start.column;
+
+            last = start;
+            tokens.data.push(SemanticToken {
+                delta_line,
+                delta_start,
+                length,
+                token_type,
+                token_modifiers_bitset,
+            });
+        }
+
+        tokens
+    }
+
+    #[inline]
+    fn add_text_range(&mut self, range: TextRange, kind: SemanticTokenKind) {
+        self.raw.push((range, kind));
+    }
+
+    fn add_token(&mut self, token: &SyntaxToken, kind: SemanticTokenKind) {
+        self.add_text_range(token.text_range(), kind);
+    }
+
+    fn add_node(&mut self, node: &SyntaxNode, kind: SemanticTokenKind) {
+        self.add_text_range(node.text_range(), kind);
     }
 }
 
@@ -152,39 +176,56 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     type State = SemanticTokensState;
 
     fn visit(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult {
-        let kind = match node.kind() {
-            SyntaxKind::POST_ANNOTATION => SemanticTokenKind::Annotation,
-            SyntaxKind::PRE_ANNOTATION => SemanticTokenKind::Annotation,
-            SyntaxKind::LITERAL_FLOAT => SemanticTokenKind::Number,
-            SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
-            SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
-            keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
-            SyntaxKind::COMMENT => SemanticTokenKind::Comment,
-
-            SyntaxKind::NAME_REF => {
-                if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
-                    match parent_node_kind {
-                        SyntaxKind::FORMAL_PARAM => SemanticTokenKind::FormalParameter,
-                        SyntaxKind::TYPE_NAME => SemanticTokenKind::Type,
-
-                        // We do not recognize this name's parent rule
-                        _ => return VisitorResult::Next,
-                    }
-                } else {
-                    // Top level names should not exist
-                    return VisitorResult::Next;
-                }
+        match node.kind() {
+            SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
+                state.add_node(node, SemanticTokenKind::Annotation);
+                VisitorResult::Next
             }
+            SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => {
+                state.add_node(node, SemanticTokenKind::Number);
+                VisitorResult::Next
+            }
+            SyntaxKind::LITERAL_STRING => {
+                state.add_node(node, SemanticTokenKind::String);
+                VisitorResult::Next
+            }
+            keyword if keyword.is_keyword() => {
+                state.add_node(node, SemanticTokenKind::Keyword);
+                VisitorResult::Next
+            }
+            SyntaxKind::COMMENT => {
+                state.add_node(node, SemanticTokenKind::Comment);
+                VisitorResult::Next
+            }
+            SyntaxKind::QUAL_IDENT => {
+                let ident_list = node.descendants_with_tokens().filter_map(|f| match f {
+                    NodeOrToken::Token(token) if token.kind() == SyntaxKind::IDENT => Some(token),
+                    _ => None,
+                });
 
+                if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
+                    let name_kind = match parent_node_kind {
+                        SyntaxKind::TYPE_NAME => SemanticTokenKind::Type,
+                        _ => return VisitorResult::Next,
+                    };
+
+                    for ident in ident_list {
+                        state.add_token(&ident, name_kind);
+                    }
+                }
+
+                VisitorResult::Next
+            }
             // These are typed by definitions above them
             SyntaxKind::NAME => {
                 if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
-                    match parent_node_kind {
+                    let name_kind = match parent_node_kind {
                         SyntaxKind::DEF_ABSTRACT_TYPE
                         | SyntaxKind::DEF_ALIAS_TYPE
                         | SyntaxKind::DEF_ARRAY
                         | SyntaxKind::DEF_ENUM
                         | SyntaxKind::DEF_STRUCT => SemanticTokenKind::Type,
+                        SyntaxKind::FORMAL_PARAM => SemanticTokenKind::FormalParameter,
                         SyntaxKind::DEF_COMPONENT => SemanticTokenKind::Component,
                         SyntaxKind::DEF_COMPONENT_INSTANCE => SemanticTokenKind::ComponentInstance,
                         SyntaxKind::DEF_ENUM_CONSTANT => SemanticTokenKind::EnumConstant,
@@ -201,25 +242,25 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_STATE_MACHINE => SemanticTokenKind::StateMachine,
                         // We do not recognize this name's parent rule
                         _ => return VisitorResult::Next,
-                    }
-                } else {
-                    // Top level names should not exist
-                    return VisitorResult::Next;
+                    };
+
+                    state.add_node(node, name_kind);
                 }
+
+                VisitorResult::Next
             }
 
             // Keep going deeper to look at children
-            _ => return VisitorResult::Recurse,
-        };
-
-        state.add(node, kind);
-        VisitorResult::Next
+            _ => VisitorResult::Recurse,
+        }
     }
 }
 
 pub(crate) fn compute(text: &str, parse: &fpp_lsp_parser::Parse) -> SemanticTokens {
+    eprint!("{}", parse.clone().to_syntax().debug_dump());
+
     let mut state = SemanticTokensState::new(text);
     parse.visit(&mut state, &SemanticTokenVisitor {});
 
-    state.tokens
+    state.finish()
 }

@@ -1,0 +1,1846 @@
+ROOT@0..7126
+  DEF_MODULE@0..7125
+    MODULE_KW@0..6 "module"
+    WHITESPACE@6..7 " "
+    NAME@7..10
+      IDENT@7..10 "Ref"
+    WHITESPACE@10..11 " "
+    LEFT_CURLY@11..12 "{"
+    EOL@12..14 "\n\n"
+    WHITESPACE@14..16 "  "
+    COMMENT@16..88 "# ------------------- ..."
+    EOL@88..89 "\n"
+    WHITESPACE@89..91 "  "
+    COMMENT@91..128 "# Symbolic constants  ..."
+    EOL@128..129 "\n"
+    WHITESPACE@129..131 "  "
+    COMMENT@131..203 "# ------------------- ..."
+    EOL@203..205 "\n\n"
+    WHITESPACE@205..207 "  "
+    MODULE_MEMBER_LIST@207..7124
+      DEF_ENUM@207..279
+        ENUM_KW@207..211 "enum"
+        WHITESPACE@211..212 " "
+        NAME@212..228
+          IDENT@212..228 "Ports_RateGroups"
+        WHITESPACE@228..229 " "
+        LEFT_CURLY@229..230 "{"
+        EOL@230..231 "\n"
+        WHITESPACE@231..235 "    "
+        ENUM_MEMBER_LIST@235..278
+          DEF_ENUM_CONSTANT@235..245
+            NAME@235..245
+              IDENT@235..245 "rateGroup1"
+          EOL@245..250 "\n    "
+          DEF_ENUM_CONSTANT@250..260
+            NAME@250..260
+              IDENT@250..260 "rateGroup2"
+          EOL@260..265 "\n    "
+          DEF_ENUM_CONSTANT@265..275
+            NAME@265..275
+              IDENT@265..275 "rateGroup3"
+          EOL@275..278 "\n  "
+        RIGHT_CURLY@278..279 "}"
+      EOL@279..285 "\n\n\n\n  "
+      DEF_TOPOLOGY@285..7122
+        TOPOLOGY_KW@285..293 "topology"
+        WHITESPACE@293..294 " "
+        NAME@294..297
+          IDENT@294..297 "Ref"
+        WHITESPACE@297..298 " "
+        LEFT_CURLY@298..299 "{"
+        EOL@299..300 "\n"
+        WHITESPACE@300..304 "    "
+        COMMENT@304..376 "# ------------------- ..."
+        EOL@376..377 "\n"
+        WHITESPACE@377..381 "    "
+        COMMENT@381..402 "# Subtopology imports"
+        EOL@402..403 "\n"
+        WHITESPACE@403..407 "    "
+        COMMENT@407..479 "# ------------------- ..."
+        EOL@479..480 "\n"
+        WHITESPACE@480..484 "    "
+        TOPOLOGY_MEMBER_LIST@484..7121
+          SPEC_INSTANCE@484..510
+            IMPORT_KW@484..490 "import"
+            WHITESPACE@490..491 " "
+            QUAL_IDENT@491..510
+              IDENT@491..498 "CdhCore"
+              DOT@498..499 "."
+              IDENT@499..510 "Subtopology"
+          EOL@510..515 "\n    "
+          SPEC_INSTANCE@515..542
+            IMPORT_KW@515..521 "import"
+            WHITESPACE@521..522 " "
+            QUAL_IDENT@522..542
+              IDENT@522..530 "ComCcsds"
+              DOT@530..531 "."
+              IDENT@531..542 "Subtopology"
+          EOL@542..547 "\n    "
+          SPEC_INSTANCE@547..578
+            IMPORT_KW@547..553 "import"
+            WHITESPACE@553..554 " "
+            QUAL_IDENT@554..578
+              IDENT@554..566 "FileHandling"
+              DOT@566..567 "."
+              IDENT@567..578 "Subtopology"
+          EOL@578..583 "\n    "
+          SPEC_INSTANCE@583..614
+            IMPORT_KW@583..589 "import"
+            WHITESPACE@589..590 " "
+            QUAL_IDENT@590..614
+              IDENT@590..602 "DataProducts"
+              DOT@602..603 "."
+              IDENT@603..614 "Subtopology"
+          EOL@614..812 "\n\n    # ------------- ..."
+          SPEC_INSTANCE@812..824
+            INSTANCE_KW@812..820 "instance"
+            WHITESPACE@820..821 " "
+            QUAL_IDENT@821..824
+              IDENT@821..824 "SG1"
+          EOL@824..829 "\n    "
+          SPEC_INSTANCE@829..841
+            INSTANCE_KW@829..837 "instance"
+            WHITESPACE@837..838 " "
+            QUAL_IDENT@838..841
+              IDENT@838..841 "SG2"
+          EOL@841..846 "\n    "
+          SPEC_INSTANCE@846..858
+            INSTANCE_KW@846..854 "instance"
+            WHITESPACE@854..855 " "
+            QUAL_IDENT@855..858
+              IDENT@855..858 "SG3"
+          EOL@858..863 "\n    "
+          SPEC_INSTANCE@863..875
+            INSTANCE_KW@863..871 "instance"
+            WHITESPACE@871..872 " "
+            QUAL_IDENT@872..875
+              IDENT@872..875 "SG4"
+          EOL@875..880 "\n    "
+          SPEC_INSTANCE@880..892
+            INSTANCE_KW@880..888 "instance"
+            WHITESPACE@888..889 " "
+            QUAL_IDENT@889..892
+              IDENT@889..892 "SG5"
+          EOL@892..897 "\n    "
+          SPEC_INSTANCE@897..914
+            INSTANCE_KW@897..905 "instance"
+            WHITESPACE@905..906 " "
+            QUAL_IDENT@906..914
+              IDENT@906..914 "blockDrv"
+          EOL@914..919 "\n    "
+          SPEC_INSTANCE@919..937
+            INSTANCE_KW@919..927 "instance"
+            WHITESPACE@927..928 " "
+            QUAL_IDENT@928..937
+              IDENT@928..937 "posixTime"
+          EOL@937..942 "\n    "
+          SPEC_INSTANCE@942..959
+            INSTANCE_KW@942..950 "instance"
+            WHITESPACE@950..951 " "
+            QUAL_IDENT@951..959
+              IDENT@951..959 "pingRcvr"
+          EOL@959..964 "\n    "
+          SPEC_INSTANCE@964..987
+            INSTANCE_KW@964..972 "instance"
+            WHITESPACE@972..973 " "
+            QUAL_IDENT@973..987
+              IDENT@973..987 "rateGroup1Comp"
+          EOL@987..992 "\n    "
+          SPEC_INSTANCE@992..1015
+            INSTANCE_KW@992..1000 "instance"
+            WHITESPACE@1000..1001 " "
+            QUAL_IDENT@1001..1015
+              IDENT@1001..1015 "rateGroup2Comp"
+          EOL@1015..1020 "\n    "
+          SPEC_INSTANCE@1020..1043
+            INSTANCE_KW@1020..1028 "instance"
+            WHITESPACE@1028..1029 " "
+            QUAL_IDENT@1029..1043
+              IDENT@1029..1043 "rateGroup3Comp"
+          EOL@1043..1048 "\n    "
+          SPEC_INSTANCE@1048..1076
+            INSTANCE_KW@1048..1056 "instance"
+            WHITESPACE@1056..1057 " "
+            QUAL_IDENT@1057..1076
+              IDENT@1057..1076 "rateGroupDriverComp"
+          EOL@1076..1081 "\n    "
+          SPEC_INSTANCE@1081..1102
+            INSTANCE_KW@1081..1089 "instance"
+            WHITESPACE@1089..1090 " "
+            QUAL_IDENT@1090..1102
+              IDENT@1090..1102 "recvBuffComp"
+          EOL@1102..1107 "\n    "
+          SPEC_INSTANCE@1107..1128
+            INSTANCE_KW@1107..1115 "instance"
+            WHITESPACE@1115..1116 " "
+            QUAL_IDENT@1116..1128
+              IDENT@1116..1128 "sendBuffComp"
+          EOL@1128..1133 "\n    "
+          SPEC_INSTANCE@1133..1150
+            INSTANCE_KW@1133..1141 "instance"
+            WHITESPACE@1141..1142 " "
+            QUAL_IDENT@1142..1150
+              IDENT@1142..1150 "typeDemo"
+          EOL@1150..1155 "\n    "
+          SPEC_INSTANCE@1155..1179
+            INSTANCE_KW@1155..1163 "instance"
+            WHITESPACE@1163..1164 " "
+            QUAL_IDENT@1164..1179
+              IDENT@1164..1179 "systemResources"
+          EOL@1179..1184 "\n    "
+          SPEC_INSTANCE@1184..1199
+            INSTANCE_KW@1184..1192 "instance"
+            WHITESPACE@1192..1193 " "
+            QUAL_IDENT@1193..1199
+              IDENT@1193..1199 "dpDemo"
+          EOL@1199..1204 "\n    "
+          SPEC_INSTANCE@1204..1223
+            INSTANCE_KW@1204..1212 "instance"
+            WHITESPACE@1212..1213 " "
+            QUAL_IDENT@1213..1223
+              IDENT@1213..1223 "linuxTimer"
+          EOL@1223..1228 "\n    "
+          SPEC_INSTANCE@1228..1246
+            INSTANCE_KW@1228..1236 "instance"
+            WHITESPACE@1236..1237 " "
+            QUAL_IDENT@1237..1246
+              IDENT@1237..1246 "comDriver"
+          EOL@1246..1251 "\n    "
+          SPEC_INSTANCE@1251..1266
+            INSTANCE_KW@1251..1259 "instance"
+            WHITESPACE@1259..1260 " "
+            QUAL_IDENT@1260..1266
+              IDENT@1260..1266 "cmdSeq"
+          EOL@1266..1458 "\n\n    # ------------- ..."
+          SPEC_CONNECTION_GRAPH_PATTERN@1458..1502
+            COMMAND_KW@1458..1465 "command"
+            WHITESPACE@1465..1466 " "
+            CONNECTIONS_KW@1466..1477 "connections"
+            WHITESPACE@1477..1478 " "
+            INSTANCE_KW@1478..1486 "instance"
+            WHITESPACE@1486..1487 " "
+            QUAL_IDENT@1487..1502
+              IDENT@1487..1494 "CdhCore"
+              DOT@1494..1495 "."
+              IDENT@1495..1502 "cmdDisp"
+          EOL@1502..1508 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1508..1549
+            EVENT_KW@1508..1513 "event"
+            WHITESPACE@1513..1514 " "
+            CONNECTIONS_KW@1514..1525 "connections"
+            WHITESPACE@1525..1526 " "
+            INSTANCE_KW@1526..1534 "instance"
+            WHITESPACE@1534..1535 " "
+            QUAL_IDENT@1535..1549
+              IDENT@1535..1542 "CdhCore"
+              DOT@1542..1543 "."
+              IDENT@1543..1549 "events"
+          EOL@1549..1555 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1555..1601
+            TELEMETRY_KW@1555..1564 "telemetry"
+            WHITESPACE@1564..1565 " "
+            CONNECTIONS_KW@1565..1576 "connections"
+            WHITESPACE@1576..1577 " "
+            INSTANCE_KW@1577..1585 "instance"
+            WHITESPACE@1585..1586 " "
+            QUAL_IDENT@1586..1601
+              IDENT@1586..1593 "CdhCore"
+              DOT@1593..1594 "."
+              IDENT@1594..1601 "tlmSend"
+          EOL@1601..1607 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1607..1657
+            TEXT_KW@1607..1611 "text"
+            WHITESPACE@1611..1612 " "
+            EVENT_KW@1612..1617 "event"
+            WHITESPACE@1617..1618 " "
+            CONNECTIONS_KW@1618..1629 "connections"
+            WHITESPACE@1629..1630 " "
+            INSTANCE_KW@1630..1638 "instance"
+            WHITESPACE@1638..1639 " "
+            QUAL_IDENT@1639..1657
+              IDENT@1639..1646 "CdhCore"
+              DOT@1646..1647 "."
+              IDENT@1647..1657 "textLogger"
+          EOL@1657..1663 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1663..1706
+            HEALTH_KW@1663..1669 "health"
+            WHITESPACE@1669..1670 " "
+            CONNECTIONS_KW@1670..1681 "connections"
+            WHITESPACE@1681..1682 " "
+            INSTANCE_KW@1682..1690 "instance"
+            WHITESPACE@1690..1691 " "
+            QUAL_IDENT@1691..1706
+              IDENT@1691..1698 "CdhCore"
+              DOT@1698..1699 "."
+              IDENT@1699..1706 "$health"
+          EOL@1706..1712 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1712..1757
+            PARAM_KW@1712..1717 "param"
+            WHITESPACE@1717..1718 " "
+            CONNECTIONS_KW@1718..1729 "connections"
+            WHITESPACE@1729..1730 " "
+            INSTANCE_KW@1730..1738 "instance"
+            WHITESPACE@1738..1739 " "
+            QUAL_IDENT@1739..1757
+              IDENT@1739..1751 "FileHandling"
+              DOT@1751..1752 "."
+              IDENT@1752..1757 "prmDb"
+          EOL@1757..1763 "\n\n    "
+          SPEC_CONNECTION_GRAPH_PATTERN@1763..1798
+            TIME_KW@1763..1767 "time"
+            WHITESPACE@1767..1768 " "
+            CONNECTIONS_KW@1768..1779 "connections"
+            WHITESPACE@1779..1780 " "
+            INSTANCE_KW@1780..1788 "instance"
+            WHITESPACE@1788..1789 " "
+            QUAL_IDENT@1789..1798
+              IDENT@1789..1798 "posixTime"
+          EOL@1798..2201 "\n\n    # ------------- ..."
+          SPEC_CONNECTION_GRAPH_DIRECT@2201..4144
+            CONNECTIONS_KW@2201..2212 "connections"
+            WHITESPACE@2212..2213 " "
+            NAME@2213..2223
+              IDENT@2213..2223 "RateGroups"
+            WHITESPACE@2223..2224 " "
+            LEFT_CURLY@2224..2225 "{"
+            EOL@2225..2227 "\n\n"
+            WHITESPACE@2227..2233 "      "
+            COMMENT@2233..2261 "# Linux timer to driv ..."
+            EOL@2261..2262 "\n"
+            WHITESPACE@2262..2268 "      "
+            CONNECTION_MEMBER_LIST@2268..4143
+              CONNECTION@2268..2318
+                CONNECTION_FROM@2268..2287
+                  PORT_INSTANCE_IDENTIFIER@2268..2287
+                    IDENT@2268..2278 "linuxTimer"
+                    DOT@2278..2279 "."
+                    IDENT@2279..2287 "CycleOut"
+                WHITESPACE@2287..2288 " "
+                RIGHT_ARROW@2288..2290 "->"
+                WHITESPACE@2290..2291 " "
+                CONNECTION_TO@2291..2318
+                  PORT_INSTANCE_IDENTIFIER@2291..2318
+                    IDENT@2291..2310 "rateGroupDriverComp"
+                    DOT@2310..2311 "."
+                    IDENT@2311..2318 "CycleIn"
+              EOL@2318..2347 "\n\n      # Rate group  ..."
+              CONNECTION@2347..2430
+                CONNECTION_FROM@2347..2404
+                  PORT_INSTANCE_IDENTIFIER@2347..2375
+                    IDENT@2347..2366 "rateGroupDriverComp"
+                    DOT@2366..2367 "."
+                    IDENT@2367..2375 "CycleOut"
+                  INDEX_OR_SIZE@2375..2403
+                    LEFT_SQUARE@2375..2376 "["
+                    EXPR@2376..2403
+                      EXPR_MEMBER@2376..2403
+                        EXPR_IDENT@2376..2392
+                          IDENT@2376..2392 "Ports_RateGroups"
+                        DOT@2392..2393 "."
+                        IDENT@2393..2403 "rateGroup1"
+                  RIGHT_SQUARE@2403..2404 "]"
+                WHITESPACE@2404..2405 " "
+                RIGHT_ARROW@2405..2407 "->"
+                WHITESPACE@2407..2408 " "
+                CONNECTION_TO@2408..2430
+                  PORT_INSTANCE_IDENTIFIER@2408..2430
+                    IDENT@2408..2422 "rateGroup1Comp"
+                    DOT@2422..2423 "."
+                    IDENT@2423..2430 "CycleIn"
+              EOL@2430..2437 "\n      "
+              CONNECTION@2437..2488
+                CONNECTION_FROM@2437..2473
+                  PORT_INSTANCE_IDENTIFIER@2437..2470
+                    IDENT@2437..2451 "rateGroup1Comp"
+                    DOT@2451..2452 "."
+                    IDENT@2452..2470 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2470..2472
+                    LEFT_SQUARE@2470..2471 "["
+                    EXPR@2471..2472
+                      EXPR_LITERAL@2471..2472
+                        LITERAL_INT@2471..2472 "0"
+                  RIGHT_SQUARE@2472..2473 "]"
+                WHITESPACE@2473..2474 " "
+                RIGHT_ARROW@2474..2476 "->"
+                WHITESPACE@2476..2477 " "
+                CONNECTION_TO@2477..2488
+                  PORT_INSTANCE_IDENTIFIER@2477..2488
+                    IDENT@2477..2480 "SG1"
+                    DOT@2480..2481 "."
+                    IDENT@2481..2488 "schedIn"
+              EOL@2488..2495 "\n      "
+              CONNECTION@2495..2546
+                CONNECTION_FROM@2495..2531
+                  PORT_INSTANCE_IDENTIFIER@2495..2528
+                    IDENT@2495..2509 "rateGroup1Comp"
+                    DOT@2509..2510 "."
+                    IDENT@2510..2528 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2528..2530
+                    LEFT_SQUARE@2528..2529 "["
+                    EXPR@2529..2530
+                      EXPR_LITERAL@2529..2530
+                        LITERAL_INT@2529..2530 "1"
+                  RIGHT_SQUARE@2530..2531 "]"
+                WHITESPACE@2531..2532 " "
+                RIGHT_ARROW@2532..2534 "->"
+                WHITESPACE@2534..2535 " "
+                CONNECTION_TO@2535..2546
+                  PORT_INSTANCE_IDENTIFIER@2535..2546
+                    IDENT@2535..2538 "SG2"
+                    DOT@2538..2539 "."
+                    IDENT@2539..2546 "schedIn"
+              EOL@2546..2553 "\n      "
+              CONNECTION@2553..2608
+                CONNECTION_FROM@2553..2589
+                  PORT_INSTANCE_IDENTIFIER@2553..2586
+                    IDENT@2553..2567 "rateGroup1Comp"
+                    DOT@2567..2568 "."
+                    IDENT@2568..2586 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2586..2588
+                    LEFT_SQUARE@2586..2587 "["
+                    EXPR@2587..2588
+                      EXPR_LITERAL@2587..2588
+                        LITERAL_INT@2587..2588 "2"
+                  RIGHT_SQUARE@2588..2589 "]"
+                WHITESPACE@2589..2590 " "
+                RIGHT_ARROW@2590..2592 "->"
+                WHITESPACE@2592..2593 " "
+                CONNECTION_TO@2593..2608
+                  PORT_INSTANCE_IDENTIFIER@2593..2608
+                    IDENT@2593..2600 "CdhCore"
+                    DOT@2600..2601 "."
+                    IDENT@2601..2608 "tlmSend"
+              ERROR@2608..2609
+                DOT@2608..2609 "."
+              CONNECTION@2609..2612
+                CONNECTION_FROM@2609..2612
+                  PORT_INSTANCE_IDENTIFIER@2609..2612
+                    IDENT@2609..2612 "Run"
+                CONNECTION_TO@2612..2612
+                  PORT_INSTANCE_IDENTIFIER@2612..2612
+              EOL@2612..2619 "\n      "
+              CONNECTION@2619..2684
+                CONNECTION_FROM@2619..2655
+                  PORT_INSTANCE_IDENTIFIER@2619..2652
+                    IDENT@2619..2633 "rateGroup1Comp"
+                    DOT@2633..2634 "."
+                    IDENT@2634..2652 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2652..2654
+                    LEFT_SQUARE@2652..2653 "["
+                    EXPR@2653..2654
+                      EXPR_LITERAL@2653..2654
+                        LITERAL_INT@2653..2654 "3"
+                  RIGHT_SQUARE@2654..2655 "]"
+                WHITESPACE@2655..2656 " "
+                RIGHT_ARROW@2656..2658 "->"
+                WHITESPACE@2658..2659 " "
+                CONNECTION_TO@2659..2684
+                  PORT_INSTANCE_IDENTIFIER@2659..2684
+                    IDENT@2659..2671 "FileHandling"
+                    DOT@2671..2672 "."
+                    IDENT@2672..2684 "fileDownlink"
+              ERROR@2684..2685
+                DOT@2684..2685 "."
+              CONNECTION@2685..2688
+                CONNECTION_FROM@2685..2688
+                  PORT_INSTANCE_IDENTIFIER@2685..2688
+                    IDENT@2685..2688 "Run"
+                CONNECTION_TO@2688..2688
+                  PORT_INSTANCE_IDENTIFIER@2688..2688
+              EOL@2688..2695 "\n      "
+              CONNECTION@2695..2754
+                CONNECTION_FROM@2695..2731
+                  PORT_INSTANCE_IDENTIFIER@2695..2728
+                    IDENT@2695..2709 "rateGroup1Comp"
+                    DOT@2709..2710 "."
+                    IDENT@2710..2728 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2728..2730
+                    LEFT_SQUARE@2728..2729 "["
+                    EXPR@2729..2730
+                      EXPR_LITERAL@2729..2730
+                        LITERAL_INT@2729..2730 "4"
+                  RIGHT_SQUARE@2730..2731 "]"
+                WHITESPACE@2731..2732 " "
+                RIGHT_ARROW@2732..2734 "->"
+                WHITESPACE@2734..2735 " "
+                CONNECTION_TO@2735..2754
+                  PORT_INSTANCE_IDENTIFIER@2735..2754
+                    IDENT@2735..2750 "systemResources"
+                    DOT@2750..2751 "."
+                    IDENT@2751..2754 "run"
+              EOL@2754..2761 "\n      "
+              CONNECTION@2761..2818
+                CONNECTION_FROM@2761..2797
+                  PORT_INSTANCE_IDENTIFIER@2761..2794
+                    IDENT@2761..2775 "rateGroup1Comp"
+                    DOT@2775..2776 "."
+                    IDENT@2776..2794 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2794..2796
+                    LEFT_SQUARE@2794..2795 "["
+                    EXPR@2795..2796
+                      EXPR_LITERAL@2795..2796
+                        LITERAL_INT@2795..2796 "5"
+                  RIGHT_SQUARE@2796..2797 "]"
+                WHITESPACE@2797..2798 " "
+                RIGHT_ARROW@2798..2800 "->"
+                WHITESPACE@2800..2801 " "
+                CONNECTION_TO@2801..2818
+                  PORT_INSTANCE_IDENTIFIER@2801..2818
+                    IDENT@2801..2809 "ComCcsds"
+                    DOT@2809..2810 "."
+                    IDENT@2810..2818 "comQueue"
+              ERROR@2818..2819
+                DOT@2818..2819 "."
+              CONNECTION@2819..2822
+                CONNECTION_FROM@2819..2822
+                  PORT_INSTANCE_IDENTIFIER@2819..2822
+                    IDENT@2819..2822 "run"
+                CONNECTION_TO@2822..2822
+                  PORT_INSTANCE_IDENTIFIER@2822..2822
+              EOL@2822..2829 "\n      "
+              CONNECTION@2829..2884
+                CONNECTION_FROM@2829..2865
+                  PORT_INSTANCE_IDENTIFIER@2829..2862
+                    IDENT@2829..2843 "rateGroup1Comp"
+                    DOT@2843..2844 "."
+                    IDENT@2844..2862 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2862..2864
+                    LEFT_SQUARE@2862..2863 "["
+                    EXPR@2863..2864
+                      EXPR_LITERAL@2863..2864
+                        LITERAL_INT@2863..2864 "6"
+                  RIGHT_SQUARE@2864..2865 "]"
+                WHITESPACE@2865..2866 " "
+                RIGHT_ARROW@2866..2868 "->"
+                WHITESPACE@2868..2869 " "
+                CONNECTION_TO@2869..2884
+                  PORT_INSTANCE_IDENTIFIER@2869..2884
+                    IDENT@2869..2876 "CdhCore"
+                    DOT@2876..2877 "."
+                    IDENT@2877..2884 "cmdDisp"
+              ERROR@2884..2885
+                DOT@2884..2885 "."
+              CONNECTION@2885..2888
+                CONNECTION_FROM@2885..2888
+                  PORT_INSTANCE_IDENTIFIER@2885..2888
+                    IDENT@2885..2888 "run"
+                CONNECTION_TO@2888..2888
+                  PORT_INSTANCE_IDENTIFIER@2888..2888
+              EOL@2888..2895 "\n      "
+              CONNECTION@2895..2954
+                CONNECTION_FROM@2895..2931
+                  PORT_INSTANCE_IDENTIFIER@2895..2928
+                    IDENT@2895..2909 "rateGroup1Comp"
+                    DOT@2909..2910 "."
+                    IDENT@2910..2928 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@2928..2930
+                    LEFT_SQUARE@2928..2929 "["
+                    EXPR@2929..2930
+                      EXPR_LITERAL@2929..2930
+                        LITERAL_INT@2929..2930 "7"
+                  RIGHT_SQUARE@2930..2931 "]"
+                WHITESPACE@2931..2932 " "
+                RIGHT_ARROW@2932..2934 "->"
+                WHITESPACE@2934..2935 " "
+                CONNECTION_TO@2935..2954
+                  PORT_INSTANCE_IDENTIFIER@2935..2954
+                    IDENT@2935..2943 "ComCcsds"
+                    DOT@2943..2944 "."
+                    IDENT@2944..2954 "aggregator"
+              ERROR@2954..2955
+                DOT@2954..2955 "."
+              CONNECTION@2955..2962
+                CONNECTION_FROM@2955..2962
+                  PORT_INSTANCE_IDENTIFIER@2955..2962
+                    IDENT@2955..2962 "timeout"
+                CONNECTION_TO@2962..2962
+                  PORT_INSTANCE_IDENTIFIER@2962..2962
+              EOL@2962..2991 "\n\n      # Rate group  ..."
+              CONNECTION@2991..3074
+                CONNECTION_FROM@2991..3048
+                  PORT_INSTANCE_IDENTIFIER@2991..3019
+                    IDENT@2991..3010 "rateGroupDriverComp"
+                    DOT@3010..3011 "."
+                    IDENT@3011..3019 "CycleOut"
+                  INDEX_OR_SIZE@3019..3047
+                    LEFT_SQUARE@3019..3020 "["
+                    EXPR@3020..3047
+                      EXPR_MEMBER@3020..3047
+                        EXPR_IDENT@3020..3036
+                          IDENT@3020..3036 "Ports_RateGroups"
+                        DOT@3036..3037 "."
+                        IDENT@3037..3047 "rateGroup2"
+                  RIGHT_SQUARE@3047..3048 "]"
+                WHITESPACE@3048..3049 " "
+                RIGHT_ARROW@3049..3051 "->"
+                WHITESPACE@3051..3052 " "
+                CONNECTION_TO@3052..3074
+                  PORT_INSTANCE_IDENTIFIER@3052..3074
+                    IDENT@3052..3066 "rateGroup2Comp"
+                    DOT@3066..3067 "."
+                    IDENT@3067..3074 "CycleIn"
+              EOL@3074..3143 "\n#      rateGroup2Com ..."
+              CONNECTION@3143..3203
+                CONNECTION_FROM@3143..3179
+                  PORT_INSTANCE_IDENTIFIER@3143..3176
+                    IDENT@3143..3157 "rateGroup2Comp"
+                    DOT@3157..3158 "."
+                    IDENT@3158..3176 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3176..3178
+                    LEFT_SQUARE@3176..3177 "["
+                    EXPR@3177..3178
+                      EXPR_LITERAL@3177..3178
+                        LITERAL_INT@3177..3178 "1"
+                  RIGHT_SQUARE@3178..3179 "]"
+                WHITESPACE@3179..3180 " "
+                RIGHT_ARROW@3180..3182 "->"
+                WHITESPACE@3182..3183 " "
+                CONNECTION_TO@3183..3203
+                  PORT_INSTANCE_IDENTIFIER@3183..3203
+                    IDENT@3183..3195 "sendBuffComp"
+                    DOT@3195..3196 "."
+                    IDENT@3196..3203 "SchedIn"
+              EOL@3203..3210 "\n      "
+              CONNECTION@3210..3261
+                CONNECTION_FROM@3210..3246
+                  PORT_INSTANCE_IDENTIFIER@3210..3243
+                    IDENT@3210..3224 "rateGroup2Comp"
+                    DOT@3224..3225 "."
+                    IDENT@3225..3243 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3243..3245
+                    LEFT_SQUARE@3243..3244 "["
+                    EXPR@3244..3245
+                      EXPR_LITERAL@3244..3245
+                        LITERAL_INT@3244..3245 "2"
+                  RIGHT_SQUARE@3245..3246 "]"
+                WHITESPACE@3246..3247 " "
+                RIGHT_ARROW@3247..3249 "->"
+                WHITESPACE@3249..3250 " "
+                CONNECTION_TO@3250..3261
+                  PORT_INSTANCE_IDENTIFIER@3250..3261
+                    IDENT@3250..3253 "SG3"
+                    DOT@3253..3254 "."
+                    IDENT@3254..3261 "schedIn"
+              EOL@3261..3268 "\n      "
+              CONNECTION@3268..3319
+                CONNECTION_FROM@3268..3304
+                  PORT_INSTANCE_IDENTIFIER@3268..3301
+                    IDENT@3268..3282 "rateGroup2Comp"
+                    DOT@3282..3283 "."
+                    IDENT@3283..3301 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3301..3303
+                    LEFT_SQUARE@3301..3302 "["
+                    EXPR@3302..3303
+                      EXPR_LITERAL@3302..3303
+                        LITERAL_INT@3302..3303 "3"
+                  RIGHT_SQUARE@3303..3304 "]"
+                WHITESPACE@3304..3305 " "
+                RIGHT_ARROW@3305..3307 "->"
+                WHITESPACE@3307..3308 " "
+                CONNECTION_TO@3308..3319
+                  PORT_INSTANCE_IDENTIFIER@3308..3319
+                    IDENT@3308..3311 "SG4"
+                    DOT@3311..3312 "."
+                    IDENT@3312..3319 "schedIn"
+              EOL@3319..3326 "\n      "
+              CONNECTION@3326..3376
+                CONNECTION_FROM@3326..3362
+                  PORT_INSTANCE_IDENTIFIER@3326..3359
+                    IDENT@3326..3340 "rateGroup2Comp"
+                    DOT@3340..3341 "."
+                    IDENT@3341..3359 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3359..3361
+                    LEFT_SQUARE@3359..3360 "["
+                    EXPR@3360..3361
+                      EXPR_LITERAL@3360..3361
+                        LITERAL_INT@3360..3361 "4"
+                  RIGHT_SQUARE@3361..3362 "]"
+                WHITESPACE@3362..3363 " "
+                RIGHT_ARROW@3363..3365 "->"
+                WHITESPACE@3365..3366 " "
+                CONNECTION_TO@3366..3376
+                  PORT_INSTANCE_IDENTIFIER@3366..3376
+                    IDENT@3366..3372 "dpDemo"
+                    DOT@3372..3373 "."
+                    IDENT@3373..3376 "run"
+              EOL@3376..3455 "\n      #connection to ..."
+              CONNECTION@3455..3519
+                CONNECTION_FROM@3455..3491
+                  PORT_INSTANCE_IDENTIFIER@3455..3488
+                    IDENT@3455..3469 "rateGroup2Comp"
+                    DOT@3469..3470 "."
+                    IDENT@3470..3488 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3488..3490
+                    LEFT_SQUARE@3488..3489 "["
+                    EXPR@3489..3490
+                      EXPR_LITERAL@3489..3490
+                        LITERAL_INT@3489..3490 "5"
+                  RIGHT_SQUARE@3490..3491 "]"
+                WHITESPACE@3491..3492 " "
+                RIGHT_ARROW@3492..3494 "->"
+                WHITESPACE@3494..3495 " "
+                CONNECTION_TO@3495..3519
+                  PORT_INSTANCE_IDENTIFIER@3495..3519
+                    IDENT@3495..3507 "FileHandling"
+                    DOT@3507..3508 "."
+                    IDENT@3508..3519 "fileManager"
+              ERROR@3519..3520
+                DOT@3519..3520 "."
+              CONNECTION@3520..3527
+                CONNECTION_FROM@3520..3527
+                  PORT_INSTANCE_IDENTIFIER@3520..3527
+                    IDENT@3520..3527 "schedIn"
+                CONNECTION_TO@3527..3527
+                  PORT_INSTANCE_IDENTIFIER@3527..3527
+              EOL@3527..3556 "\n\n      # Rate group  ..."
+              CONNECTION@3556..3639
+                CONNECTION_FROM@3556..3613
+                  PORT_INSTANCE_IDENTIFIER@3556..3584
+                    IDENT@3556..3575 "rateGroupDriverComp"
+                    DOT@3575..3576 "."
+                    IDENT@3576..3584 "CycleOut"
+                  INDEX_OR_SIZE@3584..3612
+                    LEFT_SQUARE@3584..3585 "["
+                    EXPR@3585..3612
+                      EXPR_MEMBER@3585..3612
+                        EXPR_IDENT@3585..3601
+                          IDENT@3585..3601 "Ports_RateGroups"
+                        DOT@3601..3602 "."
+                        IDENT@3602..3612 "rateGroup3"
+                  RIGHT_SQUARE@3612..3613 "]"
+                WHITESPACE@3613..3614 " "
+                RIGHT_ARROW@3614..3616 "->"
+                WHITESPACE@3616..3617 " "
+                CONNECTION_TO@3617..3639
+                  PORT_INSTANCE_IDENTIFIER@3617..3639
+                    IDENT@3617..3631 "rateGroup3Comp"
+                    DOT@3631..3632 "."
+                    IDENT@3632..3639 "CycleIn"
+              EOL@3639..3646 "\n      "
+              CONNECTION@3646..3701
+                CONNECTION_FROM@3646..3682
+                  PORT_INSTANCE_IDENTIFIER@3646..3679
+                    IDENT@3646..3660 "rateGroup3Comp"
+                    DOT@3660..3661 "."
+                    IDENT@3661..3679 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3679..3681
+                    LEFT_SQUARE@3679..3680 "["
+                    EXPR@3680..3681
+                      EXPR_LITERAL@3680..3681
+                        LITERAL_INT@3680..3681 "0"
+                  RIGHT_SQUARE@3681..3682 "]"
+                WHITESPACE@3682..3683 " "
+                RIGHT_ARROW@3683..3685 "->"
+                WHITESPACE@3685..3686 " "
+                CONNECTION_TO@3686..3701
+                  PORT_INSTANCE_IDENTIFIER@3686..3701
+                    IDENT@3686..3693 "CdhCore"
+                    DOT@3693..3694 "."
+                    IDENT@3694..3701 "$health"
+              ERROR@3701..3702
+                DOT@3701..3702 "."
+              CONNECTION@3702..3705
+                CONNECTION_FROM@3702..3705
+                  PORT_INSTANCE_IDENTIFIER@3702..3705
+                    IDENT@3702..3705 "Run"
+                CONNECTION_TO@3705..3705
+                  PORT_INSTANCE_IDENTIFIER@3705..3705
+              EOL@3705..3712 "\n      "
+              CONNECTION@3712..3763
+                CONNECTION_FROM@3712..3748
+                  PORT_INSTANCE_IDENTIFIER@3712..3745
+                    IDENT@3712..3726 "rateGroup3Comp"
+                    DOT@3726..3727 "."
+                    IDENT@3727..3745 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3745..3747
+                    LEFT_SQUARE@3745..3746 "["
+                    EXPR@3746..3747
+                      EXPR_LITERAL@3746..3747
+                        LITERAL_INT@3746..3747 "1"
+                  RIGHT_SQUARE@3747..3748 "]"
+                WHITESPACE@3748..3749 " "
+                RIGHT_ARROW@3749..3751 "->"
+                WHITESPACE@3751..3752 " "
+                CONNECTION_TO@3752..3763
+                  PORT_INSTANCE_IDENTIFIER@3752..3763
+                    IDENT@3752..3755 "SG5"
+                    DOT@3755..3756 "."
+                    IDENT@3756..3763 "schedIn"
+              EOL@3763..3770 "\n      "
+              CONNECTION@3770..3824
+                CONNECTION_FROM@3770..3806
+                  PORT_INSTANCE_IDENTIFIER@3770..3803
+                    IDENT@3770..3784 "rateGroup3Comp"
+                    DOT@3784..3785 "."
+                    IDENT@3785..3803 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3803..3805
+                    LEFT_SQUARE@3803..3804 "["
+                    EXPR@3804..3805
+                      EXPR_LITERAL@3804..3805
+                        LITERAL_INT@3804..3805 "2"
+                  RIGHT_SQUARE@3805..3806 "]"
+                WHITESPACE@3806..3807 " "
+                RIGHT_ARROW@3807..3809 "->"
+                WHITESPACE@3809..3810 " "
+                CONNECTION_TO@3810..3824
+                  PORT_INSTANCE_IDENTIFIER@3810..3824
+                    IDENT@3810..3818 "blockDrv"
+                    DOT@3818..3819 "."
+                    IDENT@3819..3824 "Sched"
+              EOL@3824..3831 "\n      "
+              CONNECTION@3831..3898
+                CONNECTION_FROM@3831..3867
+                  PORT_INSTANCE_IDENTIFIER@3831..3864
+                    IDENT@3831..3845 "rateGroup3Comp"
+                    DOT@3845..3846 "."
+                    IDENT@3846..3864 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3864..3866
+                    LEFT_SQUARE@3864..3865 "["
+                    EXPR@3865..3866
+                      EXPR_LITERAL@3865..3866
+                        LITERAL_INT@3865..3866 "3"
+                  RIGHT_SQUARE@3866..3867 "]"
+                WHITESPACE@3867..3868 " "
+                RIGHT_ARROW@3868..3870 "->"
+                WHITESPACE@3870..3871 " "
+                CONNECTION_TO@3871..3898
+                  PORT_INSTANCE_IDENTIFIER@3871..3898
+                    IDENT@3871..3879 "ComCcsds"
+                    DOT@3879..3880 "."
+                    IDENT@3880..3898 "commsBufferManager"
+              ERROR@3898..3899
+                DOT@3898..3899 "."
+              CONNECTION@3899..3906
+                CONNECTION_FROM@3899..3906
+                  PORT_INSTANCE_IDENTIFIER@3899..3906
+                    IDENT@3899..3906 "schedIn"
+                CONNECTION_TO@3906..3906
+                  PORT_INSTANCE_IDENTIFIER@3906..3906
+              EOL@3906..3913 "\n      "
+              CONNECTION@3913..3981
+                CONNECTION_FROM@3913..3949
+                  PORT_INSTANCE_IDENTIFIER@3913..3946
+                    IDENT@3913..3927 "rateGroup3Comp"
+                    DOT@3927..3928 "."
+                    IDENT@3928..3946 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@3946..3948
+                    LEFT_SQUARE@3946..3947 "["
+                    EXPR@3947..3948
+                      EXPR_LITERAL@3947..3948
+                        LITERAL_INT@3947..3948 "4"
+                  RIGHT_SQUARE@3948..3949 "]"
+                WHITESPACE@3949..3950 " "
+                RIGHT_ARROW@3950..3952 "->"
+                WHITESPACE@3952..3953 " "
+                CONNECTION_TO@3953..3981
+                  PORT_INSTANCE_IDENTIFIER@3953..3981
+                    IDENT@3953..3965 "DataProducts"
+                    DOT@3965..3966 "."
+                    IDENT@3966..3981 "dpBufferManager"
+              ERROR@3981..3982
+                DOT@3981..3982 "."
+              CONNECTION@3982..3989
+                CONNECTION_FROM@3982..3989
+                  PORT_INSTANCE_IDENTIFIER@3982..3989
+                    IDENT@3982..3989 "schedIn"
+                CONNECTION_TO@3989..3989
+                  PORT_INSTANCE_IDENTIFIER@3989..3989
+              EOL@3989..3996 "\n      "
+              CONNECTION@3996..4057
+                CONNECTION_FROM@3996..4032
+                  PORT_INSTANCE_IDENTIFIER@3996..4029
+                    IDENT@3996..4010 "rateGroup3Comp"
+                    DOT@4010..4011 "."
+                    IDENT@4011..4029 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@4029..4031
+                    LEFT_SQUARE@4029..4030 "["
+                    EXPR@4030..4031
+                      EXPR_LITERAL@4030..4031
+                        LITERAL_INT@4030..4031 "5"
+                  RIGHT_SQUARE@4031..4032 "]"
+                WHITESPACE@4032..4033 " "
+                RIGHT_ARROW@4033..4035 "->"
+                WHITESPACE@4035..4036 " "
+                CONNECTION_TO@4036..4057
+                  PORT_INSTANCE_IDENTIFIER@4036..4057
+                    IDENT@4036..4048 "DataProducts"
+                    DOT@4048..4049 "."
+                    IDENT@4049..4057 "dpWriter"
+              ERROR@4057..4058
+                DOT@4057..4058 "."
+              CONNECTION@4058..4065
+                CONNECTION_FROM@4058..4065
+                  PORT_INSTANCE_IDENTIFIER@4058..4065
+                    IDENT@4058..4065 "schedIn"
+                CONNECTION_TO@4065..4065
+                  PORT_INSTANCE_IDENTIFIER@4065..4065
+              EOL@4065..4072 "\n      "
+              CONNECTION@4072..4130
+                CONNECTION_FROM@4072..4108
+                  PORT_INSTANCE_IDENTIFIER@4072..4105
+                    IDENT@4072..4086 "rateGroup3Comp"
+                    DOT@4086..4087 "."
+                    IDENT@4087..4105 "RateGroupMemberOut"
+                  INDEX_OR_SIZE@4105..4107
+                    LEFT_SQUARE@4105..4106 "["
+                    EXPR@4106..4107
+                      EXPR_LITERAL@4106..4107
+                        LITERAL_INT@4106..4107 "6"
+                  RIGHT_SQUARE@4107..4108 "]"
+                WHITESPACE@4108..4109 " "
+                RIGHT_ARROW@4109..4111 "->"
+                WHITESPACE@4111..4112 " "
+                CONNECTION_TO@4112..4130
+                  PORT_INSTANCE_IDENTIFIER@4112..4130
+                    IDENT@4112..4124 "DataProducts"
+                    DOT@4124..4125 "."
+                    IDENT@4125..4130 "dpMgr"
+              ERROR@4130..4131
+                DOT@4130..4131 "."
+              CONNECTION@4131..4138
+                CONNECTION_FROM@4131..4138
+                  PORT_INSTANCE_IDENTIFIER@4131..4138
+                    IDENT@4131..4138 "schedIn"
+                CONNECTION_TO@4138..4138
+                  PORT_INSTANCE_IDENTIFIER@4138..4138
+              EOL@4138..4143 "\n    "
+            RIGHT_CURLY@4143..4144 "}"
+          EOL@4144..4150 "\n\n    "
+          SPEC_CONNECTION_GRAPH_DIRECT@4150..4731
+            CONNECTIONS_KW@4150..4161 "connections"
+            WHITESPACE@4161..4162 " "
+            NAME@4162..4176
+              IDENT@4162..4176 "Communications"
+            WHITESPACE@4176..4177 " "
+            LEFT_CURLY@4177..4178 "{"
+            EOL@4178..4179 "\n"
+            WHITESPACE@4179..4185 "      "
+            COMMENT@4185..4215 "# ComDriver buffer al ..."
+            EOL@4215..4216 "\n"
+            WHITESPACE@4216..4222 "      "
+            CONNECTION_MEMBER_LIST@4222..4730
+              CONNECTION@4222..4276
+                CONNECTION_FROM@4222..4240
+                  PORT_INSTANCE_IDENTIFIER@4222..4240
+                    IDENT@4222..4231 "comDriver"
+                    DOT@4231..4232 "."
+                    IDENT@4232..4240 "allocate"
+                WHITESPACE@4240..4246 "      "
+                RIGHT_ARROW@4246..4248 "->"
+                WHITESPACE@4248..4249 " "
+                CONNECTION_TO@4249..4276
+                  PORT_INSTANCE_IDENTIFIER@4249..4276
+                    IDENT@4249..4257 "ComCcsds"
+                    DOT@4257..4258 "."
+                    IDENT@4258..4276 "commsBufferManager"
+              ERROR@4276..4277
+                DOT@4276..4277 "."
+              CONNECTION@4277..4292
+                CONNECTION_FROM@4277..4292
+                  PORT_INSTANCE_IDENTIFIER@4277..4292
+                    IDENT@4277..4292 "bufferGetCallee"
+                CONNECTION_TO@4292..4292
+                  PORT_INSTANCE_IDENTIFIER@4292..4292
+              EOL@4292..4299 "\n      "
+              CONNECTION@4299..4353
+                CONNECTION_FROM@4299..4319
+                  PORT_INSTANCE_IDENTIFIER@4299..4319
+                    IDENT@4299..4308 "comDriver"
+                    DOT@4308..4309 "."
+                    IDENT@4309..4319 "deallocate"
+                WHITESPACE@4319..4323 "    "
+                RIGHT_ARROW@4323..4325 "->"
+                WHITESPACE@4325..4326 " "
+                CONNECTION_TO@4326..4353
+                  PORT_INSTANCE_IDENTIFIER@4326..4353
+                    IDENT@4326..4334 "ComCcsds"
+                    DOT@4334..4335 "."
+                    IDENT@4335..4353 "commsBufferManager"
+              ERROR@4353..4354
+                DOT@4353..4354 "."
+              CONNECTION@4354..4366
+                CONNECTION_FROM@4354..4366
+                  PORT_INSTANCE_IDENTIFIER@4354..4366
+                    IDENT@4354..4366 "bufferSendIn"
+                CONNECTION_TO@4366..4366
+                  PORT_INSTANCE_IDENTIFIER@4366..4366
+              EOL@4366..4419 "\n      \n      # ComDr ..."
+              CONNECTION@4419..4474
+                CONNECTION_FROM@4419..4434
+                  PORT_INSTANCE_IDENTIFIER@4419..4434
+                    IDENT@4419..4428 "comDriver"
+                    DOT@4428..4429 "."
+                    IDENT@4429..4434 "$recv"
+                WHITESPACE@4434..4455 "                     "
+                RIGHT_ARROW@4455..4457 "->"
+                WHITESPACE@4457..4458 " "
+                CONNECTION_TO@4458..4474
+                  PORT_INSTANCE_IDENTIFIER@4458..4474
+                    IDENT@4458..4466 "ComCcsds"
+                    DOT@4466..4467 "."
+                    IDENT@4467..4474 "comStub"
+              ERROR@4474..4475
+                DOT@4474..4475 "."
+              CONNECTION@4475..4487
+                CONNECTION_FROM@4475..4487
+                  PORT_INSTANCE_IDENTIFIER@4475..4487
+                    IDENT@4475..4487 "drvReceiveIn"
+                CONNECTION_TO@4487..4487
+                  PORT_INSTANCE_IDENTIFIER@4487..4487
+              EOL@4487..4494 "\n      "
+              CONNECTION@4494..4530
+                CONNECTION_FROM@4494..4510
+                  PORT_INSTANCE_IDENTIFIER@4494..4510
+                    IDENT@4494..4502 "ComCcsds"
+                    DOT@4502..4503 "."
+                    IDENT@4503..4510 "comStub"
+                CONNECTION_TO@4510..4530
+                  PORT_INSTANCE_IDENTIFIER@4510..4530
+                    DOT@4510..4511 "."
+                    IDENT@4511..4530 "drvReceiveReturnOut"
+              WHITESPACE@4530..4531 " "
+              ERROR@4531..4534
+                RIGHT_ARROW@4531..4533 "->"
+                WHITESPACE@4533..4534 " "
+              CONNECTION@4534..4556
+                CONNECTION_FROM@4534..4556
+                  PORT_INSTANCE_IDENTIFIER@4534..4556
+                    IDENT@4534..4543 "comDriver"
+                    DOT@4543..4544 "."
+                    IDENT@4544..4556 "recvReturnIn"
+                CONNECTION_TO@4556..4556
+                  PORT_INSTANCE_IDENTIFIER@4556..4556
+              EOL@4556..4611 "\n      \n      # ComSt ..."
+              CONNECTION@4611..4638
+                CONNECTION_FROM@4611..4627
+                  PORT_INSTANCE_IDENTIFIER@4611..4627
+                    IDENT@4611..4619 "ComCcsds"
+                    DOT@4619..4620 "."
+                    IDENT@4620..4627 "comStub"
+                CONNECTION_TO@4627..4638
+                  PORT_INSTANCE_IDENTIFIER@4627..4638
+                    DOT@4627..4628 "."
+                    IDENT@4628..4638 "drvSendOut"
+              WHITESPACE@4638..4644 "      "
+              ERROR@4644..4647
+                RIGHT_ARROW@4644..4646 "->"
+                WHITESPACE@4646..4647 " "
+              CONNECTION@4647..4662
+                CONNECTION_FROM@4647..4662
+                  PORT_INSTANCE_IDENTIFIER@4647..4662
+                    IDENT@4647..4656 "comDriver"
+                    DOT@4656..4657 "."
+                    IDENT@4657..4662 "$send"
+                CONNECTION_TO@4662..4662
+                  PORT_INSTANCE_IDENTIFIER@4662..4662
+              EOL@4662..4669 "\n      "
+              CONNECTION@4669..4712
+                CONNECTION_FROM@4669..4684
+                  PORT_INSTANCE_IDENTIFIER@4669..4684
+                    IDENT@4669..4678 "comDriver"
+                    DOT@4678..4679 "."
+                    IDENT@4679..4684 "ready"
+                WHITESPACE@4684..4693 "         "
+                RIGHT_ARROW@4693..4695 "->"
+                WHITESPACE@4695..4696 " "
+                CONNECTION_TO@4696..4712
+                  PORT_INSTANCE_IDENTIFIER@4696..4712
+                    IDENT@4696..4704 "ComCcsds"
+                    DOT@4704..4705 "."
+                    IDENT@4705..4712 "comStub"
+              ERROR@4712..4713
+                DOT@4712..4713 "."
+              CONNECTION@4713..4725
+                CONNECTION_FROM@4713..4725
+                  PORT_INSTANCE_IDENTIFIER@4713..4725
+                    IDENT@4713..4725 "drvConnected"
+                CONNECTION_TO@4725..4725
+                  PORT_INSTANCE_IDENTIFIER@4725..4725
+              EOL@4725..4730 "\n    "
+            RIGHT_CURLY@4730..4731 "}"
+          EOL@4731..4737 "\n\n    "
+          SPEC_CONNECTION_GRAPH_DIRECT@4737..5709
+            CONNECTIONS_KW@4737..4748 "connections"
+            WHITESPACE@4748..4749 " "
+            NAME@4749..4752
+              IDENT@4749..4752 "Ref"
+            WHITESPACE@4752..4753 " "
+            LEFT_CURLY@4753..4754 "{"
+            EOL@4754..4755 "\n"
+            WHITESPACE@4755..4761 "      "
+            CONNECTION_MEMBER_LIST@4761..5708
+              CONNECTION@4761..4799
+                CONNECTION_FROM@4761..4778
+                  PORT_INSTANCE_IDENTIFIER@4761..4778
+                    IDENT@4761..4773 "sendBuffComp"
+                    DOT@4773..4774 "."
+                    IDENT@4774..4778 "Data"
+                WHITESPACE@4778..4779 " "
+                RIGHT_ARROW@4779..4781 "->"
+                WHITESPACE@4781..4782 " "
+                CONNECTION_TO@4782..4799
+                  PORT_INSTANCE_IDENTIFIER@4782..4799
+                    IDENT@4782..4790 "blockDrv"
+                    DOT@4790..4791 "."
+                    IDENT@4791..4799 "BufferIn"
+              EOL@4799..4806 "\n      "
+              CONNECTION@4806..4845
+                CONNECTION_FROM@4806..4824
+                  PORT_INSTANCE_IDENTIFIER@4806..4824
+                    IDENT@4806..4814 "blockDrv"
+                    DOT@4814..4815 "."
+                    IDENT@4815..4824 "BufferOut"
+                WHITESPACE@4824..4825 " "
+                RIGHT_ARROW@4825..4827 "->"
+                WHITESPACE@4827..4828 " "
+                CONNECTION_TO@4828..4845
+                  PORT_INSTANCE_IDENTIFIER@4828..4845
+                    IDENT@4828..4840 "recvBuffComp"
+                    DOT@4840..4841 "."
+                    IDENT@4841..4845 "Data"
+              EOL@4845..5062 "\n\n      ### Moved thi ..."
+              CONNECTION@5062..5101
+                CONNECTION_FROM@5062..5079
+                  PORT_INSTANCE_IDENTIFIER@5062..5079
+                    IDENT@5062..5065 "SG1"
+                    DOT@5065..5066 "."
+                    IDENT@5066..5079 "productGetOut"
+                WHITESPACE@5079..5080 " "
+                RIGHT_ARROW@5080..5082 "->"
+                WHITESPACE@5082..5083 " "
+                CONNECTION_TO@5083..5101
+                  PORT_INSTANCE_IDENTIFIER@5083..5101
+                    IDENT@5083..5095 "DataProducts"
+                    DOT@5095..5096 "."
+                    IDENT@5096..5101 "dpMgr"
+              ERROR@5101..5102
+                DOT@5101..5102 "."
+              CONNECTION@5102..5114
+                CONNECTION_FROM@5102..5114
+                  PORT_INSTANCE_IDENTIFIER@5102..5114
+                    IDENT@5102..5114 "productGetIn"
+                CONNECTION_TO@5114..5114
+                  PORT_INSTANCE_IDENTIFIER@5114..5114
+              EOL@5114..5150 "\n      # Asynchronous ..."
+              CONNECTION@5150..5193
+                CONNECTION_FROM@5150..5171
+                  PORT_INSTANCE_IDENTIFIER@5150..5171
+                    IDENT@5150..5153 "SG1"
+                    DOT@5153..5154 "."
+                    IDENT@5154..5171 "productRequestOut"
+                WHITESPACE@5171..5172 " "
+                RIGHT_ARROW@5172..5174 "->"
+                WHITESPACE@5174..5175 " "
+                CONNECTION_TO@5175..5193
+                  PORT_INSTANCE_IDENTIFIER@5175..5193
+                    IDENT@5175..5187 "DataProducts"
+                    DOT@5187..5188 "."
+                    IDENT@5188..5193 "dpMgr"
+              ERROR@5193..5194
+                DOT@5193..5194 "."
+              CONNECTION@5194..5210
+                CONNECTION_FROM@5194..5210
+                  PORT_INSTANCE_IDENTIFIER@5194..5210
+                    IDENT@5194..5210 "productRequestIn"
+                CONNECTION_TO@5210..5210
+                  PORT_INSTANCE_IDENTIFIER@5210..5210
+              EOL@5210..5217 "\n      "
+              CONNECTION@5217..5254
+                CONNECTION_FROM@5217..5235
+                  PORT_INSTANCE_IDENTIFIER@5217..5235
+                    IDENT@5217..5229 "DataProducts"
+                    DOT@5229..5230 "."
+                    IDENT@5230..5235 "dpMgr"
+                CONNECTION_TO@5235..5254
+                  PORT_INSTANCE_IDENTIFIER@5235..5254
+                    DOT@5235..5236 "."
+                    IDENT@5236..5254 "productResponseOut"
+              WHITESPACE@5254..5255 " "
+              ERROR@5255..5258
+                RIGHT_ARROW@5255..5257 "->"
+                WHITESPACE@5257..5258 " "
+              CONNECTION@5258..5275
+                CONNECTION_FROM@5258..5275
+                  PORT_INSTANCE_IDENTIFIER@5258..5275
+                    IDENT@5258..5261 "SG1"
+                    DOT@5261..5262 "."
+                    IDENT@5262..5275 "productRecvIn"
+                CONNECTION_TO@5275..5275
+                  PORT_INSTANCE_IDENTIFIER@5275..5275
+              EOL@5275..5305 "\n      # Send filled  ..."
+              CONNECTION@5305..5345
+                CONNECTION_FROM@5305..5323
+                  PORT_INSTANCE_IDENTIFIER@5305..5323
+                    IDENT@5305..5308 "SG1"
+                    DOT@5308..5309 "."
+                    IDENT@5309..5323 "productSendOut"
+                WHITESPACE@5323..5324 " "
+                RIGHT_ARROW@5324..5326 "->"
+                WHITESPACE@5326..5327 " "
+                CONNECTION_TO@5327..5345
+                  PORT_INSTANCE_IDENTIFIER@5327..5345
+                    IDENT@5327..5339 "DataProducts"
+                    DOT@5339..5340 "."
+                    IDENT@5340..5345 "dpMgr"
+              ERROR@5345..5346
+                DOT@5345..5346 "."
+              CONNECTION@5346..5359
+                CONNECTION_FROM@5346..5359
+                  PORT_INSTANCE_IDENTIFIER@5346..5359
+                    IDENT@5346..5359 "productSendIn"
+                CONNECTION_TO@5359..5359
+                  PORT_INSTANCE_IDENTIFIER@5359..5359
+              EOL@5359..5394 "\n      # Synchronous  ..."
+              CONNECTION@5394..5436
+                CONNECTION_FROM@5394..5414
+                  PORT_INSTANCE_IDENTIFIER@5394..5414
+                    IDENT@5394..5400 "dpDemo"
+                    DOT@5400..5401 "."
+                    IDENT@5401..5414 "productGetOut"
+                WHITESPACE@5414..5415 " "
+                RIGHT_ARROW@5415..5417 "->"
+                WHITESPACE@5417..5418 " "
+                CONNECTION_TO@5418..5436
+                  PORT_INSTANCE_IDENTIFIER@5418..5436
+                    IDENT@5418..5430 "DataProducts"
+                    DOT@5430..5431 "."
+                    IDENT@5431..5436 "dpMgr"
+              ERROR@5436..5437
+                DOT@5436..5437 "."
+              CONNECTION@5437..5449
+                CONNECTION_FROM@5437..5449
+                  PORT_INSTANCE_IDENTIFIER@5437..5449
+                    IDENT@5437..5449 "productGetIn"
+                CONNECTION_TO@5449..5449
+                  PORT_INSTANCE_IDENTIFIER@5449..5449
+              EOL@5449..5479 "\n      # Send filled  ..."
+              CONNECTION@5479..5522
+                CONNECTION_FROM@5479..5500
+                  PORT_INSTANCE_IDENTIFIER@5479..5500
+                    IDENT@5479..5485 "dpDemo"
+                    DOT@5485..5486 "."
+                    IDENT@5486..5500 "productSendOut"
+                WHITESPACE@5500..5501 " "
+                RIGHT_ARROW@5501..5503 "->"
+                WHITESPACE@5503..5504 " "
+                CONNECTION_TO@5504..5522
+                  PORT_INSTANCE_IDENTIFIER@5504..5522
+                    IDENT@5504..5516 "DataProducts"
+                    DOT@5516..5517 "."
+                    IDENT@5517..5522 "dpMgr"
+              ERROR@5522..5523
+                DOT@5522..5523 "."
+              CONNECTION@5523..5536
+                CONNECTION_FROM@5523..5536
+                  PORT_INSTANCE_IDENTIFIER@5523..5536
+                    IDENT@5523..5536 "productSendIn"
+                CONNECTION_TO@5536..5536
+                  PORT_INSTANCE_IDENTIFIER@5536..5536
+              EOL@5536..5572 "\n      # Asynchronous ..."
+              CONNECTION@5572..5618
+                CONNECTION_FROM@5572..5596
+                  PORT_INSTANCE_IDENTIFIER@5572..5596
+                    IDENT@5572..5578 "dpDemo"
+                    DOT@5578..5579 "."
+                    IDENT@5579..5596 "productRequestOut"
+                WHITESPACE@5596..5597 " "
+                RIGHT_ARROW@5597..5599 "->"
+                WHITESPACE@5599..5600 " "
+                CONNECTION_TO@5600..5618
+                  PORT_INSTANCE_IDENTIFIER@5600..5618
+                    IDENT@5600..5612 "DataProducts"
+                    DOT@5612..5613 "."
+                    IDENT@5613..5618 "dpMgr"
+              ERROR@5618..5619
+                DOT@5618..5619 "."
+              CONNECTION@5619..5635
+                CONNECTION_FROM@5619..5635
+                  PORT_INSTANCE_IDENTIFIER@5619..5635
+                    IDENT@5619..5635 "productRequestIn"
+                CONNECTION_TO@5635..5635
+                  PORT_INSTANCE_IDENTIFIER@5635..5635
+              EOL@5635..5642 "\n      "
+              CONNECTION@5642..5679
+                CONNECTION_FROM@5642..5660
+                  PORT_INSTANCE_IDENTIFIER@5642..5660
+                    IDENT@5642..5654 "DataProducts"
+                    DOT@5654..5655 "."
+                    IDENT@5655..5660 "dpMgr"
+                CONNECTION_TO@5660..5679
+                  PORT_INSTANCE_IDENTIFIER@5660..5679
+                    DOT@5660..5661 "."
+                    IDENT@5661..5679 "productResponseOut"
+              WHITESPACE@5679..5680 " "
+              ERROR@5680..5683
+                RIGHT_ARROW@5680..5682 "->"
+                WHITESPACE@5682..5683 " "
+              CONNECTION@5683..5703
+                CONNECTION_FROM@5683..5703
+                  PORT_INSTANCE_IDENTIFIER@5683..5703
+                    IDENT@5683..5689 "dpDemo"
+                    DOT@5689..5690 "."
+                    IDENT@5690..5703 "productRecvIn"
+                CONNECTION_TO@5703..5703
+                  PORT_INSTANCE_IDENTIFIER@5703..5703
+              EOL@5703..5708 "\n    "
+            RIGHT_CURLY@5708..5709 "}"
+          EOL@5709..5715 "\n\n    "
+          SPEC_CONNECTION_GRAPH_DIRECT@5715..6364
+            CONNECTIONS_KW@5715..5726 "connections"
+            WHITESPACE@5726..5727 " "
+            NAME@5727..5743
+              IDENT@5727..5743 "ComCcsds_CdhCore"
+            LEFT_CURLY@5743..5744 "{"
+            EOL@5744..5745 "\n"
+            WHITESPACE@5745..5751 "      "
+            COMMENT@5751..5785 "# events and telemetr ..."
+            EOL@5785..5786 "\n"
+            WHITESPACE@5786..5792 "      "
+            CONNECTION_MEMBER_LIST@5792..6363
+              CONNECTION@5792..5814
+                CONNECTION_FROM@5792..5806
+                  PORT_INSTANCE_IDENTIFIER@5792..5806
+                    IDENT@5792..5799 "CdhCore"
+                    DOT@5799..5800 "."
+                    IDENT@5800..5806 "events"
+                CONNECTION_TO@5806..5814
+                  PORT_INSTANCE_IDENTIFIER@5806..5814
+                    DOT@5806..5807 "."
+                    IDENT@5807..5814 "PktSend"
+              WHITESPACE@5814..5822 "        "
+              ERROR@5822..5825
+                RIGHT_ARROW@5822..5824 "->"
+                WHITESPACE@5824..5825 " "
+              CONNECTION@5825..5897
+                CONNECTION_FROM@5825..5842
+                  PORT_INSTANCE_IDENTIFIER@5825..5842
+                    IDENT@5825..5833 "ComCcsds"
+                    DOT@5833..5834 "."
+                    IDENT@5834..5842 "comQueue"
+                CONNECTION_TO@5842..5897
+                  PORT_INSTANCE_IDENTIFIER@5842..5859
+                    DOT@5842..5843 "."
+                    IDENT@5843..5859 "comPacketQueueIn"
+                  INDEX_OR_SIZE@5859..5896
+                    LEFT_SQUARE@5859..5860 "["
+                    EXPR@5860..5896
+                      EXPR_MEMBER@5860..5896
+                        EXPR_MEMBER@5860..5889
+                          EXPR_IDENT@5860..5868
+                            IDENT@5860..5868 "ComCcsds"
+                          DOT@5868..5869 "."
+                          IDENT@5869..5889 "Ports_ComPacketQueue"
+                        DOT@5889..5890 "."
+                        IDENT@5890..5896 "EVENTS"
+                  RIGHT_SQUARE@5896..5897 "]"
+              EOL@5897..5904 "\n      "
+              CONNECTION@5904..5927
+                CONNECTION_FROM@5904..5919
+                  PORT_INSTANCE_IDENTIFIER@5904..5919
+                    IDENT@5904..5911 "CdhCore"
+                    DOT@5911..5912 "."
+                    IDENT@5912..5919 "tlmSend"
+                CONNECTION_TO@5919..5927
+                  PORT_INSTANCE_IDENTIFIER@5919..5927
+                    DOT@5919..5920 "."
+                    IDENT@5920..5927 "PktSend"
+              WHITESPACE@5927..5939 "            "
+              ERROR@5939..5942
+                RIGHT_ARROW@5939..5941 "->"
+                WHITESPACE@5941..5942 " "
+              CONNECTION@5942..6017
+                CONNECTION_FROM@5942..5959
+                  PORT_INSTANCE_IDENTIFIER@5942..5959
+                    IDENT@5942..5950 "ComCcsds"
+                    DOT@5950..5951 "."
+                    IDENT@5951..5959 "comQueue"
+                CONNECTION_TO@5959..6017
+                  PORT_INSTANCE_IDENTIFIER@5959..5976
+                    DOT@5959..5960 "."
+                    IDENT@5960..5976 "comPacketQueueIn"
+                  INDEX_OR_SIZE@5976..6016
+                    LEFT_SQUARE@5976..5977 "["
+                    EXPR@5977..6016
+                      EXPR_MEMBER@5977..6016
+                        EXPR_MEMBER@5977..6006
+                          EXPR_IDENT@5977..5985
+                            IDENT@5977..5985 "ComCcsds"
+                          DOT@5985..5986 "."
+                          IDENT@5986..6006 "Ports_ComPacketQueue"
+                        DOT@6006..6007 "."
+                        IDENT@6007..6016 "TELEMETRY"
+                  RIGHT_SQUARE@6016..6017 "]"
+              EOL@6017..6058 "\n\n      # Router <->  ..."
+              CONNECTION@6058..6090
+                CONNECTION_FROM@6058..6079
+                  PORT_INSTANCE_IDENTIFIER@6058..6079
+                    IDENT@6058..6066 "ComCcsds"
+                    DOT@6066..6067 "."
+                    IDENT@6067..6079 "fprimeRouter"
+                CONNECTION_TO@6079..6090
+                  PORT_INSTANCE_IDENTIFIER@6079..6090
+                    DOT@6079..6080 "."
+                    IDENT@6080..6090 "commandOut"
+              WHITESPACE@6090..6092 "  "
+              ERROR@6092..6095
+                RIGHT_ARROW@6092..6094 "->"
+                WHITESPACE@6094..6095 " "
+              CONNECTION@6095..6121
+                CONNECTION_FROM@6095..6110
+                  PORT_INSTANCE_IDENTIFIER@6095..6110
+                    IDENT@6095..6102 "CdhCore"
+                    DOT@6102..6103 "."
+                    IDENT@6103..6110 "cmdDisp"
+                CONNECTION_TO@6110..6121
+                  PORT_INSTANCE_IDENTIFIER@6110..6121
+                    DOT@6110..6111 "."
+                    IDENT@6111..6121 "seqCmdBuff"
+              EOL@6121..6128 "\n      "
+              CONNECTION@6128..6156
+                CONNECTION_FROM@6128..6143
+                  PORT_INSTANCE_IDENTIFIER@6128..6143
+                    IDENT@6128..6135 "CdhCore"
+                    DOT@6135..6136 "."
+                    IDENT@6136..6143 "cmdDisp"
+                CONNECTION_TO@6143..6156
+                  PORT_INSTANCE_IDENTIFIER@6143..6156
+                    DOT@6143..6144 "."
+                    IDENT@6144..6156 "seqCmdStatus"
+              WHITESPACE@6156..6161 "     "
+              ERROR@6161..6164
+                RIGHT_ARROW@6161..6163 "->"
+                WHITESPACE@6163..6164 " "
+              CONNECTION@6164..6199
+                CONNECTION_FROM@6164..6185
+                  PORT_INSTANCE_IDENTIFIER@6164..6185
+                    IDENT@6164..6172 "ComCcsds"
+                    DOT@6172..6173 "."
+                    IDENT@6173..6185 "fprimeRouter"
+                CONNECTION_TO@6185..6199
+                  PORT_INSTANCE_IDENTIFIER@6185..6199
+                    DOT@6185..6186 "."
+                    IDENT@6186..6199 "cmdResponseIn"
+              EOL@6199..6206 "\n      "
+              CONNECTION@6206..6238
+                CONNECTION_FROM@6206..6219
+                  PORT_INSTANCE_IDENTIFIER@6206..6219
+                    IDENT@6206..6212 "cmdSeq"
+                    DOT@6212..6213 "."
+                    IDENT@6213..6219 "cmdOut"
+                WHITESPACE@6219..6220 " "
+                RIGHT_ARROW@6220..6222 "->"
+                WHITESPACE@6222..6223 " "
+                CONNECTION_TO@6223..6238
+                  PORT_INSTANCE_IDENTIFIER@6223..6238
+                    IDENT@6223..6230 "CdhCore"
+                    DOT@6230..6231 "."
+                    IDENT@6231..6238 "cmdDisp"
+              ERROR@6238..6239
+                DOT@6238..6239 "."
+              CONNECTION@6239..6249
+                CONNECTION_FROM@6239..6249
+                  PORT_INSTANCE_IDENTIFIER@6239..6249
+                    IDENT@6239..6249 "seqCmdBuff"
+                CONNECTION_TO@6249..6249
+                  PORT_INSTANCE_IDENTIFIER@6249..6249
+              EOL@6249..6256 "\n      "
+              CONNECTION@6256..6284
+                CONNECTION_FROM@6256..6271
+                  PORT_INSTANCE_IDENTIFIER@6256..6271
+                    IDENT@6256..6263 "CdhCore"
+                    DOT@6263..6264 "."
+                    IDENT@6264..6271 "cmdDisp"
+                CONNECTION_TO@6271..6284
+                  PORT_INSTANCE_IDENTIFIER@6271..6284
+                    DOT@6271..6272 "."
+                    IDENT@6272..6284 "seqCmdStatus"
+              WHITESPACE@6284..6285 " "
+              ERROR@6285..6288
+                RIGHT_ARROW@6285..6287 "->"
+                WHITESPACE@6287..6288 " "
+              CONNECTION@6288..6308
+                CONNECTION_FROM@6288..6308
+                  PORT_INSTANCE_IDENTIFIER@6288..6308
+                    IDENT@6288..6294 "cmdSeq"
+                    DOT@6294..6295 "."
+                    IDENT@6295..6308 "cmdResponseIn"
+                CONNECTION_TO@6308..6308
+                  PORT_INSTANCE_IDENTIFIER@6308..6308
+              EOL@6308..6315 "\n      "
+              CONNECTION@6315..6351
+                CONNECTION_FROM@6315..6332
+                  PORT_INSTANCE_IDENTIFIER@6315..6332
+                    IDENT@6315..6321 "cmdSeq"
+                    DOT@6321..6322 "."
+                    IDENT@6322..6332 "getTlmChan"
+                WHITESPACE@6332..6333 " "
+                RIGHT_ARROW@6333..6335 "->"
+                WHITESPACE@6335..6336 " "
+                CONNECTION_TO@6336..6351
+                  PORT_INSTANCE_IDENTIFIER@6336..6351
+                    IDENT@6336..6343 "CdhCore"
+                    DOT@6343..6344 "."
+                    IDENT@6344..6351 "tlmSend"
+              ERROR@6351..6352
+                DOT@6351..6352 "."
+              CONNECTION@6352..6358
+                CONNECTION_FROM@6352..6358
+                  PORT_INSTANCE_IDENTIFIER@6352..6358
+                    IDENT@6352..6358 "TlmGet"
+                CONNECTION_TO@6358..6358
+                  PORT_INSTANCE_IDENTIFIER@6358..6358
+              EOL@6358..6363 "\n    "
+            RIGHT_CURLY@6363..6364 "}"
+          EOL@6364..6370 "\n\n    "
+          SPEC_CONNECTION_GRAPH_DIRECT@6370..6886
+            CONNECTIONS_KW@6370..6381 "connections"
+            WHITESPACE@6381..6382 " "
+            NAME@6382..6403
+              IDENT@6382..6403 "ComCcsds_FileHandling"
+            WHITESPACE@6403..6404 " "
+            LEFT_CURLY@6404..6405 "{"
+            EOL@6405..6406 "\n"
+            WHITESPACE@6406..6412 "      "
+            COMMENT@6412..6440 "# File Downlink <-> C ..."
+            EOL@6440..6441 "\n"
+            WHITESPACE@6441..6447 "      "
+            CONNECTION_MEMBER_LIST@6447..6885
+              CONNECTION@6447..6486
+                CONNECTION_FROM@6447..6472
+                  PORT_INSTANCE_IDENTIFIER@6447..6472
+                    IDENT@6447..6459 "FileHandling"
+                    DOT@6459..6460 "."
+                    IDENT@6460..6472 "fileDownlink"
+                CONNECTION_TO@6472..6486
+                  PORT_INSTANCE_IDENTIFIER@6472..6486
+                    DOT@6472..6473 "."
+                    IDENT@6473..6486 "bufferSendOut"
+              WHITESPACE@6486..6487 " "
+              ERROR@6487..6490
+                RIGHT_ARROW@6487..6489 "->"
+                WHITESPACE@6489..6490 " "
+              CONNECTION@6490..6557
+                CONNECTION_FROM@6490..6507
+                  PORT_INSTANCE_IDENTIFIER@6490..6507
+                    IDENT@6490..6498 "ComCcsds"
+                    DOT@6498..6499 "."
+                    IDENT@6499..6507 "comQueue"
+                CONNECTION_TO@6507..6557
+                  PORT_INSTANCE_IDENTIFIER@6507..6521
+                    DOT@6507..6508 "."
+                    IDENT@6508..6521 "bufferQueueIn"
+                  INDEX_OR_SIZE@6521..6556
+                    LEFT_SQUARE@6521..6522 "["
+                    EXPR@6522..6556
+                      EXPR_MEMBER@6522..6556
+                        EXPR_MEMBER@6522..6551
+                          EXPR_IDENT@6522..6530
+                            IDENT@6522..6530 "ComCcsds"
+                          DOT@6530..6531 "."
+                          IDENT@6531..6551 "Ports_ComBufferQueue"
+                        DOT@6551..6552 "."
+                        IDENT@6552..6556 "FILE"
+                  RIGHT_SQUARE@6556..6557 "]"
+              EOL@6557..6564 "\n      "
+              CONNECTION@6564..6633
+                CONNECTION_FROM@6564..6581
+                  PORT_INSTANCE_IDENTIFIER@6564..6581
+                    IDENT@6564..6572 "ComCcsds"
+                    DOT@6572..6573 "."
+                    IDENT@6573..6581 "comQueue"
+                CONNECTION_TO@6581..6633
+                  PORT_INSTANCE_IDENTIFIER@6581..6597
+                    DOT@6581..6582 "."
+                    IDENT@6582..6597 "bufferReturnOut"
+                  INDEX_OR_SIZE@6597..6632
+                    LEFT_SQUARE@6597..6598 "["
+                    EXPR@6598..6632
+                      EXPR_MEMBER@6598..6632
+                        EXPR_MEMBER@6598..6627
+                          EXPR_IDENT@6598..6606
+                            IDENT@6598..6606 "ComCcsds"
+                          DOT@6606..6607 "."
+                          IDENT@6607..6627 "Ports_ComBufferQueue"
+                        DOT@6627..6628 "."
+                        IDENT@6628..6632 "FILE"
+                  RIGHT_SQUARE@6632..6633 "]"
+              WHITESPACE@6633..6634 " "
+              ERROR@6634..6637
+                RIGHT_ARROW@6634..6636 "->"
+                WHITESPACE@6636..6637 " "
+              CONNECTION@6637..6675
+                CONNECTION_FROM@6637..6662
+                  PORT_INSTANCE_IDENTIFIER@6637..6662
+                    IDENT@6637..6649 "FileHandling"
+                    DOT@6649..6650 "."
+                    IDENT@6650..6662 "fileDownlink"
+                CONNECTION_TO@6662..6675
+                  PORT_INSTANCE_IDENTIFIER@6662..6675
+                    DOT@6662..6663 "."
+                    IDENT@6663..6675 "bufferReturn"
+              EOL@6675..6719 "\n      \n      # Route ..."
+              CONNECTION@6719..6748
+                CONNECTION_FROM@6719..6740
+                  PORT_INSTANCE_IDENTIFIER@6719..6740
+                    IDENT@6719..6727 "ComCcsds"
+                    DOT@6727..6728 "."
+                    IDENT@6728..6740 "fprimeRouter"
+                CONNECTION_TO@6740..6748
+                  PORT_INSTANCE_IDENTIFIER@6740..6748
+                    DOT@6740..6741 "."
+                    IDENT@6741..6748 "fileOut"
+              WHITESPACE@6748..6753 "     "
+              ERROR@6753..6756
+                RIGHT_ARROW@6753..6755 "->"
+                WHITESPACE@6755..6756 " "
+              CONNECTION@6756..6792
+                CONNECTION_FROM@6756..6779
+                  PORT_INSTANCE_IDENTIFIER@6756..6779
+                    IDENT@6756..6768 "FileHandling"
+                    DOT@6768..6769 "."
+                    IDENT@6769..6779 "fileUplink"
+                CONNECTION_TO@6779..6792
+                  PORT_INSTANCE_IDENTIFIER@6779..6792
+                    DOT@6779..6780 "."
+                    IDENT@6780..6792 "bufferSendIn"
+              EOL@6792..6799 "\n      "
+              CONNECTION@6799..6836
+                CONNECTION_FROM@6799..6822
+                  PORT_INSTANCE_IDENTIFIER@6799..6822
+                    IDENT@6799..6811 "FileHandling"
+                    DOT@6811..6812 "."
+                    IDENT@6812..6822 "fileUplink"
+                CONNECTION_TO@6822..6836
+                  PORT_INSTANCE_IDENTIFIER@6822..6836
+                    DOT@6822..6823 "."
+                    IDENT@6823..6836 "bufferSendOut"
+              WHITESPACE@6836..6837 " "
+              ERROR@6837..6840
+                RIGHT_ARROW@6837..6839 "->"
+                WHITESPACE@6839..6840 " "
+              CONNECTION@6840..6880
+                CONNECTION_FROM@6840..6861
+                  PORT_INSTANCE_IDENTIFIER@6840..6861
+                    IDENT@6840..6848 "ComCcsds"
+                    DOT@6848..6849 "."
+                    IDENT@6849..6861 "fprimeRouter"
+                CONNECTION_TO@6861..6880
+                  PORT_INSTANCE_IDENTIFIER@6861..6880
+                    DOT@6861..6862 "."
+                    IDENT@6862..6880 "fileBufferReturnIn"
+              EOL@6880..6885 "\n    "
+            RIGHT_CURLY@6885..6886 "}"
+          EOL@6886..6892 "\n\n    "
+          SPEC_CONNECTION_GRAPH_DIRECT@6892..7117
+            CONNECTIONS_KW@6892..6903 "connections"
+            WHITESPACE@6903..6904 " "
+            NAME@6904..6929
+              IDENT@6904..6929 "FileHandling_DataProd ..."
+            LEFT_CURLY@6929..6930 "{"
+            EOL@6930..6931 "\n"
+            WHITESPACE@6931..6937 "      "
+            COMMENT@6937..6952 "# Data Products"
+            EOL@6952..6953 "\n"
+            WHITESPACE@6953..6959 "      "
+            CONNECTION_MEMBER_LIST@6959..7116
+              CONNECTION@6959..6985
+                CONNECTION_FROM@6959..6977
+                  PORT_INSTANCE_IDENTIFIER@6959..6977
+                    IDENT@6959..6971 "DataProducts"
+                    DOT@6971..6972 "."
+                    IDENT@6972..6977 "dpCat"
+                CONNECTION_TO@6977..6985
+                  PORT_INSTANCE_IDENTIFIER@6977..6985
+                    DOT@6977..6978 "."
+                    IDENT@6978..6985 "fileOut"
+              WHITESPACE@6985..6998 "             "
+              ERROR@6998..7001
+                RIGHT_ARROW@6998..7000 "->"
+                WHITESPACE@7000..7001 " "
+              CONNECTION@7001..7035
+                CONNECTION_FROM@7001..7026
+                  PORT_INSTANCE_IDENTIFIER@7001..7026
+                    IDENT@7001..7013 "FileHandling"
+                    DOT@7013..7014 "."
+                    IDENT@7014..7026 "fileDownlink"
+                CONNECTION_TO@7026..7035
+                  PORT_INSTANCE_IDENTIFIER@7026..7035
+                    DOT@7026..7027 "."
+                    IDENT@7027..7035 "SendFile"
+              EOL@7035..7042 "\n      "
+              CONNECTION@7042..7080
+                CONNECTION_FROM@7042..7067
+                  PORT_INSTANCE_IDENTIFIER@7042..7067
+                    IDENT@7042..7054 "FileHandling"
+                    DOT@7054..7055 "."
+                    IDENT@7055..7067 "fileDownlink"
+                CONNECTION_TO@7067..7080
+                  PORT_INSTANCE_IDENTIFIER@7067..7080
+                    DOT@7067..7068 "."
+                    IDENT@7068..7080 "FileComplete"
+              WHITESPACE@7080..7081 " "
+              ERROR@7081..7084
+                RIGHT_ARROW@7081..7083 "->"
+                WHITESPACE@7083..7084 " "
+              CONNECTION@7084..7111
+                CONNECTION_FROM@7084..7102
+                  PORT_INSTANCE_IDENTIFIER@7084..7102
+                    IDENT@7084..7096 "DataProducts"
+                    DOT@7096..7097 "."
+                    IDENT@7097..7102 "dpCat"
+                CONNECTION_TO@7102..7111
+                  PORT_INSTANCE_IDENTIFIER@7102..7111
+                    DOT@7102..7103 "."
+                    IDENT@7103..7111 "fileDone"
+              EOL@7111..7116 "\n    "
+            RIGHT_CURLY@7116..7117 "}"
+          EOL@7117..7121 "\n\n  "
+        RIGHT_CURLY@7121..7122 "}"
+      EOL@7122..7124 "\n\n"
+    RIGHT_CURLY@7124..7125 "}"
+  EOL@7125..7126 "\n"
+error 2608..2608: expected `COMMA`
+error 2612..2612: expected RIGHT_ARROW
+error 2612..2612: expected IDENT
+error 2684..2684: expected `COMMA`
+error 2688..2688: expected RIGHT_ARROW
+error 2688..2688: expected IDENT
+error 2818..2818: expected `COMMA`
+error 2822..2822: expected RIGHT_ARROW
+error 2822..2822: expected IDENT
+error 2884..2884: expected `COMMA`
+error 2888..2888: expected RIGHT_ARROW
+error 2888..2888: expected IDENT
+error 2954..2954: expected `COMMA`
+error 2962..2962: expected RIGHT_ARROW
+error 2962..2962: expected IDENT
+error 3519..3519: expected `COMMA`
+error 3527..3527: expected RIGHT_ARROW
+error 3527..3527: expected IDENT
+error 3701..3701: expected `COMMA`
+error 3705..3705: expected RIGHT_ARROW
+error 3705..3705: expected IDENT
+error 3898..3898: expected `COMMA`
+error 3906..3906: expected RIGHT_ARROW
+error 3906..3906: expected IDENT
+error 3981..3981: expected `COMMA`
+error 3989..3989: expected RIGHT_ARROW
+error 3989..3989: expected IDENT
+error 4057..4057: expected `COMMA`
+error 4065..4065: expected RIGHT_ARROW
+error 4065..4065: expected IDENT
+error 4130..4130: expected `COMMA`
+error 4138..4138: expected RIGHT_ARROW
+error 4138..4138: expected IDENT
+error 4276..4276: expected `COMMA`
+error 4292..4292: expected RIGHT_ARROW
+error 4292..4292: expected IDENT
+error 4353..4353: expected `COMMA`
+error 4366..4366: expected RIGHT_ARROW
+error 4366..4366: expected IDENT
+error 4474..4474: expected `COMMA`
+error 4487..4487: expected RIGHT_ARROW
+error 4487..4487: expected IDENT
+error 4510..4510: expected RIGHT_ARROW
+error 4510..4510: expected IDENT
+error 4531..4531: expected `COMMA`
+error 4556..4556: expected RIGHT_ARROW
+error 4556..4556: expected IDENT
+error 4627..4627: expected RIGHT_ARROW
+error 4627..4627: expected IDENT
+error 4644..4644: expected `COMMA`
+error 4662..4662: expected RIGHT_ARROW
+error 4662..4662: expected IDENT
+error 4712..4712: expected `COMMA`
+error 4725..4725: expected RIGHT_ARROW
+error 4725..4725: expected IDENT
+error 5101..5101: expected `COMMA`
+error 5114..5114: expected RIGHT_ARROW
+error 5114..5114: expected IDENT
+error 5193..5193: expected `COMMA`
+error 5210..5210: expected RIGHT_ARROW
+error 5210..5210: expected IDENT
+error 5235..5235: expected RIGHT_ARROW
+error 5235..5235: expected IDENT
+error 5255..5255: expected `COMMA`
+error 5275..5275: expected RIGHT_ARROW
+error 5275..5275: expected IDENT
+error 5345..5345: expected `COMMA`
+error 5359..5359: expected RIGHT_ARROW
+error 5359..5359: expected IDENT
+error 5436..5436: expected `COMMA`
+error 5449..5449: expected RIGHT_ARROW
+error 5449..5449: expected IDENT
+error 5522..5522: expected `COMMA`
+error 5536..5536: expected RIGHT_ARROW
+error 5536..5536: expected IDENT
+error 5618..5618: expected `COMMA`
+error 5635..5635: expected RIGHT_ARROW
+error 5635..5635: expected IDENT
+error 5660..5660: expected RIGHT_ARROW
+error 5660..5660: expected IDENT
+error 5680..5680: expected `COMMA`
+error 5703..5703: expected RIGHT_ARROW
+error 5703..5703: expected IDENT
+error 5806..5806: expected RIGHT_ARROW
+error 5806..5806: expected IDENT
+error 5822..5822: expected `COMMA`
+error 5842..5842: expected RIGHT_ARROW
+error 5842..5842: expected IDENT
+error 5919..5919: expected RIGHT_ARROW
+error 5919..5919: expected IDENT
+error 5939..5939: expected `COMMA`
+error 5959..5959: expected RIGHT_ARROW
+error 5959..5959: expected IDENT
+error 6079..6079: expected RIGHT_ARROW
+error 6079..6079: expected IDENT
+error 6092..6092: expected `COMMA`
+error 6110..6110: expected RIGHT_ARROW
+error 6110..6110: expected IDENT
+error 6143..6143: expected RIGHT_ARROW
+error 6143..6143: expected IDENT
+error 6161..6161: expected `COMMA`
+error 6185..6185: expected RIGHT_ARROW
+error 6185..6185: expected IDENT
+error 6238..6238: expected `COMMA`
+error 6249..6249: expected RIGHT_ARROW
+error 6249..6249: expected IDENT
+error 6271..6271: expected RIGHT_ARROW
+error 6271..6271: expected IDENT
+error 6285..6285: expected `COMMA`
+error 6308..6308: expected RIGHT_ARROW
+error 6308..6308: expected IDENT
+error 6351..6351: expected `COMMA`
+error 6358..6358: expected RIGHT_ARROW
+error 6358..6358: expected IDENT
+error 6472..6472: expected RIGHT_ARROW
+error 6472..6472: expected IDENT
+error 6487..6487: expected `COMMA`
+error 6507..6507: expected RIGHT_ARROW
+error 6507..6507: expected IDENT
+error 6581..6581: expected RIGHT_ARROW
+error 6581..6581: expected IDENT
+error 6634..6634: expected `COMMA`
+error 6662..6662: expected RIGHT_ARROW
+error 6662..6662: expected IDENT
+error 6740..6740: expected RIGHT_ARROW
+error 6740..6740: expected IDENT
+error 6753..6753: expected `COMMA`
+error 6779..6779: expected RIGHT_ARROW
+error 6779..6779: expected IDENT
+error 6822..6822: expected RIGHT_ARROW
+error 6822..6822: expected IDENT
+error 6837..6837: expected `COMMA`
+error 6861..6861: expected RIGHT_ARROW
+error 6861..6861: expected IDENT
+error 6977..6977: expected RIGHT_ARROW
+error 6977..6977: expected IDENT
+error 6998..6998: expected `COMMA`
+error 7026..7026: expected RIGHT_ARROW
+error 7026..7026: expected IDENT
+error 7067..7067: expected RIGHT_ARROW
+error 7067..7067: expected IDENT
+error 7081..7081: expected `COMMA`
+error 7102..7102: expected RIGHT_ARROW
+error 7102..7102: expected IDENT

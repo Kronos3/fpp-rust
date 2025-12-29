@@ -159,3 +159,8 @@ fn syntax_kwd_names() {
 fn topology_ports() {
     run_test("topology-ports")
 }
+
+#[test]
+fn topology() {
+    run_test("topology")
+}

@@ -49,7 +49,7 @@ ROOT@0..127
       IDENT@72..77 "$port"
     LEFT_PAREN@77..78 "("
     FORMAL_PARAM_LIST@78..88
-      DEF_ENUM_CONSTANT@78..88
+      FORMAL_PARAM@78..88
         NAME@78..83
           IDENT@78..83 "$time"
         COLON@83..84 ":"

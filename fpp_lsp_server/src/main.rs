@@ -17,27 +17,27 @@ pub use vfs::*;
 use crate::global_state::GlobalState;
 use lsp_server::Connection;
 use lsp_types::{
-    CompletionOptions, HoverProviderCapability, OneOf, SemanticTokenModifier, SemanticTokenType, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind
+    CompletionOptions, HoverProviderCapability, OneOf, SemanticTokenModifier, SemanticTokenType,
+    SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions,
+    SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability,
+    TextDocumentSyncKind,
 };
 use std::error::Error;
 
-use tracing_subscriber::{
-    layer::SubscriberExt, util::SubscriberInitExt, Layer,
-};
+use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 fn setup_stderr_logging() -> anyhow::Result<()> {
     let stderr_log_level = tracing_subscriber::filter::LevelFilter::INFO;
-    let stderr_layer = tracing_subscriber::fmt::layer()
-    .with_writer(std::io::stderr);
+    let stderr_layer = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
 
     tracing_subscriber::registry()
         .with(
             stderr_layer
-            .with_ansi(false)
-            .without_time()
-            .with_file(true)
-            .with_line_number(true)
-            .with_filter(stderr_log_level),
+                .with_ansi(false)
+                .without_time()
+                .with_file(true)
+                .with_line_number(true)
+                .with_filter(stderr_log_level),
         )
         .try_init()?;
 

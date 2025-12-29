@@ -181,7 +181,7 @@ fn formal_param(p: &mut Parser) {
             p.error("expected `:`");
         }
 
-        m.complete(p, DEF_ENUM_CONSTANT);
+        m.complete(p, FORMAL_PARAM);
     } else {
         m.abandon(p);
         p.err_and_bump("expected formal parameter");

@@ -161,3 +161,8 @@ fn syntax_kwd_names() {
 fn topology_ports() {
     run_test_from_fpp_parser("topology-ports")
 }
+
+#[test]
+fn topology() {
+    run_test_from_fpp_parser("topology")
+}
