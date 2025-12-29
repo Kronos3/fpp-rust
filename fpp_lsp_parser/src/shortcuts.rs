@@ -99,10 +99,8 @@ impl LexedStr<'_> {
     pub fn to_input(&self) -> crate::Input {
         let mut res = crate::Input::with_capacity(self.len());
         let mut i = 0;
-        eprintln!("=====");
         while i < self.len() {
             let t = self.as_trivia(i);
-            eprintln!("{:?}", t);
             match t {
                 TriviaRegion::Keep(k) => {
                     // Normal token
@@ -122,7 +120,6 @@ impl LexedStr<'_> {
                 }
             }
         }
-        eprintln!("=====");
 
         res
     }
@@ -141,7 +138,6 @@ impl LexedStr<'_> {
         };
 
         for event in output.iter() {
-            eprintln!("event {:?}", event);
             match event {
                 Step::Token {
                     kind,
@@ -191,7 +187,6 @@ impl Builder<'_, '_> {
         }
 
         let t = self.lexed.as_trivia(self.pos);
-        eprintln!("[{}] {:?} [{:?}]", self.pos, t, self.lexed.kind(self.pos));
 
         match t {
             TriviaRegion::Keep(t_kind) => {
@@ -199,7 +194,6 @@ impl Builder<'_, '_> {
                 self.do_token(kind, n_tokens as usize);
             }
             TriviaRegion::Replace(n, t_kind) => {
-                eprintln!("REPLACE M {:?}", t_kind);
                 assert_eq!(kind, t_kind);
                 assert_eq!(n_tokens, 1);
                 self.do_token(kind, n);
@@ -289,19 +283,8 @@ impl Builder<'_, '_> {
         }
     }
 
-    // fn eat_n_trivias(&mut self, n: usize) {
-    //     for _ in 0..n {
-    //         let kind = self.lexed.kind(self.pos);
-    //         self.do_token(kind, 1);
-    //     }
-    // }
-
     fn do_token(&mut self, kind: SyntaxKind, n_tokens: usize) {
         let text = &self.lexed.range_text(self.pos..self.pos + n_tokens);
-        eprintln!(
-            "TOKEN s={} [{}] {:?} text='{}'",
-            self.pos, n_tokens, kind, text
-        );
         self.pos += n_tokens;
         (self.sink)(StrStep::Token { kind, text });
     }
