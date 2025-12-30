@@ -1,4 +1,4 @@
-use crate::{Parse, SyntaxNode};
+use crate::{Parse, SyntaxNode, SyntaxToken};
 
 pub enum VisitorResult {
     /// Visit all children
@@ -10,14 +10,18 @@ pub enum VisitorResult {
 pub trait Visitor {
     type State;
 
-    fn visit(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult;
+    fn visit_node(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult;
+    fn visit_token(&self, state: &mut Self::State, token: &SyntaxToken);
 }
 
 fn visit_node<State, V: Visitor<State = State>>(node: &SyntaxNode, state: &mut State, visitor: &V) {
-    match visitor.visit(state, node) {
+    match visitor.visit_node(state, node) {
         VisitorResult::Recurse => {
-            for child in node.children() {
-                visit_node(&child, state, visitor)
+            for child in node.children_with_tokens() {
+                match child {
+                    rowan::NodeOrToken::Node(child_node) => visit_node(&child_node, state, visitor),
+                    rowan::NodeOrToken::Token(token) => visitor.visit_token(state, &token),
+                }
             }
         }
         VisitorResult::Next => {}

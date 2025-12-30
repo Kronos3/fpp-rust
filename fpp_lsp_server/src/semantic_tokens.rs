@@ -1,6 +1,6 @@
 use fpp_core::{RawFileLines, RawFilePosition};
 use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
-use lsp_types::{SemanticToken, SemanticTokens};
+use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
 #[derive(Debug, Copy, Clone)]
 pub enum SemanticTokenKind {
@@ -12,6 +12,7 @@ pub enum SemanticTokenKind {
     Constant,
     EnumConstant,
     GraphGroup,
+    PortInstance,
     Port,
     Type,
     FormalParameter,
@@ -36,15 +37,14 @@ pub enum SemanticTokenKind {
 enum SemanticTokenKindRaw {
     Namespace,
     Type,
-    Enum,
     Class,
     Interface,
     Struct,
     Parameter,
     Variable,
     EnumMember,
-    Function,
     Event,
+    Function,
     Modifier,
     Keyword,
     Comment,
@@ -55,11 +55,34 @@ enum SemanticTokenKindRaw {
 #[repr(u32)]
 enum SemanticTokenModifierRaw {
     None = 0x0,
-    Readonly = 0x1,
-    Documentation = 0x2,
+    Readonly = 1 << 1,
+    Documentation = 1 << 2,
 }
 
 impl SemanticTokenKind {
+    pub const TOKEN_TYPES: [SemanticTokenType; 15] = [
+        SemanticTokenType::NAMESPACE,
+        SemanticTokenType::TYPE,
+        SemanticTokenType::CLASS,
+        SemanticTokenType::INTERFACE,
+        SemanticTokenType::STRUCT,
+        SemanticTokenType::PARAMETER,
+        SemanticTokenType::VARIABLE,
+        SemanticTokenType::ENUM_MEMBER,
+        SemanticTokenType::EVENT,
+        SemanticTokenType::FUNCTION,
+        SemanticTokenType::MODIFIER,
+        SemanticTokenType::KEYWORD,
+        SemanticTokenType::COMMENT,
+        SemanticTokenType::STRING,
+        SemanticTokenType::NUMBER,
+    ];
+
+    pub const TOKEN_MODIFIERS: [SemanticTokenModifier; 2] = [
+        SemanticTokenModifier::READONLY,
+        SemanticTokenModifier::DOCUMENTATION,
+    ];
+
     fn token_type(self) -> SemanticTokenKindRaw {
         match self {
             SemanticTokenKind::Module => SemanticTokenKindRaw::Namespace,
@@ -70,7 +93,8 @@ impl SemanticTokenKind {
             SemanticTokenKind::Constant => SemanticTokenKindRaw::Variable,
             SemanticTokenKind::EnumConstant => SemanticTokenKindRaw::EnumMember,
             SemanticTokenKind::GraphGroup => SemanticTokenKindRaw::Namespace,
-            SemanticTokenKind::Port => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::Port => SemanticTokenKindRaw::Class,
+            SemanticTokenKind::PortInstance => SemanticTokenKindRaw::Function,
             SemanticTokenKind::Type => SemanticTokenKindRaw::Type,
             SemanticTokenKind::FormalParameter => SemanticTokenKindRaw::Parameter,
             SemanticTokenKind::StateMachine => SemanticTokenKindRaw::Type,
@@ -87,12 +111,12 @@ impl SemanticTokenKind {
         }
     }
 
-    fn token_modifiers(self) -> SemanticTokenModifierRaw {
+    fn token_modifiers(self) -> u32 {
         match self {
-            SemanticTokenKind::Constant => SemanticTokenModifierRaw::Readonly,
-            SemanticTokenKind::EnumConstant => SemanticTokenModifierRaw::Readonly,
-            SemanticTokenKind::Annotation => SemanticTokenModifierRaw::Documentation,
-            _ => SemanticTokenModifierRaw::None,
+            SemanticTokenKind::Constant => SemanticTokenModifierRaw::Readonly as u32,
+            SemanticTokenKind::EnumConstant => SemanticTokenModifierRaw::Readonly as u32,
+            SemanticTokenKind::Annotation => SemanticTokenModifierRaw::Documentation as u32,
+            _ => SemanticTokenModifierRaw::None as u32,
         }
     }
 
@@ -175,29 +199,50 @@ struct SemanticTokenVisitor {}
 impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     type State = SemanticTokensState;
 
-    fn visit(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult {
-        match node.kind() {
+    fn visit_token(&self, state: &mut Self::State, token: &SyntaxToken) {
+        let kind = match token.kind() {
+            pk if pk.is_type_primitive_keyword() => SemanticTokenKind::Type,
             SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
-                state.add_node(node, SemanticTokenKind::Annotation);
+                SemanticTokenKind::Annotation
+            }
+            SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
+            SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
+            _ => return,
+        };
+
+        state.add_token(token, kind);
+    }
+
+    fn visit_node(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult {
+        match node.kind() {
+            SyntaxKind::EXPR => {
+                // TODO(tumbar) Use analysis information
+                for token in node.descendants_with_tokens() {
+                    if let NodeOrToken::Token(token) = token {
+                        if token.kind() == SyntaxKind::IDENT {
+                            state.add_token(&token, SemanticTokenKind::Constant);
+                        }
+                    }
+                }
+
                 VisitorResult::Next
             }
-            SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => {
-                state.add_node(node, SemanticTokenKind::Number);
-                VisitorResult::Next
-            }
-            SyntaxKind::LITERAL_STRING => {
-                state.add_node(node, SemanticTokenKind::String);
-                VisitorResult::Next
-            }
-            keyword if keyword.is_keyword() => {
-                state.add_node(node, SemanticTokenKind::Keyword);
-                VisitorResult::Next
-            }
-            SyntaxKind::COMMENT => {
-                state.add_node(node, SemanticTokenKind::Comment);
+
+            SyntaxKind::PORT_INSTANCE_IDENTIFIER => {
+                // TODO(tumbar) Use analysis information
+                let ident_list = node.descendants_with_tokens().filter_map(|f| match f {
+                    NodeOrToken::Token(token) if token.kind() == SyntaxKind::IDENT => Some(token),
+                    _ => None,
+                });
+
+                for ident in ident_list {
+                    state.add_token(&ident, SemanticTokenKind::ComponentInstance);
+                }
+
                 VisitorResult::Next
             }
             SyntaxKind::QUAL_IDENT => {
+                // TODO(tumbar) Use analysis information
                 let ident_list = node.descendants_with_tokens().filter_map(|f| match f {
                     NodeOrToken::Token(token) if token.kind() == SyntaxKind::IDENT => Some(token),
                     _ => None,
@@ -206,6 +251,12 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                 if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
                     let name_kind = match parent_node_kind {
                         SyntaxKind::TYPE_NAME => SemanticTokenKind::Type,
+                        SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::Port,
+                        SyntaxKind::DEF_COMPONENT_INSTANCE => SemanticTokenKind::Component,
+                        SyntaxKind::SPEC_INSTANCE => SemanticTokenKind::ComponentInstance,
+                        SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
+                            SemanticTokenKind::ComponentInstance
+                        }
                         _ => return VisitorResult::Next,
                     };
 
@@ -233,6 +284,9 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_INTERFACE => SemanticTokenKind::Interface,
                         SyntaxKind::DEF_TOPOLOGY => SemanticTokenKind::Topology,
                         SyntaxKind::SPEC_CONNECTION_GRAPH_DIRECT => SemanticTokenKind::GraphGroup,
+                        SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::PortInstance,
+                        SyntaxKind::SPEC_PORT_INSTANCE_SPECIAL => SemanticTokenKind::PortInstance,
+                        SyntaxKind::SPEC_PORT_INSTANCE_INTERNAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::DEF_MODULE => SemanticTokenKind::Module,
                         SyntaxKind::DEF_PORT => SemanticTokenKind::Port,
                         SyntaxKind::DEF_ACTION => SemanticTokenKind::Action,

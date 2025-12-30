@@ -63,7 +63,7 @@ fn interface_instance_member(p: &mut Parser) {
     p.expect(IDENT);
     while p.at(DOT) {
         p.bump(DOT);
-        if p.expect(IDENT) {
+        if !p.expect(IDENT) {
             break;
         }
     }

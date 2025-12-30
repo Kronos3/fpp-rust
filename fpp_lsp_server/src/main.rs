@@ -14,7 +14,7 @@ mod vfs;
 
 pub use vfs::*;
 
-use crate::global_state::GlobalState;
+use crate::{global_state::GlobalState, semantic_tokens::SemanticTokenKind};
 use lsp_server::Connection;
 use lsp_types::{
     CompletionOptions, HoverProviderCapability, OneOf, SemanticTokenModifier, SemanticTokenType,
@@ -61,28 +61,8 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
             SemanticTokensOptions {
                 work_done_progress_options: Default::default(),
                 legend: SemanticTokensLegend {
-                    token_types: vec![
-                        SemanticTokenType::NAMESPACE,
-                        SemanticTokenType::TYPE,
-                        SemanticTokenType::ENUM,
-                        SemanticTokenType::CLASS,
-                        SemanticTokenType::INTERFACE,
-                        SemanticTokenType::STRUCT,
-                        SemanticTokenType::PARAMETER,
-                        SemanticTokenType::VARIABLE,
-                        SemanticTokenType::ENUM_MEMBER,
-                        SemanticTokenType::FUNCTION,
-                        SemanticTokenType::EVENT,
-                        SemanticTokenType::MODIFIER,
-                        SemanticTokenType::KEYWORD,
-                        SemanticTokenType::COMMENT,
-                        SemanticTokenType::STRING,
-                        SemanticTokenType::NUMBER,
-                    ],
-                    token_modifiers: vec![
-                        SemanticTokenModifier::READONLY,
-                        SemanticTokenModifier::DOCUMENTATION,
-                    ],
+                    token_types: SemanticTokenKind::TOKEN_TYPES.into(),
+                    token_modifiers: SemanticTokenKind::TOKEN_MODIFIERS.into(),
                 },
                 range: None,
                 full: Some(SemanticTokensFullOptions::Bool(true)),

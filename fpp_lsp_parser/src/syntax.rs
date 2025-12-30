@@ -351,6 +351,33 @@ impl SyntaxKind {
     }
 
     #[inline]
+    pub fn is_modifier_keyword(self) -> bool {
+        matches!(
+            self,
+            ACTIVE_KW | ASYNC_KW | SYNC_KW | PASSIVE_KW | QUEUED_KW | GUARDED_KW
+        )
+    }
+
+    #[inline]
+    pub fn is_type_primitive_keyword(self) -> bool {
+        matches!(
+            self,
+            U8_KW
+                | I8_KW
+                | U16_KW
+                | I16_KW
+                | U32_KW
+                | I32_KW
+                | U64_KW
+                | I64_KW
+                | F32_KW
+                | F64_KW
+                | STRING_KW
+                | BOOL_KW
+        )
+    }
+
+    #[inline]
     pub fn is_keyword(self) -> bool {
         matches!(
             self,
