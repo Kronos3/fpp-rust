@@ -1,9 +1,9 @@
 //! See [RequestDispatcher].
 use std::{fmt::Debug, panic, thread};
 
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
-use crate::global_state::{GlobalState, GlobalStateSnapshot};
+use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};
 
 /// A visitor for routing a raw JSON request to an appropriate handler function.
 ///
@@ -70,7 +70,6 @@ impl RequestDispatcher<'_> {
             tracing::info_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
         tracing::debug!(?params);
         let global_state_snapshot = self.global_state.snapshot();
-
         let result = panic::catch_unwind(move || f(global_state_snapshot, params));
 
         if let Some(response) = thread_result_to_response::<R>(req.id, result) {
@@ -118,7 +117,7 @@ impl RequestDispatcher<'_> {
         self.global_state.task_pool.execute(move || {
             let result = f(snapshot, params);
             if let Some(response) = result_to_response::<R>(req_id, result) {
-                sender.send(lsp_server::Message::Response(response))
+                sender.send(Task::Response(response));
             }
         });
 

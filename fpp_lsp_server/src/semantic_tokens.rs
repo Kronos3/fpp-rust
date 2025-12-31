@@ -311,10 +311,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
 }
 
 pub(crate) fn compute(text: &str, parse: &fpp_lsp_parser::Parse) -> SemanticTokens {
-    eprint!("{}", parse.clone().to_syntax().debug_dump());
-
     let mut state = SemanticTokensState::new(text);
     parse.visit(&mut state, &SemanticTokenVisitor {});
-
     state.finish()
 }

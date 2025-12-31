@@ -115,7 +115,7 @@ pub fn handle_workspace_reload(state: &mut GlobalState, _: ()) -> Result<()> {
         match read_future.await {
             // Successfully read from the filesystem
             // Send the results back to the main_loop for processing
-            Ok(files) => sender.task(IndexWorkspace((progress.with_total(files.len()), files))),
+            Ok(files) => sender.send(IndexWorkspace((progress.with_total(files.len()), files))),
             Err(e) => {
                 progress.finish(None);
                 sender.send_notification::<lsp_types::notification::ShowMessage>(

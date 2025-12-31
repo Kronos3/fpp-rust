@@ -51,6 +51,10 @@ impl GlobalState {
 
                 self.analysis = Arc::new(analysis);
             }
+            Task::Response(response) => self.respond(response),
+            Task::Notification(notification) => {
+                self.send(lsp_server::Message::Notification(notification))
+            }
         }
     }
 }

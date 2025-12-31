@@ -16,7 +16,8 @@ type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
 
 #[derive(Debug)]
 pub enum Task {
-    // Response(lsp_server::Response),
+    Response(lsp_server::Response),
+    Notification(lsp_server::Notification),
     // Retry(lsp_server::Request),
     IndexWorkspace((Progress, Vec<(String, String)>)),
 }
@@ -28,7 +29,7 @@ pub struct GlobalState {
     task_inbox: Receiver<Task>,
 
     pub(crate) cancellable: FxHashMap<lsp_types::ProgressToken, CancellationToken>,
-    pub(crate) task_tx: Sender<Task>,
+    task_tx: Sender<Task>,
 
     pub(crate) vfs: vfs::Vfs,
 
@@ -71,15 +72,12 @@ impl GlobalState {
         }
     }
 
-    fn send(&self, message: lsp_server::Message) {
+    pub(crate) fn send(&self, message: lsp_server::Message) {
         self.sender.send(message).unwrap();
     }
 
     pub(crate) fn get_sender(&self) -> GlobalComm {
-        GlobalComm {
-            tx: self.task_tx.clone(),
-            sender: self.sender.clone(),
-        }
+        GlobalComm(self.task_tx.clone())
     }
 
     pub(crate) fn register_request(
@@ -116,7 +114,7 @@ impl GlobalState {
     pub(crate) fn respond(&mut self, response: lsp_server::Response) {
         if let Some((method, start)) = self.req_queue.incoming.complete(&response.id) {
             let duration = start.elapsed();
-            tracing::debug!(name: "message response", method, %response.id, duration = format_args!("{:0.2?}", duration));
+            tracing::info!(name: "message response", method, %response.id, duration = format_args!("{:0.2?}", duration));
             self.send(response.into());
         } else {
             tracing::warn!(%response.id, "invalid response id")
@@ -159,14 +157,12 @@ impl GlobalState {
 
     fn main_loop(&mut self, receiver: Receiver<lsp_server::Message>) {
         while !self.shutdown_requested {
-            let loop_start = Instant::now();
-
             crossbeam_channel::select_biased! {
                 recv(self.task_inbox) -> msg => {
                     if let Ok(msg) = msg { self.on_task(msg) }
                 }
                 recv(receiver) -> msg => {
-                    if let Ok(msg) = msg { self.on_message(loop_start, msg) }
+                    if let Ok(msg) = msg { self.on_message(Instant::now(), msg) }
                 }
             }
         }
@@ -176,33 +172,17 @@ impl GlobalState {
         let mut state = GlobalState::new(connection.sender);
         state.main_loop(connection.receiver);
     }
-
-    // for event in inbox {
-    //     match event {
-    //         Event::Task(task) => self.on_task(task),
-    //     }
-    //
-    //     if self.shutdown_requested {
-    //         tracing::info!("shutdown requested, exiting main loop");
-    //         break;
-    //     }
-    // }
 }
 
 #[derive(Clone)]
-pub struct GlobalComm {
-    // Message channel to main event loop
-    tx: Sender<Task>,
-    // Message channel to IDE client
-    sender: Sender<lsp_server::Message>,
-}
+pub struct GlobalComm(Sender<Task>);
 
 impl GlobalComm {
-    pub(crate) fn send(&self, message: lsp_server::Message) {
-        match self.sender.send(message) {
+    pub(crate) fn send(&self, task: Task) {
+        match self.0.send(task) {
             Ok(_) => {}
             Err(err) => {
-                tracing::error!(err = %err, "failed to message")
+                tracing::error!(err = %err, "failed to queue task")
             }
         }
     }
@@ -212,16 +192,7 @@ impl GlobalComm {
         params: N::Params,
     ) {
         let not = lsp_server::Notification::new(N::METHOD.to_owned(), params);
-        self.send(not.into());
-    }
-
-    pub(crate) fn task(&self, task: Task) {
-        match self.tx.send(task) {
-            Ok(_) => {}
-            Err(e) => {
-                tracing::error!(err = %e, "failed to queue task")
-            }
-        }
+        self.send(Task::Notification(not.into()));
     }
 }
 
