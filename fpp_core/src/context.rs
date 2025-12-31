@@ -27,7 +27,7 @@ impl SpanData {
 
 #[derive(Default, Debug)]
 pub struct RawFilePosition {
-    pub pos: usize,
+    pub pos: BytePos,
     pub line: u32,
     pub column: u32,
 }
@@ -40,7 +40,7 @@ impl RawFileLines {
             let mut out = vec![0];
             for (i, c) in file.chars().enumerate() {
                 if c == '\n' {
-                    out.push(BytePos::from(i) + 1)
+                    out.push(BytePos::from(i as BytePos) + 1)
                 }
             }
 
@@ -50,7 +50,17 @@ impl RawFileLines {
         RawFileLines(lines)
     }
 
-    pub fn position(&self, offset: usize) -> RawFilePosition {
+    pub fn position_of(&self, line: u32, column: u32) -> BytePos {
+        if line as usize >= self.0.len() {
+            // TODO(tumbar) Is this actually what we want here?
+            return 0;
+        }
+
+        let line_start = self.0[line as usize];
+        return line_start + column;
+    }
+
+    pub fn position(&self, offset: u32) -> RawFilePosition {
         let line = match self.0.binary_search(&offset) {
             // End of the line, it's actually on the line before
             Ok(line_idx) => match line_idx {
@@ -130,7 +140,7 @@ impl SourceFileData {
 
         let first = *self.lines.0.get(first_line).unwrap();
         let last = match self.lines.0.get(last_line) {
-            None => self.content.len(),
+            None => self.content.len() as BytePos,
             Some(last) => *last,
         };
 
@@ -156,7 +166,7 @@ impl SourceFileData {
             end: span.start + span.length - first,
             line_offset: first_line,
             uri: self.uri.clone(),
-            file_content: self.content[first..last].into(),
+            file_content: self.content[(first as usize)..(last as usize)].into(),
             include_spans,
         }
     }

@@ -34,7 +34,7 @@ pub trait FileReader {
     fn read(&self, path: &str) -> Result<SourceFile, Error>;
 }
 
-pub type BytePos = usize;
+pub type BytePos = u32;
 
 #[derive(Clone, Copy, Hash, Eq, PartialEq)]
 pub struct SourceFile {
@@ -107,7 +107,7 @@ impl SourceFile {
 
         with(|w| {
             let content = &w.file_content(self);
-            content.as_str()[(start.pos - start.column as usize)..end.pos].to_string()
+            content.as_str()[((start.pos - start.column) as usize)..(end.pos as usize)].to_string()
         })
     }
 

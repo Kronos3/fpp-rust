@@ -29,8 +29,7 @@ impl Vfs {
                 format!("file not in vfs: {}", key),
             )
             .into()),
-            Some(File::Fs(f)) => Ok(f.text.clone()),
-            Some(File::Lsp(f)) => Ok(f.text.clone()),
+            Some(file) => Ok(file.content.text().to_string()),
         }
     }
 
@@ -38,28 +37,31 @@ impl Vfs {
         let key = path.to_string_lossy().to_string();
         match self.files.read().unwrap().get(&key) {
             None => {}
-            Some(File::Fs(f)) => return Ok(f.text.clone()),
-            Some(File::Lsp(f)) => return Ok(f.text.clone()),
+            Some(file) => return Ok(file.content.text().to_string()),
         }
 
         let text = std::fs::read_to_string(&path)?;
 
         self.files.write().unwrap().insert(
             key,
-            File::Fs(FsFile {
+            File::new(FileContent::Fs(FsFile {
                 path: path.clone(),
                 text: text.clone(),
-            }),
+            })),
         );
 
         Ok(text)
     }
 
     pub fn clear(&mut self) {
-        let _ = self.files.write().unwrap().extract_if(|_, f| match f {
-            File::Fs(_) => true,
-            File::Lsp(_) => false,
-        });
+        let _ = self
+            .files
+            .write()
+            .unwrap()
+            .extract_if(|_, f| match &f.content {
+                FileContent::Fs(_) => true,
+                FileContent::Lsp(_) => false,
+            });
     }
 
     pub fn did_open(&mut self, open: DidOpenTextDocumentParams) {
@@ -103,38 +105,46 @@ impl Vfs {
                     "received didClose event for a file that hasn't been opened yet"
                 );
             }
-            Some(File::Fs(old)) => {
-                tracing::warn!(
-                    uri = close.text_document.uri.to_string(),
-                    "received a close event to a file not being traced by the LSP, dropping event"
-                );
+            Some(file) => match file.content {
+                FileContent::Fs(fs_file) => {
+                    tracing::warn!(
+                        uri = close.text_document.uri.to_string(),
+                        "received a close event to a file not being traced by the LSP, dropping event"
+                    );
 
-                // Add back the file
-                files.insert(key, File::Fs(old));
-            }
-            Some(File::Lsp(lsp)) => {
-                tracing::info!(
-                    uri = key,
-                    "received didClose on LSP file, falling back to filesystem tracking"
-                );
+                    files.insert(
+                        key,
+                        File {
+                            content: FileContent::Fs(fs_file),
+                            lines: file.lines,
+                            parse: file.parse,
+                        },
+                    );
+                }
+                FileContent::Lsp(lsp_file) => {
+                    tracing::info!(
+                        uri = key,
+                        "received didClose on LSP file, falling back to filesystem tracking"
+                    );
 
-                // Read the file asynchronously
-                let mut this = self.clone();
-                tokio::task::spawn_blocking(move || {
-                    let path: PathBuf = lsp.uri.path().to_string().into();
-                    match this.read(&path) {
-                        Ok(_) => {}
-                        Err(err) => {
-                            tracing::error!(
-                                uri = key,
-                                err = %err,
-                                "failed to read file {} into vfs",
-                                lsp.uri.path(),
-                            );
+                    // Read the file asynchronously
+                    let mut this = self.clone();
+                    tokio::task::spawn_blocking(move || {
+                        let path: PathBuf = lsp_file.uri.path().to_string().into();
+                        match this.read(&path) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                tracing::error!(
+                                    uri = key,
+                                    err = %err,
+                                    "failed to read file {} into vfs",
+                                    lsp_file.uri.path(),
+                                );
+                            }
                         }
-                    }
-                });
-            }
+                    });
+                }
+            },
         };
     }
 }

@@ -1,6 +1,6 @@
 use crate::error::{ParseError, ParseResult};
 use crate::token::Token;
-use fpp_core::{Diagnostic, Level, SourceFile, Span, Spanned};
+use fpp_core::{BytePos, Diagnostic, Level, SourceFile, Span, Spanned};
 use fpp_lexer::{Lexer, TokenKind};
 use std::collections::VecDeque;
 
@@ -51,7 +51,12 @@ impl<'a> Cursor<'a> {
     pub fn emit_errors(&self) {
         self.lexer.errors().for_each(|err| {
             Diagnostic::new(
-                Span::new(self.file, err.pos, err.len, self.include_span),
+                Span::new(
+                    self.file,
+                    err.pos as BytePos,
+                    err.len as BytePos,
+                    self.include_span,
+                ),
                 Level::Error,
                 "syntax error: invalid token",
             )
@@ -87,7 +92,12 @@ impl<'a> Cursor<'a> {
                 TokenKind::EOF => unreachable!(),
                 TokenKind::Unknown => {
                     Diagnostic::new(
-                        Span::new(self.file, prev, tok.len, self.include_span),
+                        Span::new(
+                            self.file,
+                            prev as BytePos,
+                            tok.len as BytePos,
+                            self.include_span,
+                        ),
                         Level::Error,
                         format!(
                             "syntax error: invalid character {:#?}",
@@ -105,8 +115,8 @@ impl<'a> Cursor<'a> {
                             TokenKind::Eol,
                             None,
                             self.file,
-                            prev,
-                            self.pos - prev,
+                            prev as BytePos,
+                            (self.pos - prev) as BytePos,
                             self.include_span,
                         )),
                         Some(lookahead) => {
@@ -121,8 +131,8 @@ impl<'a> Cursor<'a> {
                                         lookahead.kind,
                                         None,
                                         self.file,
-                                        lookahead_prev,
-                                        lookahead.len,
+                                        lookahead_prev as BytePos,
+                                        lookahead.len as BytePos,
                                         self.include_span,
                                     ))
                                 }
@@ -135,8 +145,8 @@ impl<'a> Cursor<'a> {
                                         TokenKind::Eol,
                                         None,
                                         self.file,
-                                        prev,
-                                        self.pos - prev,
+                                        prev as BytePos,
+                                        (self.pos - prev) as BytePos,
                                         self.include_span,
                                     ))
                                 }
@@ -156,8 +166,8 @@ impl<'a> Cursor<'a> {
                         TokenKind::Identifier,
                         Some(self.content[start..self.pos].to_string()),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -171,8 +181,8 @@ impl<'a> Cursor<'a> {
                                 .to_string(),
                         ),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -183,8 +193,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         Some(self.content[prev + 1..=prev + tok.len].trim().to_string()),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -200,8 +210,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         Some(text),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -228,8 +238,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         Some(text),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -240,8 +250,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         Some(self.content[prev..(prev + tok.len)].to_string()),
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -256,8 +266,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         None,
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }
@@ -280,8 +290,8 @@ impl<'a> Cursor<'a> {
                         tok.kind,
                         None,
                         self.file,
-                        prev,
-                        tok.len,
+                        prev as BytePos,
+                        tok.len as BytePos,
                         self.include_span,
                     ));
                 }

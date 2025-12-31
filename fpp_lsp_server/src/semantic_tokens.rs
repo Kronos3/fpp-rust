@@ -125,7 +125,7 @@ impl SemanticTokenKind {
     }
 }
 
-struct SemanticTokensState {
+pub(crate) struct SemanticTokensState {
     lines: RawFileLines,
     raw: Vec<(TextRange, SemanticTokenKind)>,
 }
@@ -138,7 +138,7 @@ impl SemanticTokensState {
         }
     }
 
-    fn finish(mut self) -> SemanticTokens {
+    pub(crate) fn finish(mut self, filter_range: Option<lsp_types::Range>) -> SemanticTokens {
         let mut tokens = SemanticTokens::default();
         self.raw.sort_by(|a, b| a.0.ordering(b.0));
 
@@ -148,7 +148,28 @@ impl SemanticTokensState {
             column: 0,
         };
 
+        let filter_range = match filter_range {
+            Some(filter_range) => Some(TextRange::new(
+                self.lines
+                    .position_of(filter_range.start.line, filter_range.start.character)
+                    .into(),
+                self.lines
+                    .position_of(filter_range.start.line, filter_range.start.character)
+                    .into(),
+            )),
+            None => None,
+        };
+
         for (range, kind) in self.raw {
+            match filter_range {
+                Some(filter_range) => {
+                    if filter_range.intersect(range).is_none() {
+                        continue;
+                    }
+                }
+                None => {}
+            }
+
             // TODO(tumbar) This can be heavily optimized
             let start = self.lines.position(range.start().into());
             let end = self.lines.position(range.end().into());
@@ -310,8 +331,8 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     }
 }
 
-pub(crate) fn compute(text: &str, parse: &fpp_lsp_parser::Parse) -> SemanticTokens {
+pub(crate) fn compute(text: &str, parse: &fpp_lsp_parser::Parse) -> SemanticTokensState {
     let mut state = SemanticTokensState::new(text);
     parse.visit(&mut state, &SemanticTokenVisitor {});
-    state.finish()
+    state
 }

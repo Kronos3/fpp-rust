@@ -2,7 +2,7 @@ use crate::cursor::Cursor;
 use crate::error::{ParseError, ParseResult};
 use crate::token::Token;
 use fpp_ast::*;
-use fpp_core::{SourceFile, Spanned};
+use fpp_core::{BytePos, SourceFile, Spanned};
 use fpp_lexer::KeywordKind::*;
 use fpp_lexer::TokenKind::*;
 use fpp_lexer::{KeywordKind, TokenKind};
@@ -2505,7 +2505,7 @@ impl<'a> Parser<'a> {
                 let inner_span = fpp_core::Span::new(
                     token.span.file(),
                     token.span.start().pos() + 1,
-                    token.text().len(),
+                    token.text().len() as BytePos,
                     token.span.including_span(),
                 );
 
@@ -2516,7 +2516,7 @@ impl<'a> Parser<'a> {
                 let inner_span = fpp_core::Span::new(
                     token.span.file(),
                     token.span.start().pos() + 3,
-                    token.text().len(),
+                    token.text().len() as BytePos,
                     token.span.including_span(),
                 );
 

@@ -1,6 +1,6 @@
-use lsp_types::{
-    DidChangeTextDocumentParams, DidOpenTextDocumentParams, Uri,
-};
+use fpp_core::RawFileLines;
+use fpp_lsp_parser::Parse;
+use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams, Uri};
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -22,13 +22,27 @@ pub struct LspFile {
 }
 
 #[derive(Debug)]
-pub enum File {
+pub enum FileContent {
     Fs(FsFile),
     Lsp(LspFile),
 }
 
-impl File {
-    pub(crate) fn open_new(open: DidOpenTextDocumentParams) -> File {
+pub struct File {
+    pub content: FileContent,
+    pub lines: fpp_core::RawFileLines,
+    pub parse: Parse,
+    // semantic_tokens: lsp_types::SemanticTokens,
+}
+
+impl FileContent {
+    pub(crate) fn text(&self) -> &str {
+        match self {
+            FileContent::Fs(fs_file) => &fs_file.text,
+            FileContent::Lsp(lsp_file) => &lsp_file.text,
+        }
+    }
+
+    pub(crate) fn open_new(open: DidOpenTextDocumentParams) -> FileContent {
         let key = open.text_document.uri.as_str();
         tracing::debug!(
             uri = key,
@@ -36,23 +50,23 @@ impl File {
             "opening new lsp file"
         );
 
-        File::Lsp(LspFile {
+        FileContent::Lsp(LspFile {
             version: open.text_document.version,
             uri: open.text_document.uri,
             text: open.text_document.text,
         })
     }
 
-    pub(crate) fn open_over(self, open: DidOpenTextDocumentParams) -> File {
+    pub(crate) fn open_over(self, open: DidOpenTextDocumentParams) -> FileContent {
         match self {
-            File::Fs(_) => {
+            FileContent::Fs(_) => {
                 tracing::debug!(
                     uri = open.text_document.uri.to_string(),
                     version = open.text_document.version,
                     "opening lsp file over fs-watched file, dropping watch"
                 );
 
-                let file = File::Lsp(LspFile {
+                let file = FileContent::Lsp(LspFile {
                     version: open.text_document.version,
                     uri: open.text_document.uri,
                     text: open.text_document.text,
@@ -60,14 +74,14 @@ impl File {
 
                 file
             }
-            File::Lsp(_) => {
+            FileContent::Lsp(_) => {
                 tracing::warn!(
                     uri = open.text_document.uri.to_string(),
                     version = open.text_document.version,
                     "opening lsp file over an already opened lsp file"
                 );
 
-                File::Lsp(LspFile {
+                FileContent::Lsp(LspFile {
                     version: open.text_document.version,
                     uri: open.text_document.uri,
                     text: open.text_document.text,
@@ -75,25 +89,66 @@ impl File {
             }
         }
     }
+}
 
-    pub(crate) fn update(self, mut change: DidChangeTextDocumentParams) -> File {
-        match self {
-            File::Fs(fs) => {
+impl File {
+    pub(crate) fn new(content: FileContent) -> File {
+        let lines = RawFileLines::new(content.text());
+        let parse = fpp_lsp_parser::parse(content.text());
+        File {
+            content,
+            lines,
+            parse,
+        }
+    }
+
+    pub(crate) fn open_new(open: DidOpenTextDocumentParams) -> File {
+        File::new(FileContent::open_new(open))
+    }
+
+    pub(crate) fn open_over(self, open: DidOpenTextDocumentParams) -> File {
+        File::new(FileContent::open_over(self.content, open))
+    }
+
+    pub(crate) fn update(self, change: DidChangeTextDocumentParams) -> File {
+        match self.content {
+            FileContent::Fs(fs) => {
                 tracing::warn!(
                     uri = change.text_document.uri.to_string(),
                     "received a change event to a file not being traced by the LSP, dropping event"
                 );
-                File::Fs(fs)
+
+                File {
+                    content: FileContent::Fs(fs),
+                    lines: self.lines,
+                    parse: self.parse,
+                }
             }
-            File::Lsp(_) => {
-                // TODO(tumbar) Handle incremental changes
-                // Currently the server only handles full file synchronization
-                // Look at the final event and apply the full text to the Vfs
-                File::Lsp(LspFile {
+            FileContent::Lsp(f) => {
+                let mut text = f.text;
+                for event in change.content_changes {
+                    match event.range {
+                        Some(delta_range) => {
+                            let start = self
+                                .lines
+                                .position_of(delta_range.start.line, delta_range.start.character);
+                            let end = self
+                                .lines
+                                .position_of(delta_range.end.line, delta_range.end.character);
+
+                            text.replace_range(start as usize..end as usize, &event.text);
+                        }
+                        None => {
+                            text = event.text;
+                        }
+                    }
+                }
+
+                File::new(FileContent::Lsp(LspFile {
                     version: change.text_document.version,
                     uri: change.text_document.uri.clone(),
-                    text: change.content_changes.pop().unwrap().text,
-                })
+                    text,
+                }))
             }
         }
     }

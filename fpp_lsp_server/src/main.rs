@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 
     // advertised capabilities
     let caps = ServerCapabilities {
-        text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
+        text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::INCREMENTAL)),
         // completion_provider: Some(CompletionOptions::default()),
         // definition_provider: Some(OneOf::Left(true)),
         // hover_provider: Some(HoverProviderCapability::Simple(true)),
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
                     token_types: SemanticTokenKind::TOKEN_TYPES.into(),
                     token_modifiers: SemanticTokenKind::TOKEN_MODIFIERS.into(),
                 },
-                range: None,
+                range: Some(true),
                 full: Some(SemanticTokensFullOptions::Bool(true)),
             },
         )),

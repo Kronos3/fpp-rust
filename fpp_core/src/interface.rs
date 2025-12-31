@@ -99,7 +99,7 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn span_len(&self, s: &Span) -> usize {
         let ctx = self.ctx.borrow();
         let data = ctx.span_get(s);
-        data.length
+        data.length as usize
     }
 
     fn span_file(&self, s: &Span) -> SourceFile {

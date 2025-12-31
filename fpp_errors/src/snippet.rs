@@ -16,7 +16,9 @@ fn diagnostic_snippet_to_annotation<'a>(
     kind: AnnotationKind,
     snippet: &DiagnosticDataSnippet,
 ) -> Annotation<'a> {
-    let mut annotation = kind.span(snippet.start..snippet.end).label(message);
+    let mut annotation = kind
+        .span((snippet.start as usize)..(snippet.end as usize))
+        .label(message);
 
     for include_loc in &snippet.include_spans {
         annotation = annotation.label(format!(

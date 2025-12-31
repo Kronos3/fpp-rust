@@ -8,7 +8,7 @@ use fpp_ast::ModuleMember;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    SemanticTokensResult,
+    SemanticTokensRangeResult, SemanticTokensResult,
 };
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
@@ -177,6 +177,22 @@ pub fn handle_semantic_tokens_full(
         .read_sync(&request.text_document.uri.path().to_string().into())?;
 
     Ok(Some(SemanticTokensResult::Tokens(
-        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)),
+        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None),
+    )))
+}
+
+pub fn handle_semantic_tokens_range(
+    state: GlobalStateSnapshot,
+    request: lsp_types::SemanticTokensRangeParams,
+) -> Result<Option<SemanticTokensRangeResult>> {
+    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
+
+    // TODO(tumbar) We probably don't need to run a reparse here
+    let text = state
+        .vfs
+        .read_sync(&request.text_document.uri.path().to_string().into())?;
+
+    Ok(Some(SemanticTokensRangeResult::Tokens(
+        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(Some(request.range)),
     )))
 }

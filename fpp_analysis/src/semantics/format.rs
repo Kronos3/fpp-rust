@@ -415,6 +415,6 @@ impl<'a> FormatParser<'a> {
 
     /// Returns amount of already consumed symbols.
     fn pos_within_token(&self) -> BytePos {
-        self.len_remaining - self.chars.as_str().len()
+        (self.len_remaining - self.chars.as_str().len()) as BytePos
     }
 }
