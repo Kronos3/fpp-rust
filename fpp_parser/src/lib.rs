@@ -10,6 +10,6 @@ pub use parser::Parser;
 
 #[cfg(test)]
 mod tests {
-    mod lexer;
+    mod cursor;
     mod parser;
 }

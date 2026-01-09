@@ -1,5 +1,7 @@
+use line_index::LineIndex;
+
 use crate::interface::with;
-use crate::{Error, RawFileLines, Span};
+use crate::{Error, Span};
 use std::cell::Ref;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -97,7 +99,7 @@ impl SourceFile {
         })
     }
 
-    pub fn lines(&self) -> Ref<'_, RawFileLines> {
+    pub fn lines(&self) -> Ref<'_, LineIndex> {
         with(|w| w.file_lines(self))
     }
 

@@ -1,6 +1,6 @@
 use crate::context::LspDiagnosticsEmitter;
 use crate::progress::{CancellationToken, Progress};
-use crate::vfs;
+use crate::{lsp, vfs};
 use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
 use fpp_core::CompilerContext;
@@ -43,10 +43,15 @@ pub struct GlobalState {
     pub(crate) context: CompilerContext<LspDiagnosticsEmitter>,
     pub(crate) asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
     pub(crate) analysis: Arc<Analysis>,
+
+    pub(crate) capabilities: Arc<lsp::capabilities::ClientCapabilities>,
 }
 
 impl GlobalState {
-    pub fn new(sender: Sender<lsp_server::Message>) -> GlobalState {
+    pub fn new(
+        sender: Sender<lsp_server::Message>,
+        capabilities: lsp::capabilities::ClientCapabilities,
+    ) -> GlobalState {
         let (tx, rx) = crossbeam_channel::unbounded();
         let task_pool = Arc::new(ThreadPool::new(10));
 
@@ -69,6 +74,7 @@ impl GlobalState {
             context: CompilerContext::new(diagnostics),
             asts: Default::default(),
             analysis: Arc::new(Analysis::new()),
+            capabilities: Arc::new(capabilities),
         }
     }
 
@@ -126,7 +132,8 @@ impl GlobalState {
             analysis: self.analysis.clone(),
             asts: self.asts.clone(),
             vfs: self.vfs.clone(),
-            task_tx: self.task_tx.clone(),
+            tx: self.task_tx.clone(),
+            capabilities: self.capabilities.clone(),
         }
     }
 
@@ -168,8 +175,11 @@ impl GlobalState {
         }
     }
 
-    pub fn run(connection: lsp_server::Connection) {
-        let mut state = GlobalState::new(connection.sender);
+    pub fn run(
+        connection: lsp_server::Connection,
+        capabilities: lsp::capabilities::ClientCapabilities,
+    ) {
+        let mut state = GlobalState::new(connection.sender, capabilities);
         state.main_loop(connection.receiver);
     }
 }
@@ -200,12 +210,13 @@ pub struct GlobalStateSnapshot {
     pub analysis: Arc<Analysis>,
     pub asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
     pub vfs: vfs::Vfs,
-    task_tx: Sender<Task>,
+    pub capabilities: Arc<lsp::capabilities::ClientCapabilities>,
+    tx: Sender<Task>,
 }
 
 impl GlobalStateSnapshot {
     pub(crate) fn task(&self, task: Task) {
-        match self.task_tx.send(task) {
+        match self.tx.send(task) {
             Ok(_) => {}
             Err(e) => {
                 tracing::error!(err = %e, "failed to queue task")

@@ -6,6 +6,8 @@ pub enum SyntaxKind {
     TOMBSTONE,
     #[doc(hidden)]
     EOF,
+    #[doc(hidden)]
+    UNKNOWN,
 
     IDENT,
     POST_ANNOTATION,
@@ -155,7 +157,6 @@ pub enum SyntaxKind {
     WHITESPACE,
     COMMENT,
     ERROR,
-    UNKNOWN,
 
     // Definitions
     DEF_ABSTRACT_TYPE,

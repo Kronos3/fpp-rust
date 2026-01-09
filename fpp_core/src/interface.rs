@@ -1,5 +1,7 @@
+use line_index::LineIndex;
+
 use crate::context::CompilerContext;
-use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, RawFileLines, SourceFile, Span};
+use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
 use std::cell::{Cell, Ref, RefCell};
 
 struct Container<'ctx, E: DiagnosticEmitter> {
@@ -60,7 +62,7 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         Ref::map(ctx, |c| &c.file_get(file).content)
     }
 
-    fn file_lines(&self, file: &SourceFile) -> Ref<'_, RawFileLines> {
+    fn file_lines(&self, file: &SourceFile) -> Ref<'_, LineIndex> {
         let ctx = self.ctx.borrow();
         Ref::map(ctx, |c| &c.file_get(file).lines)
     }
@@ -135,7 +137,7 @@ pub(crate) trait CompilerInterface {
     fn file_uri(&self, file: &SourceFile) -> String;
     fn file_drop(&self, file: SourceFile);
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
-    fn file_lines(&self, file: &SourceFile) -> Ref<'_, RawFileLines>;
+    fn file_lines(&self, file: &SourceFile) -> Ref<'_, LineIndex>;
     fn file_len(&self, file: &SourceFile) -> usize;
 
     /** Span related functions */

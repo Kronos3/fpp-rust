@@ -6,22 +6,16 @@ mod lsp_ext;
 mod notification;
 mod progress;
 mod request;
-mod semantic_tokens;
 mod task;
 mod util;
 
+mod lsp;
 mod vfs;
 
 pub use vfs::*;
 
-use crate::{global_state::GlobalState, semantic_tokens::SemanticTokenKind};
+use crate::{global_state::GlobalState, util::from_json};
 use lsp_server::Connection;
-use lsp_types::{
-    CompletionOptions, HoverProviderCapability, OneOf, SemanticTokenModifier, SemanticTokenType,
-    SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions,
-    SemanticTokensServerCapabilities, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind,
-};
 use std::error::Error;
 
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
@@ -48,35 +42,50 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     setup_stderr_logging()?;
 
     // transport
-    let (connection, io_thread) = Connection::stdio();
+    let (connection, io_threads) = Connection::stdio();
 
-    // advertised capabilities
-    let caps = ServerCapabilities {
-        text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::INCREMENTAL)),
-        // completion_provider: Some(CompletionOptions::default()),
-        // definition_provider: Some(OneOf::Left(true)),
-        // hover_provider: Some(HoverProviderCapability::Simple(true)),
-        // references_provider: Some(OneOf::Left(true)),
-        semantic_tokens_provider: Some(SemanticTokensServerCapabilities::SemanticTokensOptions(
-            SemanticTokensOptions {
-                work_done_progress_options: Default::default(),
-                legend: SemanticTokensLegend {
-                    token_types: SemanticTokenKind::TOKEN_TYPES.into(),
-                    token_modifiers: SemanticTokenKind::TOKEN_MODIFIERS.into(),
-                },
-                range: Some(true),
-                full: Some(SemanticTokensFullOptions::Bool(true)),
-            },
-        )),
-        // document_formatting_provider: Some(OneOf::Left(true)),
-        ..Default::default()
+    let (initialize_id, initialize_params) = match connection.initialize_start() {
+        Ok(it) => it,
+        Err(e) => {
+            if e.channel_is_disconnected() {
+                io_threads.join()?;
+            }
+            return Err(e.into());
+        }
     };
 
-    let _ = connection.initialize(serde_json::to_value(caps).unwrap())?;
+    tracing::info!("InitializeParams: {}", initialize_params);
+    let lsp_types::InitializeParams {
+        capabilities,
+        // workspace_folders,
+        // initialization_options,
+        // client_info,
+        ..
+    } = from_json::<lsp_types::InitializeParams>("InitializeParams", &initialize_params)?;
+
+    let client_capabilties = lsp::capabilities::ClientCapabilities::new(capabilities);
+    let server_capabilities = lsp::capabilities::server_capabilities(&client_capabilties);
+
+    let initialize_result = lsp_types::InitializeResult {
+        capabilities: server_capabilities,
+        server_info: Some(lsp_types::ServerInfo {
+            name: String::from("fpp"),
+            version: Some("1.0.0".to_string()),
+        }),
+    };
+
+    let initialize_result = serde_json::to_value(initialize_result).unwrap();
+
+    if let Err(e) = connection.initialize_finish(initialize_id, initialize_result) {
+        if e.channel_is_disconnected() {
+            io_threads.join()?;
+        }
+        return Err(e.into());
+    }
 
     tracing::info!("server is starting up");
-    GlobalState::run(connection);
-    io_thread.join()?;
+    GlobalState::run(connection, client_capabilties);
+    io_threads.join()?;
     log::info!("shutting down server");
 
     Ok(())

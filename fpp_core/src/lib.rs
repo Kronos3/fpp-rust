@@ -7,6 +7,8 @@ mod map;
 mod node;
 mod span;
 
+pub use line_index::{LineCol, LineIndex, TextRange, TextSize, WideEncoding, WideLineCol};
+
 pub use context::*;
 pub use diagnostic::*;
 pub use error::*;

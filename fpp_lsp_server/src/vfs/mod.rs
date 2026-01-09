@@ -9,6 +9,8 @@ use rustc_hash::FxHashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
+use crate::lsp::capabilities::PositionEncoding;
+
 #[derive(Clone)]
 pub struct Vfs {
     files: Arc<RwLock<FxHashMap<String, File>>>,
@@ -75,7 +77,7 @@ impl Vfs {
         files.insert(key, new_file);
     }
 
-    pub fn did_change(&mut self, change: DidChangeTextDocumentParams) {
+    pub fn did_change(&mut self, change: DidChangeTextDocumentParams, encoding: PositionEncoding) {
         let key = change.text_document.uri.path().to_string();
         let mut files = self.files.write().unwrap();
 
@@ -88,13 +90,14 @@ impl Vfs {
                 );
                 return;
             }
-            Some(old) => old.update(change),
+            Some(old) => old.update(change, encoding),
         };
 
         files.insert(key, new_file);
     }
 
     pub fn did_close(&mut self, close: DidCloseTextDocumentParams) {
+        let uri = close.text_document.uri.clone();
         let key = close.text_document.uri.path().to_string();
         let mut files = self.files.write().unwrap();
 
@@ -121,7 +124,7 @@ impl Vfs {
                         },
                     );
                 }
-                FileContent::Lsp(lsp_file) => {
+                FileContent::Lsp(_) => {
                     tracing::info!(
                         uri = key,
                         "received didClose on LSP file, falling back to filesystem tracking"
@@ -130,15 +133,15 @@ impl Vfs {
                     // Read the file asynchronously
                     let mut this = self.clone();
                     tokio::task::spawn_blocking(move || {
-                        let path: PathBuf = lsp_file.uri.path().to_string().into();
-                        match this.read(&path) {
+                        let path_buf: PathBuf = uri.path().to_string().into();
+                        match this.read(&path_buf) {
                             Ok(_) => {}
                             Err(err) => {
                                 tracing::error!(
                                     uri = key,
                                     err = %err,
                                     "failed to read file {} into vfs",
-                                    lsp_file.uri.path(),
+                                    uri.path().to_string(),
                                 );
                             }
                         }

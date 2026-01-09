@@ -3,6 +3,7 @@ use crate::file::SourceFile;
 use crate::map::IdMap;
 use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
+use line_index::LineIndex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::cell::RefCell;
 use std::rc::{Rc, Weak};
@@ -25,71 +26,16 @@ impl SpanData {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct RawFilePosition {
-    pub pos: BytePos,
-    pub line: u32,
-    pub column: u32,
-}
-
-pub struct RawFileLines(Vec<BytePos>);
-
-impl RawFileLines {
-    pub fn new(file: &str) -> RawFileLines {
-        let lines = {
-            let mut out = vec![0];
-            for (i, c) in file.chars().enumerate() {
-                if c == '\n' {
-                    out.push(BytePos::from(i as BytePos) + 1)
-                }
-            }
-
-            out
-        };
-
-        RawFileLines(lines)
-    }
-
-    pub fn position_of(&self, line: u32, column: u32) -> BytePos {
-        if line as usize >= self.0.len() {
-            // TODO(tumbar) Is this actually what we want here?
-            return 0;
-        }
-
-        let line_start = self.0[line as usize];
-        return line_start + column;
-    }
-
-    pub fn position(&self, offset: u32) -> RawFilePosition {
-        let line = match self.0.binary_search(&offset) {
-            // End of the line, it's actually on the line before
-            Ok(line_idx) => match line_idx {
-                0 => 0,
-                _ => line_idx - 1,
-            },
-            // Somewhere in the middle of the last
-            Err(line_insertion_point) => line_insertion_point - 1,
-        };
-        let line_offset = *self.0.get(line).unwrap();
-
-        RawFilePosition {
-            pos: offset,
-            line: line as u32,
-            column: (offset - line_offset) as u32,
-        }
-    }
-}
-
 pub struct SourceFileData {
     pub handle: usize,
     pub uri: String,
     pub content: String,
-    pub lines: RawFileLines,
+    pub lines: LineIndex,
 }
 
 impl SourceFileData {
     fn new(handle: usize, uri: String, content: String) -> SourceFileData {
-        let lines = RawFileLines::new(&content);
+        let lines = LineIndex::new(&content);
 
         SourceFileData {
             handle,
@@ -100,11 +46,11 @@ impl SourceFileData {
     }
 
     pub fn position(&self, offset: BytePos) -> Position {
-        let raw_position = self.lines.position(offset);
+        let raw_position = self.lines.line_col(offset.into());
         Position {
-            pos: raw_position.pos,
+            pos: offset,
             line: raw_position.line,
-            column: raw_position.column,
+            column: raw_position.col,
             source_file: SourceFile {
                 handle: self.handle,
             },
@@ -123,26 +69,14 @@ impl SourceFileData {
 
     pub fn snippet(&self, span: &SpanData) -> DiagnosticDataSnippet {
         // Find the line start of the start/end
-        let first_line = match self.lines.0.binary_search(&span.start) {
-            // The span start is a newline
-            Ok(newline_idx) => match newline_idx {
-                0 => 0,
-                _ => newline_idx - 1,
-            },
-            Err(insert_position) => insert_position - 1,
-        };
+        let first_line_i = self.lines.line_col(span.start.into()).line;
+        let last_line_i = self.lines.line_col((span.start + span.length).into()).line;
 
-        let last_line = self
-            .lines
-            .0
-            .binary_search(&(span.start + span.length))
-            .unwrap_or_else(|line_insert| line_insert);
+        let first_line = self.lines.line(first_line_i).unwrap();
+        let last_line = self.lines.line(last_line_i).unwrap();
+        let full_range = first_line.cover(last_line);
 
-        let first = *self.lines.0.get(first_line).unwrap();
-        let last = match self.lines.0.get(last_line) {
-            None => self.content.len() as BytePos,
-            Some(last) => *last,
-        };
+        let first: BytePos = first_line.start().into();
 
         // Collect all the include locations
         fn collect_include_locs(
@@ -164,9 +98,9 @@ impl SourceFileData {
         DiagnosticDataSnippet {
             start: span.start - first,
             end: span.start + span.length - first,
-            line_offset: first_line,
+            line_offset: first_line_i as usize,
             uri: self.uri.clone(),
-            file_content: self.content[(first as usize)..(last as usize)].into(),
+            file_content: self.content[full_range.start().into()..full_range.end().into()].into(),
             include_spans,
         }
     }

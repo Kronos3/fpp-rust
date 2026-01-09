@@ -61,6 +61,13 @@ fn is_identifier_rest(c: char) -> bool {
     }
 }
 
+/// True if `c` is valid as a non-first character of an identifier.
+/// See [Rust language reference](https://doc.rust-lang.org/reference/identifiers.html) for
+/// a formal definition of valid identifier name.
+pub fn is_id_continue(c: char) -> bool {
+    unicode_ident::is_xid_continue(c)
+}
+
 impl<'a> Iterator for Lexer<'a> {
     type Item = Token;
 
@@ -374,7 +381,7 @@ impl<'a> Lexer<'a> {
             ')' => RightParen,
             ']' => RightSquare,
             '}' => RightCurly,
-
+            c if !c.is_ascii() => self.invalid_ident(),
             _ => Unknown,
         }
     }
@@ -393,7 +400,9 @@ impl<'a> Lexer<'a> {
                 Some('\"') => {
                     if self.first() == '\"' && self.second() == '\"' {
                         self.bump_bytes(2);
-                        return LiteralMultilineString { indent: self.indent };
+                        return LiteralMultilineString {
+                            indent: self.indent,
+                        };
                     }
                 }
 
@@ -405,7 +414,9 @@ impl<'a> Lexer<'a> {
                 Some(_) => {}
                 None => {
                     self.error(0, "unclosed multi-line string literal");
-                    return LiteralMultilineString { indent: self.indent };
+                    return LiteralMultilineString {
+                        indent: self.indent,
+                    };
                 }
             }
         }
@@ -459,6 +470,15 @@ impl<'a> Lexer<'a> {
 
     fn eat_to_next(&mut self) {
         self.eat_while(is_identifier_rest)
+    }
+
+    fn invalid_ident(&mut self) -> TokenKind {
+        // Start is already eaten, eat the rest of identifier.
+        self.eat_while(|c| {
+            const ZERO_WIDTH_JOINER: char = '\u{200d}';
+            is_id_continue(c) || (!c.is_ascii()) || c == ZERO_WIDTH_JOINER
+        });
+        Unknown
     }
 
     fn eat_fraction(&mut self) -> TokenKind {
@@ -530,7 +550,7 @@ impl<'a> Lexer<'a> {
     /// Moves to the next character.
     fn bump(&mut self) -> Option<char> {
         let c = self.chars.next()?;
-        self.pos += 1;
+        self.pos += c.len_utf8();
 
         Some(c)
     }
@@ -560,7 +580,7 @@ impl<'a> Lexer<'a> {
             None => {
                 self.pos += b.len();
                 "".chars()
-            },
+            }
         }
     }
 }

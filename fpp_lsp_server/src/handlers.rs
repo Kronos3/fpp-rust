@@ -1,7 +1,7 @@
 use crate::context::LspDiagnosticsEmitter;
 use crate::global_state::Task::IndexWorkspace;
 use crate::global_state::{GlobalState, GlobalStateSnapshot};
-use crate::{semantic_tokens, vfs};
+use crate::{lsp, vfs};
 use anyhow::Result;
 use fpp_analysis::Analysis;
 use fpp_ast::ModuleMember;
@@ -145,7 +145,9 @@ pub fn handle_did_change_text_document(
     not: DidChangeTextDocumentParams,
 ) -> Result<()> {
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidChangeTextDocument");
-    state.vfs.did_change(not);
+    state
+        .vfs
+        .did_change(not, state.capabilities.negotiated_encoding());
     state.refresh_semantics = true;
     Ok(())
 }
@@ -177,7 +179,7 @@ pub fn handle_semantic_tokens_full(
         .read_sync(&request.text_document.uri.path().to_string().into())?;
 
     Ok(Some(SemanticTokensResult::Tokens(
-        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None),
+        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None),
     )))
 }
 
@@ -193,6 +195,7 @@ pub fn handle_semantic_tokens_range(
         .read_sync(&request.text_document.uri.path().to_string().into())?;
 
     Ok(Some(SemanticTokensRangeResult::Tokens(
-        semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(Some(request.range)),
+        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text))
+            .finish(Some(request.range)),
     )))
 }

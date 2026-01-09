@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 scoped-tls = "1.0"
 rustc-hash = "2.1.1"
+line-index = "0.1.2"

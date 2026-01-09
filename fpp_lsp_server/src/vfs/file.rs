@@ -1,7 +1,9 @@
-use fpp_core::RawFileLines;
+use fpp_core::LineIndex;
 use fpp_lsp_parser::Parse;
-use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams, Uri};
+use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams};
 use std::path::PathBuf;
+
+use crate::lsp::{capabilities::PositionEncoding, utils::apply_document_changes};
 
 #[derive(Debug)]
 pub struct FsFile {
@@ -15,8 +17,6 @@ pub struct FsFile {
 pub struct LspFile {
     /// LSP document version number to handle interleaved updated
     pub version: i32,
-    /// LSP file URI
-    pub uri: Uri,
     /// LSP managed file contents, may not have been committed to disk yet
     pub text: String,
 }
@@ -29,7 +29,7 @@ pub enum FileContent {
 
 pub struct File {
     pub content: FileContent,
-    pub lines: fpp_core::RawFileLines,
+    pub lines: fpp_core::LineIndex,
     pub parse: Parse,
     // semantic_tokens: lsp_types::SemanticTokens,
 }
@@ -52,7 +52,6 @@ impl FileContent {
 
         FileContent::Lsp(LspFile {
             version: open.text_document.version,
-            uri: open.text_document.uri,
             text: open.text_document.text,
         })
     }
@@ -68,7 +67,6 @@ impl FileContent {
 
                 let file = FileContent::Lsp(LspFile {
                     version: open.text_document.version,
-                    uri: open.text_document.uri,
                     text: open.text_document.text,
                 });
 
@@ -83,7 +81,6 @@ impl FileContent {
 
                 FileContent::Lsp(LspFile {
                     version: open.text_document.version,
-                    uri: open.text_document.uri,
                     text: open.text_document.text,
                 })
             }
@@ -93,7 +90,7 @@ impl FileContent {
 
 impl File {
     pub(crate) fn new(content: FileContent) -> File {
-        let lines = RawFileLines::new(content.text());
+        let lines = LineIndex::new(content.text());
         let parse = fpp_lsp_parser::parse(content.text());
         File {
             content,
@@ -110,7 +107,11 @@ impl File {
         File::new(FileContent::open_over(self.content, open))
     }
 
-    pub(crate) fn update(self, change: DidChangeTextDocumentParams) -> File {
+    pub(crate) fn update(
+        self,
+        change: DidChangeTextDocumentParams,
+        encoding: PositionEncoding,
+    ) -> File {
         match self.content {
             FileContent::Fs(fs) => {
                 tracing::warn!(
@@ -125,29 +126,11 @@ impl File {
                 }
             }
             FileContent::Lsp(f) => {
-                let mut text = f.text;
-                for event in change.content_changes {
-                    match event.range {
-                        Some(delta_range) => {
-                            let start = self
-                                .lines
-                                .position_of(delta_range.start.line, delta_range.start.character);
-                            let end = self
-                                .lines
-                                .position_of(delta_range.end.line, delta_range.end.character);
-
-                            text.replace_range(start as usize..end as usize, &event.text);
-                        }
-                        None => {
-                            text = event.text;
-                        }
-                    }
-                }
+                let new_contents = apply_document_changes(encoding, f.text, change.content_changes);
 
                 File::new(FileContent::Lsp(LspFile {
                     version: change.text_document.version,
-                    uri: change.text_document.uri.clone(),
-                    text,
+                    text: new_contents,
                 }))
             }
         }

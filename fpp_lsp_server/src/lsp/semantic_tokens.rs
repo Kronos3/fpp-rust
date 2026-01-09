@@ -1,4 +1,4 @@
-use fpp_core::{RawFileLines, RawFilePosition};
+use fpp_core::{LineCol, LineIndex};
 use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
@@ -126,14 +126,14 @@ impl SemanticTokenKind {
 }
 
 pub(crate) struct SemanticTokensState {
-    lines: RawFileLines,
+    lines: LineIndex,
     raw: Vec<(TextRange, SemanticTokenKind)>,
 }
 
 impl SemanticTokensState {
     fn new(text: &str) -> SemanticTokensState {
         SemanticTokensState {
-            lines: RawFileLines::new(text),
+            lines: LineIndex::new(text),
             raw: Default::default(),
         }
     }
@@ -142,20 +142,22 @@ impl SemanticTokensState {
         let mut tokens = SemanticTokens::default();
         self.raw.sort_by(|a, b| a.0.ordering(b.0));
 
-        let mut last: RawFilePosition = RawFilePosition {
-            pos: 0,
-            line: 0,
-            column: 0,
-        };
+        let mut last = LineCol { line: 0, col: 0 };
 
         let filter_range = match filter_range {
             Some(filter_range) => Some(TextRange::new(
                 self.lines
-                    .position_of(filter_range.start.line, filter_range.start.character)
-                    .into(),
+                    .offset(LineCol {
+                        line: filter_range.start.line,
+                        col: filter_range.start.character,
+                    })
+                    .unwrap(),
                 self.lines
-                    .position_of(filter_range.start.line, filter_range.start.character)
-                    .into(),
+                    .offset(LineCol {
+                        line: filter_range.start.line,
+                        col: filter_range.start.character,
+                    })
+                    .unwrap(),
             )),
             None => None,
         };
@@ -170,24 +172,27 @@ impl SemanticTokensState {
                 None => {}
             }
 
-            // TODO(tumbar) This can be heavily optimized
-            let start = self.lines.position(range.start().into());
-            let end = self.lines.position(range.end().into());
+            let start = self.lines.line_col(range.start());
+            let end = self.lines.line_col(range.end());
 
             // We only support single line tokens
-            assert_eq!(start.line, end.line);
+            assert_eq!(
+                start.line, end.line,
+                "semantic tokens should be a single line: {:?}, {:?} - {:?}",
+                kind, start, end
+            );
 
             let delta_line = start.line - last.line;
             let delta_start = if delta_line == 0 {
                 // Same line, offset the start position
-                start.column - last.column
+                start.col - last.col
             } else {
                 // Token is on a different line, don't alter the column
-                start.column
+                start.col
             };
 
             let (token_type, token_modifiers_bitset) = kind.type_and_modifier();
-            let length = end.column - start.column;
+            let length = end.col - start.col;
 
             last = start;
             tokens.data.push(SemanticToken {
