@@ -231,6 +231,8 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
             SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
                 SemanticTokenKind::Annotation
             }
+            // TODO(tumbar) Port all the tmLanguage tokens/highlights to LSP
+            // keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
             SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
             SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
             _ => return,
@@ -280,6 +282,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::Port,
                         SyntaxKind::DEF_COMPONENT_INSTANCE => SemanticTokenKind::Component,
                         SyntaxKind::SPEC_INSTANCE => SemanticTokenKind::ComponentInstance,
+                        SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => SemanticTokenKind::StateMachine,
                         SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
                             SemanticTokenKind::ComponentInstance
                         }
@@ -320,6 +323,9 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_SIGNAL => SemanticTokenKind::Signal,
                         SyntaxKind::DEF_STATE => SemanticTokenKind::State,
                         SyntaxKind::DEF_STATE_MACHINE => SemanticTokenKind::StateMachine,
+                        SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => {
+                            SemanticTokenKind::StateMachineInstance
+                        }
                         // We do not recognize this name's parent rule
                         _ => return VisitorResult::Next,
                     };

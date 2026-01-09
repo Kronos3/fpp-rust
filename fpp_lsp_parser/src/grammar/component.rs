@@ -70,7 +70,7 @@ fn spec_state_machine_instance(p: &mut Parser) {
     p.expect(MACHINE_KW);
     p.expect(INSTANCE_KW);
 
-    name_ref(p);
+    name(p);
     p.expect(COLON);
     qual_ident(p);
 
