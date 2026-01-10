@@ -1,6 +1,7 @@
 use crate::context::LspDiagnosticsEmitter;
 use crate::global_state::Task::IndexWorkspace;
 use crate::global_state::{GlobalState, GlobalStateSnapshot};
+use crate::lsp::utils::semantic_token_delta;
 use crate::{lsp, vfs};
 use anyhow::Result;
 use fpp_analysis::Analysis;
@@ -8,7 +9,7 @@ use fpp_ast::ModuleMember;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    SemanticTokensRangeResult, SemanticTokensResult,
+    SemanticTokensFullDeltaResult, SemanticTokensRangeResult, SemanticTokensResult,
 };
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
@@ -157,8 +158,16 @@ pub fn handle_did_close_text_document(
     not: DidCloseTextDocumentParams,
 ) -> Result<()> {
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidCloseTextDocument");
+
+    state
+        .semantic_tokens
+        .lock()
+        .unwrap()
+        .remove(&not.text_document.uri);
+
     state.vfs.did_close(not);
     state.refresh_semantics = true;
+
     Ok(())
 }
 
@@ -178,9 +187,17 @@ pub fn handle_semantic_tokens_full(
         .vfs
         .read_sync(&request.text_document.uri.path().to_string().into())?;
 
-    Ok(Some(SemanticTokensResult::Tokens(
-        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None),
-    )))
+    let semantic_tokens =
+        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None);
+
+    // Unconditionally cache the tokens
+    state
+        .semantic_tokens
+        .lock()
+        .unwrap()
+        .insert(request.text_document.uri, semantic_tokens.clone());
+
+    Ok(Some(semantic_tokens.into()))
 }
 
 pub fn handle_semantic_tokens_range(
@@ -198,4 +215,52 @@ pub fn handle_semantic_tokens_range(
         lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text))
             .finish(Some(request.range)),
     )))
+}
+
+pub fn handle_semantic_tokens_full_delta(
+    state: GlobalStateSnapshot,
+    request: lsp_types::SemanticTokensDeltaParams,
+) -> Result<Option<SemanticTokensFullDeltaResult>> {
+    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
+
+    // TODO(tumbar) We probably don't need to run a reparse here
+    let text = state
+        .vfs
+        .read_sync(&request.text_document.uri.path().to_string().into())?;
+
+    let semantic_tokens =
+        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None);
+
+    let cached_tokens = state
+        .semantic_tokens
+        .lock()
+        .unwrap()
+        .remove(&request.text_document.uri);
+
+    if let Some(
+        cached_tokens @ lsp_types::SemanticTokens {
+            result_id: Some(prev_id),
+            ..
+        },
+    ) = &cached_tokens
+        && *prev_id == request.previous_result_id
+    {
+        let delta = semantic_token_delta(cached_tokens, &semantic_tokens);
+        state
+            .semantic_tokens
+            .lock()
+            .unwrap()
+            .insert(request.text_document.uri, semantic_tokens);
+        return Ok(Some(delta.into()));
+    }
+
+    // Clone first to keep the lock short
+    let semantic_tokens_clone = semantic_tokens.clone();
+    state
+        .semantic_tokens
+        .lock()
+        .unwrap()
+        .insert(request.text_document.uri, semantic_tokens_clone);
+
+    Ok(Some(semantic_tokens.into()))
 }

@@ -88,8 +88,7 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
                     token_modifiers: SemanticTokenKind::TOKEN_MODIFIERS.into(),
                 },
 
-                // full: Some(SemanticTokensFullOptions::Delta { delta: Some(true) }),
-                full: Some(SemanticTokensFullOptions::Bool(true)),
+                full: Some(SemanticTokensFullOptions::Delta { delta: Some(true) }),
                 range: Some(true),
                 work_done_progress_options: Default::default(),
             }

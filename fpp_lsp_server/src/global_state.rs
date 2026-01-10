@@ -4,10 +4,11 @@ use crate::{lsp, vfs};
 use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
 use fpp_core::CompilerContext;
+use lsp_types::{SemanticTokens, Uri};
 use rustc_hash::FxHashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use threadpool::ThreadPool;
 
@@ -45,6 +46,8 @@ pub struct GlobalState {
     pub(crate) analysis: Arc<Analysis>,
 
     pub(crate) capabilities: Arc<lsp::capabilities::ClientCapabilities>,
+
+    pub(crate) semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
 }
 
 impl GlobalState {
@@ -75,6 +78,7 @@ impl GlobalState {
             asts: Default::default(),
             analysis: Arc::new(Analysis::new()),
             capabilities: Arc::new(capabilities),
+            semantic_tokens: Default::default(),
         }
     }
 
@@ -134,6 +138,7 @@ impl GlobalState {
             vfs: self.vfs.clone(),
             tx: self.task_tx.clone(),
             capabilities: self.capabilities.clone(),
+            semantic_tokens: self.semantic_tokens.clone(),
         }
     }
 
@@ -209,6 +214,7 @@ impl GlobalComm {
 pub struct GlobalStateSnapshot {
     pub analysis: Arc<Analysis>,
     pub asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
+    pub semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
     pub vfs: vfs::Vfs,
     pub capabilities: Arc<lsp::capabilities::ClientCapabilities>,
     tx: Sender<Task>,

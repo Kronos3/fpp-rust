@@ -26,7 +26,7 @@ impl GlobalState {
             // .on::<lsp_request::Completion>(handlers::handle_completion)
             // .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)
             .on::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
-            // .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
+            .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
             .on::<lsp_request::SemanticTokensRangeRequest>(handlers::handle_semantic_tokens_range)
             // .on_with_vfs_default::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics, empty_diagnostic_report, || lsp_server::ResponseError {
             //     code: lsp_server::ErrorCode::ServerCancelled as i32,

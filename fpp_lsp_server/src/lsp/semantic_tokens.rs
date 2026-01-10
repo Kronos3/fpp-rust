@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicU32, Ordering};
+
 use fpp_core::{LineCol, LineIndex};
 use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
@@ -130,6 +132,8 @@ pub(crate) struct SemanticTokensState {
     raw: Vec<(TextRange, SemanticTokenKind)>,
 }
 
+static TOKEN_RESULT_COUNTER: AtomicU32 = AtomicU32::new(1);
+
 impl SemanticTokensState {
     fn new(text: &str) -> SemanticTokensState {
         SemanticTokensState {
@@ -139,7 +143,14 @@ impl SemanticTokensState {
     }
 
     pub(crate) fn finish(mut self, filter_range: Option<lsp_types::Range>) -> SemanticTokens {
-        let mut tokens = SemanticTokens::default();
+        let id = TOKEN_RESULT_COUNTER
+            .fetch_add(1, Ordering::SeqCst)
+            .to_string();
+
+        let mut tokens = SemanticTokens {
+            result_id: Some(id),
+            data: vec![],
+        };
         self.raw.sort_by(|a, b| a.0.ordering(b.0));
 
         let mut last = LineCol { line: 0, col: 0 };
