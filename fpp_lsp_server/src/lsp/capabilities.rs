@@ -1,12 +1,7 @@
 //! Advertises the capabilities of the LSP Server.
 use fpp_core::WideEncoding;
 use lsp_types::{
-    FileOperationFilter, FileOperationPattern, FileOperationPatternKind,
-    FileOperationRegistrationOptions, OneOf, PositionEncodingKind, SaveOptions,
-    SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, ServerCapabilities,
-    TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions,
-    WorkspaceFileOperationsServerCapabilities, WorkspaceFoldersServerCapabilities,
-    WorkspaceServerCapabilities,
+    FileOperationFilter, FileOperationPattern, FileOperationPatternKind, FileOperationRegistrationOptions, OneOf, PositionEncodingKind, SaveOptions, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions, WorkDoneProgressOptions, WorkspaceFileOperationsServerCapabilities, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities
 };
 
 use crate::lsp::semantic_tokens::SemanticTokenKind;
@@ -94,16 +89,16 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
             }
             .into(),
         ),
-        // diagnostic_provider: Some(lsp_types::DiagnosticServerCapabilities::Options(
-        //     lsp_types::DiagnosticOptions {
-        //         identifier: Some("fpp".to_owned()),
-        //         inter_file_dependencies: true,
-        //         workspace_diagnostics: false,
-        //         work_done_progress_options: WorkDoneProgressOptions {
-        //             work_done_progress: None,
-        //         },
-        //     },
-        // )),
+        diagnostic_provider: Some(lsp_types::DiagnosticServerCapabilities::Options(
+            lsp_types::DiagnosticOptions {
+                identifier: Some("fpp".to_owned()),
+                inter_file_dependencies: true,
+                workspace_diagnostics: false,
+                work_done_progress_options: WorkDoneProgressOptions {
+                    work_done_progress: None,
+                },
+            },
+        )),
         ..Default::default()
     }
 }
