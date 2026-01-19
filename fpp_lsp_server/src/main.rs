@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
         }),
     };
 
-    let initialize_result = serde_json::to_value(initialize_result).unwrap();
+    let initialize_result = serde_json::to_value(initialize_result)?;
 
     if let Err(e) = connection.initialize_finish(initialize_id, initialize_result) {
         if e.channel_is_disconnected() {
