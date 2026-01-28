@@ -1,6 +1,5 @@
-use crate::context::LspDiagnosticsEmitter;
 use crate::global_state::Task::IndexWorkspace;
-use crate::global_state::{GlobalState, GlobalStateSnapshot};
+use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};
 use crate::lsp::utils::semantic_token_delta;
 use crate::{lsp, vfs};
 use anyhow::Result;
@@ -9,14 +8,13 @@ use fpp_ast::ModuleMember;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    SemanticTokensFullDeltaResult, SemanticTokensRangeResult, SemanticTokensResult,
+    DocumentDiagnosticReportResult, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
+    SemanticTokensResult,
 };
 use rustc_hash::FxHashMap;
-use std::cell::RefCell;
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::str::FromStr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(String, String)>> {
     let mut vfs_c_1 = vfs.clone();
@@ -77,10 +75,10 @@ async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(St
 
 pub fn handle_workspace_reload(state: &mut GlobalState, _: ()) -> Result<()> {
     // Wipe all the accumulated state
-    state.diagnostics = Rc::new(RefCell::new(LspDiagnosticsEmitter::new()));
+    state.diagnostics.lock().unwrap().clear();
     state.asts = FxHashMap::default();
     state.analysis = Arc::new(Analysis::new());
-    state.context = CompilerContext::new(state.diagnostics.clone());
+    state.context = Arc::new(Mutex::new(CompilerContext::new(state.diagnostics.clone())));
     state.vfs.clear();
 
     let watchers = vec![lsp_types::FileSystemWatcher {
@@ -137,7 +135,9 @@ pub fn handle_did_open_text_document(
     not: DidOpenTextDocumentParams,
 ) -> Result<()> {
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidOpenTextDocument");
+    let uri = not.text_document.uri.clone();
     state.vfs.did_open(not);
+    state.task(Task::Parse(uri));
     Ok(())
 }
 
@@ -146,10 +146,11 @@ pub fn handle_did_change_text_document(
     not: DidChangeTextDocumentParams,
 ) -> Result<()> {
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidChangeTextDocument");
+    let uri = not.text_document.uri.clone();
     state
         .vfs
         .did_change(not, state.capabilities.negotiated_encoding());
-    state.refresh_semantics = true;
+    state.task(Task::Parse(uri));
     Ok(())
 }
 
@@ -158,6 +159,7 @@ pub fn handle_did_close_text_document(
     not: DidCloseTextDocumentParams,
 ) -> Result<()> {
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidCloseTextDocument");
+    let uri = not.text_document.uri.clone();
 
     state
         .semantic_tokens
@@ -166,7 +168,7 @@ pub fn handle_did_close_text_document(
         .remove(&not.text_document.uri);
 
     state.vfs.did_close(not);
-    state.refresh_semantics = true;
+    state.task(Task::Parse(uri));
 
     Ok(())
 }
@@ -176,6 +178,36 @@ pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
     Ok(())
 }
 
+fn parse_text_document(
+    state: &GlobalStateSnapshot,
+    uri: &lsp_types::Uri,
+) -> Result<(String, fpp_lsp_parser::Parse)> {
+    let path_s = &uri.path().to_string();
+    let text = state.vfs.read_sync(&path_s.into())?;
+
+    let parse_kind = fpp_core::run(&mut state.context.lock().unwrap(), || {
+        if let Some(source_file) = SourceFile::get(&path_s) {
+            match state.analysis.parent_file_map.get(&source_file) {
+                Some((_, kind)) => kind.clone(),
+                None => fpp_parser::IncludeParentKind::Module,
+            }
+        } else {
+            fpp_parser::IncludeParentKind::Module
+        }
+    });
+
+    let entry_kind = match parse_kind {
+        fpp_parser::IncludeParentKind::Component => fpp_lsp_parser::TopEntryPoint::Component,
+        fpp_parser::IncludeParentKind::Module => fpp_lsp_parser::TopEntryPoint::Module,
+        fpp_parser::IncludeParentKind::TlmPacket => fpp_lsp_parser::TopEntryPoint::TlmPacket,
+        fpp_parser::IncludeParentKind::TlmPacketSet => fpp_lsp_parser::TopEntryPoint::TlmPacketSet,
+        fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
+    };
+
+    let parse = fpp_lsp_parser::parse(&text, entry_kind);
+    Ok((text, parse))
+}
+
 pub fn handle_semantic_tokens_full(
     state: GlobalStateSnapshot,
     request: lsp_types::SemanticTokensParams,
@@ -183,12 +215,8 @@ pub fn handle_semantic_tokens_full(
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
 
     // TODO(tumbar) We probably don't need to run a reparse here
-    let text = state
-        .vfs
-        .read_sync(&request.text_document.uri.path().to_string().into())?;
-
-    let semantic_tokens =
-        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None);
+    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
 
     // Unconditionally cache the tokens
     state
@@ -207,13 +235,10 @@ pub fn handle_semantic_tokens_range(
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
 
     // TODO(tumbar) We probably don't need to run a reparse here
-    let text = state
-        .vfs
-        .read_sync(&request.text_document.uri.path().to_string().into())?;
+    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     Ok(Some(SemanticTokensRangeResult::Tokens(
-        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text))
-            .finish(Some(request.range)),
+        lsp::semantic_tokens::compute(&text, &parse).finish(Some(request.range)),
     )))
 }
 
@@ -224,12 +249,9 @@ pub fn handle_semantic_tokens_full_delta(
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
 
     // TODO(tumbar) We probably don't need to run a reparse here
-    let text = state
-        .vfs
-        .read_sync(&request.text_document.uri.path().to_string().into())?;
+    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
-    let semantic_tokens =
-        lsp::semantic_tokens::compute(&text, &fpp_lsp_parser::parse(&text)).finish(None);
+    let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
 
     let cached_tokens = state
         .semantic_tokens
@@ -263,4 +285,27 @@ pub fn handle_semantic_tokens_full_delta(
         .insert(request.text_document.uri, semantic_tokens_clone);
 
     Ok(Some(semantic_tokens.into()))
+}
+
+pub fn handle_document_diagnostics(
+    state: GlobalStateSnapshot,
+    request: lsp_types::DocumentDiagnosticParams,
+) -> Result<DocumentDiagnosticReportResult> {
+    tracing::info!(uri = %request.text_document.uri.as_str(), "document diagnostics");
+
+    Ok(DocumentDiagnosticReportResult::Report(
+        lsp_types::DocumentDiagnosticReport::Full(lsp_types::RelatedFullDocumentDiagnosticReport {
+            full_document_diagnostic_report: lsp_types::FullDocumentDiagnosticReport {
+                items: state
+                    .diagnostics
+                    .lock()
+                    .unwrap()
+                    .diagnostics
+                    .get(&request.text_document.uri)
+                    .map_or(vec![], |d| d.clone()),
+                ..Default::default()
+            },
+            ..Default::default()
+        }),
+    ))
 }

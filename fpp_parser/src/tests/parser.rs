@@ -3,9 +3,8 @@ use fpp_ast::MutVisitor;
 use fpp_core::FileReader;
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
-use std::cell::RefCell;
 use std::path::PathBuf;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::{env, fs};
 
 fn run_test(file_path: &str) {
@@ -23,7 +22,7 @@ fn run_test(file_path: &str) {
     let file_reader = FsReader {};
 
     let mut diagnostics_str = vec![];
-    let mut ctx = fpp_core::CompilerContext::new(Rc::new(RefCell::new(
+    let mut ctx = fpp_core::CompilerContext::new(Arc::new(Mutex::new(
         fpp_errors::WriteEmitter::new(&mut diagnostics_str),
     )));
     let ast: String = fpp_core::run(&mut ctx, || {

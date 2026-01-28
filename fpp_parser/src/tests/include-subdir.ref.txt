@@ -17,7 +17,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/subdir/constant.fppi:1:21,
+            start: [ local path prefix ]/subdir/constant.fppi:2:1,
             end: [ local path prefix ]/subdir/constant.fppi:2:15,
         },
         pre_annotation: [

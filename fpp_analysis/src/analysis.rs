@@ -27,8 +27,8 @@ pub struct Analysis {
     pub parent_symbol: Option<Symbol>,
     /** The current nested scope for symbol lookup */
     pub nested_scope: NestedScope,
-    /** The set of files included when parsing input */
-    pub included_file_set: HashSet<fpp_core::SourceFile>,
+    /** The mapping from included files `.fppi` to their parent/which context they were included in */
+    pub parent_file_map: HashMap<fpp_core::SourceFile, (fpp_core::SourceFile, fpp_parser::IncludeParentKind)>,
     /** The mapping from type and constant symbols, expressions,
      *  and type names to their types */
     pub type_map: HashMap<fpp_core::Node, Arc<Type>>,
@@ -53,7 +53,7 @@ impl Analysis {
             use_def_symbol_set: Default::default(),
             parent_symbol: None,
             nested_scope: NestedScope::new(),
-            included_file_set: Default::default(),
+            parent_file_map: Default::default(),
             type_map: Default::default(),
             value_map: Default::default(),
         }

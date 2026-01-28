@@ -28,13 +28,7 @@ impl GlobalState {
             .on::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
             .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
             .on::<lsp_request::SemanticTokensRangeRequest>(handlers::handle_semantic_tokens_range)
-            // .on_with_vfs_default::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics, empty_diagnostic_report, || lsp_server::ResponseError {
-            //     code: lsp_server::ErrorCode::ServerCancelled as i32,
-            //     message: "server cancelled the request".to_owned(),
-            //     data: serde_json::to_value(lsp_types::DiagnosticServerCancellationData {
-            //         retrigger_request: true
-            //     }).ok(),
-            // })
+            .on::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics)
             // .on::<lsp_request::DocumentSymbolRequest>(handlers::handle_document_symbol)
             // .on::<lsp_request::FoldingRangeRequest>(handlers::handle_folding_range)
             // .on::<lsp_request::SignatureHelpRequest>(handlers::handle_signature_help)

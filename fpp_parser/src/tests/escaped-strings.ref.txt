@@ -39,7 +39,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/escaped-strings.fpp:1:20,
+            start: [ local path prefix ]/escaped-strings.fpp:2:1,
             end: [ local path prefix ]/escaped-strings.fpp:2:19,
         },
     },
@@ -61,7 +61,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/escaped-strings.fpp:2:20,
+            start: [ local path prefix ]/escaped-strings.fpp:3:1,
             end: [ local path prefix ]/escaped-strings.fpp:3:21,
         },
     },
@@ -83,7 +83,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/escaped-strings.fpp:3:22,
+            start: [ local path prefix ]/escaped-strings.fpp:4:1,
             end: [ local path prefix ]/escaped-strings.fpp:4:21,
         },
     },

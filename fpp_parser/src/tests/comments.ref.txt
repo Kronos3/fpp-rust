@@ -17,7 +17,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:1:11,
+            start: [ local path prefix ]/comments.fpp:2:1,
             end: [ local path prefix ]/comments.fpp:2:15,
         },
     },
@@ -39,7 +39,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:4:11,
+            start: [ local path prefix ]/comments.fpp:5:1,
             end: [ local path prefix ]/comments.fpp:5:15,
         },
     },
@@ -61,7 +61,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:7:2,
+            start: [ local path prefix ]/comments.fpp:8:1,
             end: [ local path prefix ]/comments.fpp:9:4,
         },
     },
@@ -83,7 +83,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:10:2,
+            start: [ local path prefix ]/comments.fpp:11:1,
             end: [ local path prefix ]/comments.fpp:13:4,
         },
     },
@@ -105,7 +105,7 @@
             },
         },
         node_id: Span {
-            start: [ local path prefix ]/comments.fpp:16:11,
+            start: [ local path prefix ]/comments.fpp:17:1,
             end: [ local path prefix ]/comments.fpp:17:15,
         },
         pre_annotation: [

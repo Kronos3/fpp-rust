@@ -4,9 +4,9 @@ mod include;
 mod parser;
 mod token;
 
-pub use include::ResolveIncludes;
-pub use parser::parse;
+pub use include::*;
 pub use parser::Parser;
+pub use parser::parse;
 
 #[cfg(test)]
 mod tests {

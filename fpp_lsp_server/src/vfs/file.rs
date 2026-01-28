@@ -1,5 +1,4 @@
 use fpp_core::LineIndex;
-use fpp_lsp_parser::Parse;
 use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams};
 use std::path::PathBuf;
 
@@ -29,9 +28,7 @@ pub enum FileContent {
 
 pub struct File {
     pub content: FileContent,
-    pub lines: fpp_core::LineIndex,
-    pub parse: Parse,
-    // semantic_tokens: lsp_types::SemanticTokens,
+    pub lines: LineIndex,
 }
 
 impl FileContent {
@@ -91,12 +88,7 @@ impl FileContent {
 impl File {
     pub(crate) fn new(content: FileContent) -> File {
         let lines = LineIndex::new(content.text());
-        let parse = fpp_lsp_parser::parse(content.text());
-        File {
-            content,
-            lines,
-            parse,
-        }
+        File { content, lines }
     }
 
     pub(crate) fn open_new(open: DidOpenTextDocumentParams) -> File {
@@ -122,7 +114,6 @@ impl File {
                 File {
                     content: FileContent::Fs(fs),
                     lines: self.lines,
-                    parse: self.parse,
                 }
             }
             FileContent::Lsp(f) => {

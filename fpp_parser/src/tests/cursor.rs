@@ -1,10 +1,9 @@
 use crate::cursor::Cursor;
-use fpp_lexer::TokenKind::*;
-use fpp_core::SourceFile;
-use std::cell::RefCell;
-use std::rc::Rc;
-use fpp_lexer::{KeywordKind, TokenKind};
 use crate::token::Token;
+use fpp_core::SourceFile;
+use fpp_lexer::TokenKind::*;
+use fpp_lexer::{KeywordKind, TokenKind};
+use std::sync::{Arc, Mutex};
 
 struct Index(usize);
 
@@ -18,7 +17,7 @@ impl Index {
 
 fn lex(content: &str) -> Vec<Token> {
     let mut diagnostics_str = vec![];
-    let mut ctx = fpp_core::CompilerContext::new(Rc::new(RefCell::new(
+    let mut ctx = fpp_core::CompilerContext::new(Arc::new(Mutex::new(
         fpp_errors::WriteEmitter::new(&mut diagnostics_str),
     )));
 
@@ -96,7 +95,11 @@ fn literals() {
         LiteralMultilineString { indent: 4 },
         "\na multiline literal string with \\\"\\\"\\\" some \\escapes \" \"\n",
     );
-    assert_token_eq(&tokens[idx.next()], LiteralMultilineString { indent: 0 }, "");
+    assert_token_eq(
+        &tokens[idx.next()],
+        LiteralMultilineString { indent: 0 },
+        "",
+    );
     assert_eq!(tokens.len(), 12);
 }
 

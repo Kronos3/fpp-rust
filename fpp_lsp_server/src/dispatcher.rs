@@ -88,7 +88,7 @@ impl RequestDispatcher<'_> {
     where
         R: lsp_types::request::Request<
                 Params: DeserializeOwned + panic::UnwindSafe + Send + Debug,
-                Result: Serialize + Default,
+                Result: Serialize,
             > + 'static,
     {
         // Try to grab the request

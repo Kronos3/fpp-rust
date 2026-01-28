@@ -6,8 +6,6 @@ use fpp_analysis::Analysis;
 use fpp_core::CompilerContext;
 use lsp_types::{SemanticTokens, Uri};
 use rustc_hash::FxHashMap;
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use threadpool::ThreadPool;
@@ -21,27 +19,28 @@ pub enum Task {
     Notification(lsp_server::Notification),
     // Retry(lsp_server::Request),
     IndexWorkspace((Progress, Vec<(String, String)>)),
+    Parse(Uri),
+    Analysis(()),
 }
 
 pub struct GlobalState {
     sender: Sender<lsp_server::Message>,
     req_queue: ReqQueue,
 
-    task_inbox: Receiver<Task>,
+    task_rx: Receiver<Task>,
+    task_tx: Sender<Task>,
 
     pub(crate) cancellable: FxHashMap<lsp_types::ProgressToken, CancellationToken>,
-    task_tx: Sender<Task>,
 
     pub(crate) vfs: vfs::Vfs,
 
     pub(crate) task_pool: Arc<ThreadPool>,
     pub(crate) shutdown_requested: bool,
-    pub(crate) refresh_semantics: bool,
 
     pub(crate) workspace_locs: String,
 
-    pub(crate) diagnostics: Rc<RefCell<LspDiagnosticsEmitter>>,
-    pub(crate) context: CompilerContext<LspDiagnosticsEmitter>,
+    pub(crate) diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
+    pub(crate) context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
     pub(crate) asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
     pub(crate) analysis: Arc<Analysis>,
 
@@ -55,26 +54,23 @@ impl GlobalState {
         sender: Sender<lsp_server::Message>,
         capabilities: lsp::capabilities::ClientCapabilities,
     ) -> GlobalState {
-        let (tx, rx) = crossbeam_channel::unbounded();
+        let (task_tx, task_rx) = crossbeam_channel::unbounded();
         let task_pool = Arc::new(ThreadPool::new(10));
 
-        let diagnostics = Rc::new(RefCell::new(LspDiagnosticsEmitter {
-            diagnostics: Default::default(),
-        }));
+        let diagnostics: Arc<Mutex<LspDiagnosticsEmitter>> = Default::default();
 
         GlobalState {
             sender,
             req_queue: Default::default(),
             cancellable: Default::default(),
-            task_inbox: rx,
-            task_tx: tx,
+            task_rx,
+            task_tx,
             vfs: vfs::Vfs::new(),
             task_pool: task_pool.clone(),
             shutdown_requested: false,
-            refresh_semantics: false,
             workspace_locs: "".to_string(),
             diagnostics: diagnostics.clone(),
-            context: CompilerContext::new(diagnostics),
+            context: Arc::new(Mutex::new(CompilerContext::new(diagnostics))),
             asts: Default::default(),
             analysis: Arc::new(Analysis::new()),
             capabilities: Arc::new(capabilities),
@@ -136,9 +132,11 @@ impl GlobalState {
             analysis: self.analysis.clone(),
             asts: self.asts.clone(),
             vfs: self.vfs.clone(),
-            tx: self.task_tx.clone(),
+            task_tx: self.task_tx.clone(),
             capabilities: self.capabilities.clone(),
             semantic_tokens: self.semantic_tokens.clone(),
+            diagnostics: self.diagnostics.clone(),
+            context: self.context.clone(),
         }
     }
 
@@ -167,14 +165,25 @@ impl GlobalState {
         }
     }
 
+    pub(crate) fn task(&self, task: Task) {
+        match self.task_tx.send(task) {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!(err = %e, "failed to queue task")
+            }
+        }
+    }
+
     fn main_loop(&mut self, receiver: Receiver<lsp_server::Message>) {
         while !self.shutdown_requested {
             crossbeam_channel::select_biased! {
-                recv(self.task_inbox) -> msg => {
+                recv(self.task_rx) -> msg => {
                     if let Ok(msg) = msg { self.on_task(msg) }
                 }
                 recv(receiver) -> msg => {
-                    if let Ok(msg) = msg { self.on_message(Instant::now(), msg) }
+                    if let Ok(msg) = msg {
+                        self.on_message(Instant::now(), msg)
+                    }
                 }
             }
         }
@@ -212,17 +221,19 @@ impl GlobalComm {
 }
 
 pub struct GlobalStateSnapshot {
+    pub context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
     pub analysis: Arc<Analysis>,
+    pub diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
     pub asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
     pub semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
     pub vfs: vfs::Vfs,
     pub capabilities: Arc<lsp::capabilities::ClientCapabilities>,
-    tx: Sender<Task>,
+    pub task_tx: Sender<Task>,
 }
 
 impl GlobalStateSnapshot {
     pub(crate) fn task(&self, task: Task) {
-        match self.tx.send(task) {
+        match self.task_tx.send(task) {
             Ok(_) => {}
             Err(e) => {
                 tracing::error!(err = %e, "failed to queue task")

@@ -47,10 +47,30 @@ impl ImpliedUse {
     }
 
     pub fn as_qual_ident(&self) -> fpp_ast::QualIdent {
-        todo!()
+        let mut tail = self.name.to_ident_list();
+        let head = tail.pop_front().unwrap();
+        tail.into_iter().fold(
+            fpp_ast::QualIdent::Unqualified(fpp_ast::Ident {
+                data: head,
+                node_id: self.id,
+            }),
+            |e1: fpp_ast::QualIdent, s| {
+                fpp_ast::QualIdent::Qualified(fpp_ast::Qualified {
+                    qualifier: Box::new(e1),
+                    name: fpp_ast::Ident {
+                        data: s,
+                        node_id: self.id,
+                    },
+                    node_id: self.id,
+                })
+            },
+        )
     }
 
     pub fn as_type_name(&self) -> fpp_ast::TypeName {
-        todo!()
+        fpp_ast::TypeName {
+            kind: fpp_ast::TypeNameKind::QualIdent(self.as_qual_ident()),
+            node_id: self.id,
+        }
     }
 }

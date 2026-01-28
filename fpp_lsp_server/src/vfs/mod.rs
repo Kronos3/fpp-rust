@@ -120,7 +120,6 @@ impl Vfs {
                         File {
                             content: FileContent::Fs(fs_file),
                             lines: file.lines,
-                            parse: file.parse,
                         },
                     );
                 }

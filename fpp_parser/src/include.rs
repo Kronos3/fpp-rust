@@ -1,9 +1,20 @@
 use crate::error::{ParseError, ParseResult};
-use crate::{parse, Parser};
+use crate::{Parser, parse};
 use fpp_ast::*;
 use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
-use rustc_hash::FxHashSet as HashSet;
+use rustc_hash::FxHashMap;
 use std::ops::ControlFlow;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum IncludeParentKind {
+    Component,
+    Module,
+    TlmPacket,
+    TlmPacketSet,
+    Topology,
+}
+
+type ResolveIncludesState = FxHashMap<SourceFile, (SourceFile, IncludeParentKind)>;
 
 pub struct ResolveIncludes<Reader: FileReader> {
     reader: Reader,
@@ -53,10 +64,11 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn resolve_spec_include<T>(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
+        kind: IncludeParentKind,
         spec_include: &SpecInclude,
         parser: fn(&mut Parser) -> Vec<T>,
-        transformer: fn(&ResolveIncludes<Reader>, &mut HashSet<SourceFile>, T, &mut Vec<T>),
+        transformer: fn(&ResolveIncludes<Reader>, &mut ResolveIncludesState, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
         let file = match self
@@ -83,7 +95,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             }
         };
 
-        a.insert(file);
+        a.insert(file, (spec_include.span().file(), kind));
         let members = parse(file, parser, Some(spec_include.span()));
         for member in members {
             transformer(self, a, member, out);
@@ -92,13 +104,14 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn component_member(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
         mut member: ComponentMember,
         out: &mut Vec<ComponentMember>,
     ) {
         match &member {
             ComponentMember::SpecInclude(spec_include) => self.resolve_spec_include(
                 a,
+                IncludeParentKind::Component,
                 spec_include,
                 |p| p.component_members(),
                 Self::component_member,
@@ -113,7 +126,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn topology_member(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
         mut member: TopologyMember,
         out: &mut Vec<TopologyMember>,
     ) {
@@ -121,6 +134,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             TopologyMember::SpecInclude(spec_include) => {
                 self.resolve_spec_include(
                     a,
+                    IncludeParentKind::Topology,
                     spec_include,
                     |p| p.topology_members(),
                     Self::topology_member,
@@ -136,7 +150,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn module_member(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
         mut member: ModuleMember,
         out: &mut Vec<ModuleMember>,
     ) {
@@ -144,6 +158,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             ModuleMember::SpecInclude(spec_include) => {
                 self.resolve_spec_include(
                     a,
+                    IncludeParentKind::Module,
                     spec_include,
                     |p| p.module_members(),
                     Self::module_member,
@@ -159,7 +174,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn tlm_packet_member(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
         mut member: TlmPacketMember,
         out: &mut Vec<TlmPacketMember>,
     ) {
@@ -167,6 +182,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             TlmPacketMember::SpecInclude(spec_include) => {
                 self.resolve_spec_include(
                     a,
+                    IncludeParentKind::TlmPacket,
                     spec_include,
                     |p| p.tlm_packet_members(),
                     Self::tlm_packet_member,
@@ -182,7 +198,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn tlm_packet_set_member(
         &self,
-        a: &mut HashSet<SourceFile>,
+        a: &mut ResolveIncludesState,
         mut member: TlmPacketSetMember,
         out: &mut Vec<TlmPacketSetMember>,
     ) {
@@ -190,6 +206,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             TlmPacketSetMember::SpecInclude(spec_include) => {
                 self.resolve_spec_include(
                     a,
+                    IncludeParentKind::TlmPacketSet,
                     spec_include,
                     |p| p.tlm_packet_set_members(),
                     Self::tlm_packet_set_member,
@@ -206,7 +223,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
 impl<Reader: FileReader> MutVisitor for ResolveIncludes<Reader> {
     type Break = ();
-    type State = HashSet<SourceFile>;
+    type State = ResolveIncludesState;
 
     fn visit_def_component(
         &self,

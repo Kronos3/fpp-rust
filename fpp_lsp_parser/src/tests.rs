@@ -1,5 +1,5 @@
 use std::{env, fs};
-use crate::parse;
+use crate::{parse, TopEntryPoint};
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
 
@@ -10,7 +10,7 @@ fn run_test_inner(fpp_file: &PathBuf, ref_file: &PathBuf) {
         Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
     };
 
-    let out = parse(&src);
+    let out = parse(&src, TopEntryPoint::Module);
     let out_s = out.debug_dump();
 
     match env::var("FPP_UPDATE_REF") {

@@ -845,7 +845,7 @@
             ],
         ),
         node_id: Span {
-            start: [ local path prefix ]/state-machine.fpp:1:19,
+            start: [ local path prefix ]/state-machine.fpp:2:1,
             end: [ local path prefix ]/state-machine.fpp:82:2,
         },
         pre_annotation: [

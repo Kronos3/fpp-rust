@@ -5,8 +5,7 @@ use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
 use line_index::LineIndex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::cell::RefCell;
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, Weak, Mutex};
 
 #[derive(Clone, Debug)]
 pub struct SpanData {
@@ -150,14 +149,14 @@ pub trait DiagnosticEmitter {
 
 pub struct CompilerContext<E: DiagnosticEmitter> {
     spans: IdMap<SpanData>,
-    files: IdMap<Rc<SourceFileData>>,
+    files: IdMap<Arc<SourceFileData>>,
     file_uris: FxHashMap<String, usize>,
     nodes: IdMap<NodeData>,
-    emitter: Rc<RefCell<E>>,
+    emitter: Arc<Mutex<E>>,
 }
 
 impl<E: DiagnosticEmitter> CompilerContext<E> {
-    pub fn new(emitter: Rc<RefCell<E>>) -> CompilerContext<E> {
+    pub fn new(emitter: Arc<Mutex<E>>) -> CompilerContext<E> {
         CompilerContext {
             spans: Default::default(),
             files: Default::default(),
@@ -177,7 +176,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
 
         let handle = self
             .files
-            .push_with(|handle| Rc::new(SourceFileData::new(handle, uri.to_string(), content)));
+            .push_with(|handle| Arc::new(SourceFileData::new(handle, uri.to_string(), content)));
 
         SourceFile { handle }
     }
@@ -238,7 +237,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         let include_span = include_span.map(|s| Box::new(self.span_get(&s).clone()));
         let handle = self.spans.push_with(|handle| SpanData {
             handle,
-            file: Rc::downgrade(file),
+            file: Arc::downgrade(file),
             start,
             length,
             include_span,
@@ -294,6 +293,6 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     pub(crate) fn diagnostic_emit(&mut self, diag: Diagnostic) {
         // Convert a standard diagnostic to a flattened diagnostic
         // Send to the emitter
-        self.emitter.borrow_mut().emit(self.diagnostic_get(diag));
+        self.emitter.lock().unwrap().emit(self.diagnostic_get(diag));
     }
 }

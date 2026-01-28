@@ -13,6 +13,7 @@ pub enum SemanticTokenKind {
     ComponentInstance,
     Constant,
     EnumConstant,
+    StructMember,
     GraphGroup,
     PortInstance,
     Port,
@@ -94,6 +95,7 @@ impl SemanticTokenKind {
             SemanticTokenKind::ComponentInstance => SemanticTokenKindRaw::Variable,
             SemanticTokenKind::Constant => SemanticTokenKindRaw::Variable,
             SemanticTokenKind::EnumConstant => SemanticTokenKindRaw::EnumMember,
+            SemanticTokenKind::StructMember => SemanticTokenKindRaw::Variable,
             SemanticTokenKind::GraphGroup => SemanticTokenKindRaw::Namespace,
             SemanticTokenKind::Port => SemanticTokenKindRaw::Class,
             SemanticTokenKind::PortInstance => SemanticTokenKindRaw::Function,
@@ -297,6 +299,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
                             SemanticTokenKind::ComponentInstance
                         }
+                        SyntaxKind::SPEC_INTERFACE_IMPORT => SemanticTokenKind::Interface,
                         _ => return VisitorResult::Next,
                     };
 
@@ -323,6 +326,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_CONSTANT => SemanticTokenKind::Constant,
                         SyntaxKind::DEF_INTERFACE => SemanticTokenKind::Interface,
                         SyntaxKind::DEF_TOPOLOGY => SemanticTokenKind::Topology,
+                        SyntaxKind::STRUCT_MEMBER => SemanticTokenKind::StructMember,
                         SyntaxKind::SPEC_CONNECTION_GRAPH_DIRECT => SemanticTokenKind::GraphGroup,
                         SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_SPECIAL => SemanticTokenKind::PortInstance,

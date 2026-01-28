@@ -1,7 +1,6 @@
-use std::cell::RefCell;
 use std::io::Read;
 use std::process::exit;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 fn compiler_main() -> String {
     let mut stdin = String::new();
@@ -21,11 +20,11 @@ fn compiler_main() -> String {
 }
 
 fn main() {
-    let diagnostics = Rc::new(RefCell::new(fpp_errors::ConsoleEmitter::color()));
+    let diagnostics = Arc::new(Mutex::new(fpp_errors::ConsoleEmitter::color()));
     let mut ctx = fpp_core::CompilerContext::new(diagnostics.clone());
     let out = fpp_core::run(&mut ctx, compiler_main);
 
-    if diagnostics.borrow().has_errors() {
+    if diagnostics.lock().unwrap().has_errors() {
         exit(1)
     }
 

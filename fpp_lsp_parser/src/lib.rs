@@ -75,10 +75,10 @@ pub use rowan::{
     WalkEvent,
 };
 
-pub(crate) fn parse_text(text: &str) -> (GreenNode, Vec<SyntaxError>) {
+pub(crate) fn parse_text(text: &str, entry: TopEntryPoint) -> (GreenNode, Vec<SyntaxError>) {
     let lexed = LexedStr::new(text);
     let parser_input = lexed.to_input();
-    let parser_output = TopEntryPoint::Module.parse(&parser_input);
+    let parser_output = entry.parse(&parser_input);
     let (node, errors, _eof) = build_tree(lexed, parser_output);
     (node, errors)
 }
@@ -185,8 +185,8 @@ impl Parse {
     }
 }
 
-pub fn parse(text: &str) -> Parse {
-    let (green, errors) = parse_text(text);
+pub fn parse(text: &str, entry: TopEntryPoint) -> Parse {
+    let (green, errors) = parse_text(text, entry);
     Parse::new(green, errors)
 }
 
