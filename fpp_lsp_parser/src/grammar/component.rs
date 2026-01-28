@@ -52,7 +52,7 @@ pub(super) fn component_member(p: &mut Parser) {
         INCLUDE_KW => spec_include(p),
         INTERNAL_KW => spec_internal_port(p),
         MATCH_KW => spec_port_matching(p),
-        PARAM_KW if p.nth_at(1, PORT_KW) => spec_port_instance(p),
+        PARAM_KW if p.nth_at(1, GET_KW) || p.nth_at(1, SET_KW) => spec_port_instance(p),
         EXTERNAL_KW | PARAM_KW => spec_param(p),
         TELEMETRY_KW if p.nth_at(1, PORT_KW) => spec_port_instance(p),
         TELEMETRY_KW => spec_telemetry(p),

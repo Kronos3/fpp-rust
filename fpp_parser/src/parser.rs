@@ -265,7 +265,7 @@ impl<'a> Parser<'a> {
             Keyword(Match) => Ok(ComponentMember::SpecPortMatching(
                 self.spec_port_matching()?,
             )),
-            Keyword(Param) if self.peek(1) == Keyword(Port) => Ok(
+            Keyword(Param) if self.peek(1) == Keyword(Get) || self.peek(1) == Keyword(Set) => Ok(
                 ComponentMember::SpecPortInstance(self.spec_port_instance()?),
             ),
             Keyword(Param | External) => Ok(ComponentMember::SpecParam(self.spec_param()?)),
