@@ -84,7 +84,7 @@ pub fn resolve_includes<Reader: FileReader>(
     reader: Reader,
     ast: &mut fpp_ast::TransUnit,
 ) -> ControlFlow<()> {
-    fpp_parser::ResolveIncludes::new(reader).visit_trans_unit(&mut a.parent_file_map, ast)
+    fpp_parser::ResolveIncludes::new(reader).visit_trans_unit(&mut a.include_context_map, ast)
 }
 
 pub fn check_semantics(a: &mut Analysis, ast: Vec<&fpp_ast::TransUnit>) -> ControlFlow<()> {

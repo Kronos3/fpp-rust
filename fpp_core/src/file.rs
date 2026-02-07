@@ -6,11 +6,12 @@ use std::cell::Ref;
 use std::fmt::{Debug, Display, Formatter};
 
 pub trait FileReader {
-    /// Read a file given the current FPP source file and the included FPP source file
-    fn include(&self, current: SourceFile, include: &str) -> Result<SourceFile, Error> {
+    /// Resolve an include path relative to the parent source file
+    /// where the "include" exists
+    fn resolve(&self, current: SourceFile, include: &str) -> Result<String, Error> {
         let current_path = if current.uri() == "<stdin>" {
             // Read from relative to the current directory
-            return self.read(include);
+            return Ok(include.to_string());
         } else {
             current.uri()
         };
@@ -25,15 +26,15 @@ pub trait FileReader {
                         "Failed to resolve path {} relative to {:?}",
                         include, parent_dir
                     )
-                        .into()),
-                    Some(file_path) => self.read(file_path),
+                    .into()),
+                    Some(file_path) => Ok(file_path.to_string()),
                 }
             }
         }
     }
 
     /// Read a file given its path
-    fn read(&self, path: &str) -> Result<SourceFile, Error>;
+    fn read(&self, path: &str) -> Result<String, Error>;
 }
 
 pub type BytePos = u32;
@@ -81,8 +82,18 @@ impl SourceFile {
         with(|w| w.file_new(uri, content))
     }
 
+    /// Same as [SourceFile::new] but sets the parent source file
+    /// Use this for included files
+    pub fn new_with_parent(uri: &str, content: String, parent: SourceFile) -> SourceFile {
+        with(|w| w.file_new_with_parent(uri, content, parent))
+    }
+
     pub fn get(uri: &str) -> Option<SourceFile> {
         with(|w| w.file_get(uri))
+    }
+
+    pub fn get_parent(&self) -> Option<SourceFile> {
+        with(|w| w.file_get_parent(self))
     }
 
     pub fn uri(&self) -> String {

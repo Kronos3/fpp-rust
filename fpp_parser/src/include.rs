@@ -1,5 +1,5 @@
 use crate::error::{ParseError, ParseResult};
-use crate::{Parser, parse};
+use crate::{parse, Parser};
 use fpp_ast::*;
 use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
 use rustc_hash::FxHashMap;
@@ -14,7 +14,7 @@ pub enum IncludeParentKind {
     Topology,
 }
 
-type ResolveIncludesState = FxHashMap<SourceFile, (SourceFile, IncludeParentKind)>;
+type ResolveIncludesState = FxHashMap<String, IncludeParentKind>;
 
 pub struct ResolveIncludes<Reader: FileReader> {
     reader: Reader,
@@ -27,7 +27,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
 
     fn check_loc_for_cycle(
         including_span: Span,
-        including_path: String,
+        including_path: &str,
         loc_opt: Option<Span>,
         mut visited_paths: Vec<Position>,
     ) -> ParseResult<()> {
@@ -53,13 +53,8 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
         }
     }
 
-    fn check_for_cycle(including_span: Span, including_path: String) -> ParseResult<()> {
-        Self::check_loc_for_cycle(
-            including_span,
-            including_path.clone(),
-            Some(including_span),
-            vec![],
-        )
+    fn check_for_cycle(including_span: Span, including_path: &str) -> ParseResult<()> {
+        Self::check_loc_for_cycle(including_span, including_path, Some(including_span), vec![])
     }
 
     fn resolve_spec_include<T>(
@@ -71,11 +66,11 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
         transformer: fn(&ResolveIncludes<Reader>, &mut ResolveIncludesState, T, &mut Vec<T>),
         out: &mut Vec<T>,
     ) {
-        let file = match self
+        let file_path = match self
             .reader
-            .include(spec_include.span().file(), &spec_include.file.data)
+            .resolve(spec_include.span().file(), &spec_include.file.data)
         {
-            Ok(file) => file,
+            Ok(file_path) => file_path,
             Err(err) => {
                 fpp_core::Diagnostic::new(
                     spec_include.file.span(),
@@ -87,7 +82,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             }
         };
 
-        match Self::check_for_cycle(spec_include.span(), file.uri()) {
+        match Self::check_for_cycle(spec_include.span(), &file_path) {
             Ok(_) => {}
             Err(err) => {
                 fpp_core::Diagnostic::from(err.into()).emit();
@@ -95,7 +90,24 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             }
         };
 
-        a.insert(file, (spec_include.span().file(), kind));
+        a.insert(file_path.clone(), kind);
+
+        // Read the file
+        let content = match self.reader.read(&file_path) {
+            Ok(content) => content,
+            Err(err) => {
+                fpp_core::Diagnostic::new(
+                    spec_include.file.span(),
+                    fpp_core::Level::Error,
+                    err.to_string(),
+                )
+                .emit();
+                return;
+            }
+        };
+
+        let file = SourceFile::new_with_parent(&file_path, content, spec_include.span().file());
+
         let members = parse(file, parser, Some(spec_include.span()));
         for member in members {
             transformer(self, a, member, out);

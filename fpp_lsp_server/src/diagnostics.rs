@@ -5,14 +5,48 @@ use lsp_types::{
 use rustc_hash::FxHashMap;
 use std::str::FromStr;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
+pub enum DiagnosticType {
+    #[default]
+    Syntax,
+    Analysis,
+}
+
 #[derive(Clone, Default)]
 pub struct LspDiagnosticsEmitter {
-    pub diagnostics: FxHashMap<Uri, Vec<Diagnostic>>,
+    mode: DiagnosticType,
+    diagnostics: FxHashMap<Uri, Vec<(DiagnosticType, Diagnostic)>>,
 }
 
 impl LspDiagnosticsEmitter {
     pub fn clear(&mut self) {
         self.diagnostics.clear();
+    }
+
+    pub fn set_mode(&mut self, mode: DiagnosticType) {
+        self.mode = mode;
+    }
+
+    /// Clears all diagnostics of type Analysis
+    pub fn clear_all_analysis(&mut self) {
+        self.diagnostics.iter_mut().for_each(|(_, diagnostics)| {
+            diagnostics.retain(|(t, _)| *t != DiagnosticType::Analysis);
+        });
+    }
+
+    /// Clears all diagnostics for a specific URI
+    pub fn clear_for(&mut self, uri: &Uri) {
+        self.diagnostics.get_mut(uri).map(|d| d.clear());
+    }
+
+    /// Returns all diagnostics for a specific URI
+    pub fn get(&self, uri: &Uri) -> Vec<Diagnostic> {
+        self.diagnostics
+            .get(uri)
+            .map_or_else(|| vec![], |v| v.clone())
+            .into_iter()
+            .map(|d| d.1)
+            .collect()
     }
 }
 
@@ -65,7 +99,7 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
         let lsp_diag = Diagnostic {
             range,
             severity: Some(diagnostic_level_to_severity(diagnostic.level)),
-            source: Some(uri.as_str().to_owned()),
+            source: Some("fpp".to_owned()),
             message: diagnostic.message,
             related_information,
             ..Diagnostic::default()
@@ -73,9 +107,9 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
 
         match self.diagnostics.get_mut(&uri) {
             None => {
-                self.diagnostics.insert(uri, vec![lsp_diag]);
+                self.diagnostics.insert(uri, vec![(self.mode, lsp_diag)]);
             }
-            Some(c) => c.push(lsp_diag),
+            Some(c) => c.push((self.mode, lsp_diag)),
         }
     }
 }

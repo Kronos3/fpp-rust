@@ -3,11 +3,12 @@ pub use file::*;
 
 use fpp_core::{Error, SourceFile};
 use lsp_types::{
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, Uri,
 };
 use rustc_hash::FxHashMap;
-use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
+use url::Url;
 
 use crate::lsp::capabilities::PositionEncoding;
 
@@ -23,36 +24,39 @@ impl Vfs {
         }
     }
 
-    pub(crate) fn read_sync(&self, path: &PathBuf) -> anyhow::Result<String> {
-        let key = path.to_string_lossy().to_string();
-        match self.files.read().unwrap().get(&key) {
+    pub(crate) fn read_sync(&self, path: &str) -> anyhow::Result<String> {
+        match self.files.read().unwrap().get(path) {
             None => Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                format!("file not in vfs: {}", key),
+                format!("file not in vfs: {}", path),
             )
             .into()),
             Some(file) => Ok(file.content.text().to_string()),
         }
     }
 
-    pub(crate) fn read(&mut self, path: &PathBuf) -> anyhow::Result<String> {
-        let key = path.to_string_lossy().to_string();
-        match self.files.read().unwrap().get(&key) {
+    pub(crate) fn read(&mut self, path: &str) -> anyhow::Result<String> {
+        match self.files.read().unwrap().get(path) {
             None => {}
             Some(file) => return Ok(file.content.text().to_string()),
         }
 
-        let text = std::fs::read_to_string(&path)?;
-
-        self.files.write().unwrap().insert(
-            key,
-            File::new(FileContent::Fs(FsFile {
-                path: path.clone(),
-                text: text.clone(),
-            })),
-        );
-
-        Ok(text)
+        let path_uri = Uri::from_str(&path)?;
+        let fs_path = path_uri.path().to_string();
+        tracing::info!(fs_path = %fs_path, "reading file");
+        match std::fs::read_to_string(&fs_path) {
+            Ok(text) => {
+                self.files.write().unwrap().insert(
+                    path.to_string(),
+                    File::new(FileContent::Fs(FsFile {
+                        path: path.to_string(),
+                        text: text.clone(),
+                    })),
+                );
+                return Ok(text);
+            }
+            Err(e) => return Err(e.into()),
+        }
     }
 
     pub fn clear(&mut self) {
@@ -67,7 +71,7 @@ impl Vfs {
     }
 
     pub fn did_open(&mut self, open: DidOpenTextDocumentParams) {
-        let key = open.text_document.uri.path().to_string();
+        let key = open.text_document.uri.as_str().to_string();
         let mut files = self.files.write().unwrap();
         let new_file = match files.remove(&key) {
             None => File::open_new(open),
@@ -78,7 +82,7 @@ impl Vfs {
     }
 
     pub fn did_change(&mut self, change: DidChangeTextDocumentParams, encoding: PositionEncoding) {
-        let key = change.text_document.uri.path().to_string();
+        let key = change.text_document.uri.as_str().to_string();
         let mut files = self.files.write().unwrap();
 
         let new_file = match files.remove(&key) {
@@ -98,7 +102,7 @@ impl Vfs {
 
     pub fn did_close(&mut self, close: DidCloseTextDocumentParams) {
         let uri = close.text_document.uri.clone();
-        let key = close.text_document.uri.path().to_string();
+        let key = close.text_document.uri.as_str().to_string();
         let mut files = self.files.write().unwrap();
 
         match files.remove(&key) {
@@ -131,18 +135,15 @@ impl Vfs {
 
                     // Read the file asynchronously
                     let mut this = self.clone();
-                    tokio::task::spawn_blocking(move || {
-                        let path_buf: PathBuf = uri.path().to_string().into();
-                        match this.read(&path_buf) {
-                            Ok(_) => {}
-                            Err(err) => {
-                                tracing::error!(
-                                    uri = key,
-                                    err = %err,
-                                    "failed to read file {} into vfs",
-                                    uri.path().to_string(),
-                                );
-                            }
+                    tokio::task::spawn_blocking(move || match this.read(uri.as_str()) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            tracing::error!(
+                                uri = key,
+                                err = %err,
+                                "failed to read file {} into vfs",
+                                uri.path().to_string(),
+                            );
                         }
                     });
                 }
@@ -152,10 +153,40 @@ impl Vfs {
 }
 
 impl fpp_core::FileReader for &Vfs {
-    fn read(&self, path: &str) -> Result<SourceFile, Error> {
+    fn resolve(&self, current: SourceFile, include: &str) -> Result<String, Error> {
+        let uri = match Uri::from_str(&current.uri()) {
+            Ok(it) => it,
+            Err(err) => return Err(err.to_string().into()),
+        };
+        let fs_path = uri.path().to_string();
+
+        let parent_file_path = std::path::Path::new(&fs_path).canonicalize()?;
+        match parent_file_path.parent() {
+            None => Err(format!("Cannot resolve parent directory of {}", &fs_path).into()),
+            Some(parent_dir) => {
+                let final_path = parent_dir.join(include);
+                match final_path.as_path().to_str() {
+                    None => Err(format!(
+                        "Failed to resolve path {} relative to {:?}",
+                        include, parent_dir
+                    )
+                    .into()),
+                    Some(file_path) => {
+                        let uri = Url::from_file_path(&file_path).map_err(|_| {
+                            Error::from(format!("Failed to convert path to URI: {}", file_path))
+                        })?;
+
+                        Ok(uri.as_str().to_string())
+                    }
+                }
+            }
+        }
+    }
+
+    fn read(&self, path: &str) -> Result<String, Error> {
         let mut this = (*self).clone();
-        match Vfs::read(&mut this, &path.into()) {
-            Ok(text) => Ok(SourceFile::new(path, text)),
+        match Vfs::read(&mut this, path) {
+            Ok(text) => Ok(text),
             Err(e) => Err(e.to_string().into()),
         }
     }

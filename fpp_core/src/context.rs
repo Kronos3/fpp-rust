@@ -5,7 +5,7 @@ use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
 use line_index::LineIndex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::sync::{Arc, Weak, Mutex};
+use std::sync::{Arc, Mutex, Weak};
 
 #[derive(Clone, Debug)]
 pub struct SpanData {
@@ -30,10 +30,16 @@ pub struct SourceFileData {
     pub uri: String,
     pub content: String,
     pub lines: LineIndex,
+    pub parent: Option<usize>,
 }
 
 impl SourceFileData {
-    fn new(handle: usize, uri: String, content: String) -> SourceFileData {
+    fn new(
+        handle: usize,
+        uri: String,
+        content: String,
+        parent: Option<SourceFile>,
+    ) -> SourceFileData {
         let lines = LineIndex::new(&content);
 
         SourceFileData {
@@ -41,6 +47,7 @@ impl SourceFileData {
             uri,
             content,
             lines,
+            parent: parent.map(|p| p.handle),
         }
     }
 
@@ -166,47 +173,70 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         }
     }
 
-    pub(crate) fn file_new(&mut self, uri: &str, content: String) -> SourceFile {
-        // If this file uri is overlapping, remove it and refresh the file contents
-        if let Some(old) = self.file_uris.get(uri) {
-            self.file_drop(SourceFile {
-                handle: old.clone(),
+    pub(crate) fn file_new(
+        &mut self,
+        uri: &str,
+        content: String,
+        parent: Option<SourceFile>,
+    ) -> SourceFile {
+        if let Some(old) = self.file_uris.get(uri).cloned() {
+            self.file_drop(SourceFile { handle: old });
+            let handle = self.files.push_with(|handle| {
+                Arc::new(SourceFileData::new(
+                    handle,
+                    uri.to_string(),
+                    content,
+                    parent,
+                ))
             });
+
+            // Handles should stay identical
+            assert_eq!(handle, old);
+            self.file_uris.insert(uri.to_string(), handle);
+            SourceFile { handle }
+        } else {
+            let handle = self.files.push_with(|handle| {
+                Arc::new(SourceFileData::new(
+                    handle,
+                    uri.to_string(),
+                    content,
+                    parent,
+                ))
+            });
+
+            self.file_uris.insert(uri.to_string(), handle);
+
+            SourceFile { handle }
         }
-
-        let handle = self
-            .files
-            .push_with(|handle| Arc::new(SourceFileData::new(handle, uri.to_string(), content)));
-
-        SourceFile { handle }
     }
 
     pub(crate) fn file_drop(&mut self, file: SourceFile) {
         // Clean up anything pointing to this file
-        let old = self.files.remove(file.handle);
-        let removed_spans = FxHashSet::from_iter(self.spans.retain(|_, v| {
-            if file.handle == v.file_handle {
-                // Span is in the file
-                return false;
-            } else {
-                // Check if file includes this span
-                let mut included_loc = &v.include_span;
-                while included_loc.is_some() {
-                    let l = included_loc.as_ref().unwrap();
-                    if l.file_handle == file.handle {
-                        return false;
-                    }
-
-                    included_loc = &l.include_span
-                }
-
-                true
-            }
-        }));
+        let removed_spans =
+            FxHashSet::from_iter(self.spans.retain(|_, v| file.handle != v.file_handle));
 
         self.nodes
             .retain(|_, v| !removed_spans.contains(&v.span_handle));
 
+        // Remove all files that are parented by this file
+        let files_to_remove: Vec<usize> = self
+            .files
+            .iter()
+            .filter(|(_, v)| {
+                v.parent
+                    .map_or_else(|| false, |parent| parent == file.handle)
+            })
+            .map(|(k, _)| *k)
+            .collect();
+
+        for handle in files_to_remove {
+            self.file_drop(SourceFile { handle })
+        }
+
+        // Clean up the file itself
+        // This should be done last so that the final retained source file id
+        // is sitting at the of the 'reuse' stack.
+        let old = self.files.remove(file.handle);
         self.file_uris.remove(&old.uri);
     }
 

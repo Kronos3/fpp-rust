@@ -1,4 +1,4 @@
-mod context;
+mod diagnostics;
 mod dispatcher;
 mod global_state;
 mod handlers;

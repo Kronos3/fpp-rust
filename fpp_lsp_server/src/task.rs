@@ -1,3 +1,4 @@
+use crate::diagnostics::DiagnosticType;
 use crate::global_state::{GlobalState, Task};
 use crate::progress::Progress;
 use crate::vfs::Vfs;
@@ -54,33 +55,54 @@ impl GlobalState {
                 self.send(lsp_server::Message::Notification(notification))
             }
             Task::Parse(uri) => {
-                let key: String = uri.path().to_string();
-                let content = self.vfs.read_sync(&key.clone().into()).unwrap();
+                // Clear all diagnostics for this file
+                self.diagnostics.lock().unwrap().clear_for(&uri);
+                self.diagnostics
+                    .lock()
+                    .unwrap()
+                    .set_mode(DiagnosticType::Syntax);
 
-                if let Some(ast) = fpp_core::run(&mut self.context.lock().unwrap(), || {
-                    let file: fpp_core::SourceFile =
-                        fpp_core::SourceFile::new(uri.as_str(), content);
-
-                    if let Some((parent, _)) = self.analysis.parent_file_map.get(&file) {
+                if let Some((ast, a)) = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                    if let Some(parent) = fpp_core::SourceFile::get(uri.as_str())
+                        .map(|file| file.get_parent())
+                        .flatten()
+                    {
+                        // This file was included from another file
+                        // We should reprocess the above file since thats the true translation unit that changed
+                        tracing::info!(uri = %uri.as_str(), parent_uri = %parent.uri(), "parent file found");
                         self.task(Task::Parse(Uri::from_str(&parent.uri()).unwrap()));
                         None
                     } else {
-                        Some(fpp_parser::parse(
-                            file,
+                        // Read the file from VFS and produce the initial AST
+                        let content = self.vfs.read_sync(uri.as_str()).unwrap();
+                        let mut ast = fpp_ast::TransUnit(fpp_parser::parse(
+                            fpp_core::SourceFile::new(uri.as_str(), content),
                             |p: &mut fpp_parser::Parser| p.module_members(),
                             None,
-                        ))
+                        ));
+
+                        let mut a = Analysis::new();
+                        a.include_context_map = self.analysis.include_context_map.clone();
+                        let _ = fpp_analysis::resolve_includes(&mut a, &self.vfs, &mut ast);
+
+                        Some((ast, a))
                     }
                 }) {
-                    self.asts.insert(key, Arc::new(fpp_ast::TransUnit(ast)));
+                    self.asts.insert(uri.as_str().to_string(), Arc::new(ast));
+                    self.analysis = Arc::new(a);
                     self.task(Task::Analysis(()))
                 }
             }
             Task::Analysis(_) => {
                 let mut analysis = Analysis::new();
-                analysis.parent_file_map = self.analysis.parent_file_map.clone();
+                analysis.include_context_map = self.analysis.include_context_map.clone();
 
-                self.diagnostics.lock().unwrap().clear();
+                // Clear all analysis diagnostics
+                self.diagnostics
+                    .lock()
+                    .unwrap()
+                    .set_mode(DiagnosticType::Analysis);
+                self.diagnostics.lock().unwrap().clear_all_analysis();
 
                 fpp_core::run(&mut self.context.lock().unwrap(), || {
                     let _ = fpp_analysis::check_semantics(

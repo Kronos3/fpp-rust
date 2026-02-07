@@ -1,4 +1,4 @@
-use crate::context::LspDiagnosticsEmitter;
+use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::progress::{CancellationToken, Progress};
 use crate::{lsp, vfs};
 use crossbeam_channel::{Receiver, Sender};

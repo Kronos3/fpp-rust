@@ -1,13 +1,12 @@
 use fpp_core::LineIndex;
 use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams};
-use std::path::PathBuf;
 
 use crate::lsp::{capabilities::PositionEncoding, utils::apply_document_changes};
 
 #[derive(Debug)]
 pub struct FsFile {
     /// Path to the file on the filesystem
-    pub path: PathBuf,
+    pub path: String,
     /// Buffered file contents
     pub text: String,
 }

@@ -1,4 +1,4 @@
-use fpp_core::FileReader;
+use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
@@ -30,7 +30,7 @@ pub(crate) fn run_test(file_path: &str) {
     fpp_core::run(&mut ctx, || {
         let source_file_path = fpp_file.to_str().unwrap();
         let src = match file_reader.read(source_file_path) {
-            Ok(src) => src,
+            Ok(src) => SourceFile::new(source_file_path, src),
             Err(err) => panic!("failed to open {}: {}", source_file_path, err.to_string()),
         };
 

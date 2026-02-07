@@ -9,7 +9,7 @@ use fpp_core::{CompilerContext, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentDiagnosticReportResult, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
-    SemanticTokensResult,
+    SemanticTokensResult, Uri,
 };
 use rustc_hash::FxHashMap;
 use std::path::PathBuf;
@@ -23,8 +23,7 @@ async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(St
     let mut locs: Vec<String> = fpp_parser::parse(
         SourceFile::new(
             &workspace_locs,
-            tokio::task::spawn_blocking(move || vfs_c_1.read(&workspace_locs_1.clone().into()))
-                .await??,
+            tokio::task::spawn_blocking(move || vfs_c_1.read(&workspace_locs_1.clone())).await??,
         ),
         |p| p.module_members(),
         None,
@@ -46,11 +45,13 @@ async fn read_workspace(workspace_locs: String, vfs: vfs::Vfs) -> Result<Vec<(St
     for file in locs {
         let mut path: PathBuf = locs_dir.into();
         path.push(file);
+        let path_uri = Uri::from_str(&path.to_string_lossy().to_string())?;
+
         let mut vfs_c = vfs.clone();
         loc_files_futures.spawn(async move {
             (
-                path.to_string_lossy().to_string(),
-                tokio::task::spawn_blocking(move || vfs_c.read(&path)).await,
+                path_uri.to_string(),
+                tokio::task::spawn_blocking(move || vfs_c.read(&path_uri.to_string())).await,
             )
         });
     }
@@ -182,13 +183,13 @@ fn parse_text_document(
     state: &GlobalStateSnapshot,
     uri: &lsp_types::Uri,
 ) -> Result<(String, fpp_lsp_parser::Parse)> {
-    let path_s = &uri.path().to_string();
-    let text = state.vfs.read_sync(&path_s.into())?;
+    let uri_c = &uri.clone();
+    let text: String = state.vfs.read_sync(uri_c.as_str())?;
 
     let parse_kind = fpp_core::run(&mut state.context.lock().unwrap(), || {
-        if let Some(source_file) = SourceFile::get(&path_s) {
-            match state.analysis.parent_file_map.get(&source_file) {
-                Some((_, kind)) => kind.clone(),
+        if let Some(source_file) = SourceFile::get(uri_c.as_str()) {
+            match state.analysis.include_context_map.get(&source_file.uri()) {
+                Some(kind) => kind.clone(),
                 None => fpp_parser::IncludeParentKind::Module,
             }
         } else {
@@ -300,9 +301,7 @@ pub fn handle_document_diagnostics(
                     .diagnostics
                     .lock()
                     .unwrap()
-                    .diagnostics
-                    .get(&request.text_document.uri)
-                    .map_or(vec![], |d| d.clone()),
+                    .get(&request.text_document.uri),
                 ..Default::default()
             },
             ..Default::default()

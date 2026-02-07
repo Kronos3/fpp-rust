@@ -49,10 +49,20 @@ class FppExtension implements vscode.Disposable {
             run: {
                 command: serverPath,
                 transport: TransportKind.stdio,
+                options: {
+                    env: {
+                        "RUST_BACKTRACE": "1"
+                    }
+                }
             },
             debug: {
                 command: serverPath,
                 transport: TransportKind.stdio,
+                options: {
+                    env: {
+                        "RUST_BACKTRACE": "1"
+                    }
+                }
             },
         };
 

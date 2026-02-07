@@ -1,5 +1,5 @@
 use rustc_hash::FxHashMap as HashMap;
-use std::collections::VecDeque;
+use std::collections::hash_map;
 
 /// A special map that will manage unique keys for you
 /// This will keep key IDs packed and reuse old IDs when items are removed
@@ -9,12 +9,12 @@ pub(crate) struct IdMap<V> {
     /// The last added ID, if we need a new ID, use this
     current: usize,
     /// If an item has been invalidated, this keeps track of IDs that can be used
-    dropped: VecDeque<usize>,
+    dropped: Vec<usize>,
 }
 
 impl<V> IdMap<V> {
     fn new_key(&mut self) -> usize {
-        match self.dropped.pop_front() {
+        match self.dropped.pop() {
             None => {
                 let out = self.current;
                 self.current += 1;
@@ -76,7 +76,7 @@ impl<V> IdMap<V> {
             .store
             .remove(&key)
             .expect("attempting to remove invalid item");
-        self.dropped.push_back(key);
+        self.dropped.push(key);
         out
     }
 
@@ -106,6 +106,10 @@ impl<V> IdMap<V> {
         let dropped_keys: Vec<_> = self.store.extract_if(f).map(|(k, _)| k).collect();
         self.dropped.extend(dropped_keys.clone());
         dropped_keys
+    }
+
+    pub fn iter(&self) -> hash_map::Iter<'_, usize, V> {
+        self.store.iter()
     }
 }
 

@@ -41,11 +41,23 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     }
 
     fn file_new(&self, uri: &str, content: String) -> SourceFile {
-        self.ctx.borrow_mut().file_new(uri, content)
+        self.ctx.borrow_mut().file_new(uri, content, None)
+    }
+
+    fn file_new_with_parent(&self, uri: &str, content: String, parent: SourceFile) -> SourceFile {
+        self.ctx.borrow_mut().file_new(uri, content, Some(parent))
     }
 
     fn file_get(&self, uri: &str) -> Option<SourceFile> {
         self.ctx.borrow().file_get_from_uri(uri)
+    }
+
+    fn file_get_parent(&self, file: &SourceFile) -> Option<SourceFile> {
+        self.ctx
+            .borrow()
+            .file_get(file)
+            .parent
+            .map(|handle| SourceFile { handle })
     }
 
     fn file_uri(&self, file: &SourceFile) -> String {
@@ -133,7 +145,9 @@ pub(crate) trait CompilerInterface {
 
     /** Source file related functions */
     fn file_new(&self, uri: &str, content: String) -> SourceFile;
+    fn file_new_with_parent(&self, uri: &str, content: String, parent: SourceFile) -> SourceFile;
     fn file_get(&self, uri: &str) -> Option<SourceFile>;
+    fn file_get_parent(&self, file: &SourceFile) -> Option<SourceFile>;
     fn file_uri(&self, file: &SourceFile) -> String;
     fn file_drop(&self, file: SourceFile);
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
