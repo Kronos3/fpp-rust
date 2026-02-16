@@ -4,6 +4,7 @@ use fpp_core::{LineCol, LineIndex};
 use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
+#[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub enum SemanticTokenKind {
     Module,
@@ -19,6 +20,11 @@ pub enum SemanticTokenKind {
     Port,
     Type,
     FormalParameter,
+    Command,
+    Event,
+    Telemetry,
+    Parameter,
+    DataProduct,
 
     StateMachine,
     StateMachineInstance,
@@ -36,6 +42,7 @@ pub enum SemanticTokenKind {
     Keyword,
 }
 
+#[allow(dead_code)]
 #[repr(u32)]
 enum SemanticTokenKindRaw {
     Namespace,
@@ -112,6 +119,11 @@ impl SemanticTokenKind {
             SemanticTokenKind::Number => SemanticTokenKindRaw::Number,
             SemanticTokenKind::String => SemanticTokenKindRaw::String,
             SemanticTokenKind::Keyword => SemanticTokenKindRaw::Keyword,
+            SemanticTokenKind::Command => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::Event => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::Telemetry => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::Parameter => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::DataProduct => SemanticTokenKindRaw::Function,
         }
     }
 

@@ -6,7 +6,7 @@ mod lsp_ext;
 mod notification;
 mod progress;
 mod request;
-mod task;
+mod analysis;
 mod util;
 
 mod lsp;
@@ -58,7 +58,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let lsp_types::InitializeParams {
         capabilities,
         // workspace_folders,
-        // initialization_options,
+        initialization_options,
         // client_info,
         ..
     } = from_json::<lsp_types::InitializeParams>("InitializeParams", &initialize_params)?;

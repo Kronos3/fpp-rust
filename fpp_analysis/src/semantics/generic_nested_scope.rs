@@ -1,5 +1,5 @@
-use crate::semantics::generic_name_symbol_map::GenericNameSymbolMap;
 use crate::semantics::SymbolInterface;
+use crate::semantics::generic_name_symbol_map::GenericNameSymbolMap;
 use fpp_util::EnumMap;
 use std::marker::PhantomData;
 

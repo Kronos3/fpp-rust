@@ -17,7 +17,9 @@ class FppExtension implements vscode.Disposable {
 
     client?: LanguageClient;
 
-    constructor() {
+    constructor(
+        private readonly context: vscode.ExtensionContext
+    ) {
         this.outputChannel = vscode.window.createOutputChannel("FPP", { log: true });
         this.traceOutputChannel = vscode.window.createOutputChannel("FPP Trace", { log: true });
 
@@ -28,7 +30,6 @@ class FppExtension implements vscode.Disposable {
             this.outputChannel,
             this.traceOutputChannel,
         ];
-
     }
 
     async initializeClient() {
@@ -87,6 +88,20 @@ class FppExtension implements vscode.Disposable {
         }
     }
 
+    async setProjectLocs(locsFile: vscode.Uri | undefined) {
+        await this.context.workspaceState.update('fpp.locsFile', locsFile?.path);
+        await this.project.locsFile(locsFile);
+    }
+
+    async setProjectScanWorkspace() {
+        await this.context.workspaceState.update('fpp.locsFile', '*');
+        await this.project.workspaceScan();
+    }
+
+    reload() {
+        return this.project.reload();
+    }
+
     async deactivate() {
         await this.client?.stop();
         await this.client?.dispose();
@@ -101,12 +116,113 @@ class FppExtension implements vscode.Disposable {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-    extension = new FppExtension();
+    extension = new FppExtension(context);
     context.subscriptions.push(
         extension,
         vscode.commands.registerCommand("fpp.restartLsp", async () => {
             await extension.initializeClient();
-        })
+        }),
+        vscode.commands.registerCommand('fpp.reload', extension.reload.bind(extension)),
+        vscode.commands.registerCommand('fpp.load', (file?: vscode.Uri) => {
+            if (!file) {
+                return vscode.commands.executeCommand('fpp.open');
+            } else {
+                return extension.setProjectLocs(file);
+            }
+        }),
+        vscode.commands.registerCommand('fpp.select', () => {
+            vscode.window.showQuickPick(
+                (async () => {
+                    const currentLocs = locs(context);
+
+                    const searchPaths = Settings.locsSearch();
+                    const excludeGlob = Settings.excludeLocs();
+
+                    const files = new Map<string, vscode.Uri>();
+                    const items: LocsQuickPickItem[] = [
+                        {
+                            kind: vscode.QuickPickItemKind.Default,
+                            label: '$(open) Open',
+                            locsKind: LocsQuickPickType.locsOpenDialog
+                        },
+                        {
+                            kind: vscode.QuickPickItemKind.Default,
+                            label: 'Scan entire workspace for .fpp files',
+                            locsKind: LocsQuickPickType.workspaceScan
+                        },
+                        {
+                            kind: vscode.QuickPickItemKind.Separator,
+                            label: ''
+                        }
+                    ];
+
+                    for (const searchPath of searchPaths) {
+                        for (const file of await vscode.workspace.findFiles(
+                            searchPath,
+                            excludeGlob,
+                        )) {
+                            files.set(vscode.workspace.asRelativePath(file), file);
+                        }
+                    }
+
+                    for (const [relPath, uri] of files.entries()) {
+                        items.push({
+                            kind: vscode.QuickPickItemKind.Default,
+                            label: relPath,
+                            uri,
+                            locsKind: LocsQuickPickType.locsFile,
+                            description: currentLocs === uri.path ? '(Active)' : undefined
+                        } as LocsQuickPickFile);
+                    }
+
+                    return items;
+                })(),
+                {
+                    title: 'Select FPP Locs for project indexing',
+                    canPickMany: false,
+                }
+            ).then((picked) => {
+                if (picked?.kind === vscode.QuickPickItemKind.Default) {
+                    switch (picked.locsKind) {
+                        case LocsQuickPickType.locsOpenDialog:
+                            vscode.commands.executeCommand('fpp.open');
+                            break;
+                        case LocsQuickPickType.locsFile:
+                            extension.setProjectLocs(picked.uri);
+                            break;
+                        case LocsQuickPickType.workspaceScan:
+                            extension.setProjectScanWorkspace();
+                            break;
+                    }
+                }
+            });
+        }),
+        vscode.commands.registerCommand('fpp.close', async () => {
+            await extension.setProjectLocs(undefined);
+        }),
+        vscode.commands.registerCommand('fpp.open', () => {
+            const currentLocs = locs(context);
+            vscode.window.showOpenDialog({
+                defaultUri: currentLocs ? vscode.Uri.file(currentLocs) : undefined,
+                openLabel: "Open locs",
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                filters: { "FPP": ["fpp"] },
+                title: "Open 'locs.fpp' files in build directory"
+            }).then((value) => {
+                if (value) {
+                    extension.setProjectLocs(value[0]);
+                }
+            });
+        }),
+        Settings.onLocsSearchChanged(() => {
+            // Don't re-scan if a locs file is already loaded
+            if (!locs(context)) {
+                extension.searchForLocs().then((f) => extension.setProjectLocs(f));
+            }
+        }),
     );
 
     await extension.initializeClient();

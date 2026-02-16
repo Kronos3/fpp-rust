@@ -1,5 +1,8 @@
 use crate::errors::SemanticResult;
-use crate::semantics::{NameGroup, NestedScope, Scope, Symbol, Type, UseDefMatching, Value};
+use crate::semantics::{
+    NameGroup, NestedScope, Scope, Symbol, SymbolInterface, Type, UseDefMatching, Value,
+};
+use fpp_core::SourceFile;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::Arc;
 
@@ -28,7 +31,7 @@ pub struct Analysis {
     /** The current nested scope for symbol lookup */
     pub nested_scope: NestedScope,
     /** The mapping from included files `.fppi` to their context they were included in */
-    pub include_context_map: HashMap<String, fpp_parser::IncludeParentKind>,
+    pub include_context_map: HashMap<SourceFile, fpp_parser::IncludeParentKind>,
     /** The mapping from type and constant symbols, expressions,
      *  and type names to their types */
     pub type_map: HashMap<fpp_core::Node, Arc<Type>>,
@@ -69,7 +72,7 @@ impl Analysis {
             Some(s) => self
                 .symbol_scope_map
                 .get(s)
-                .expect("symbol does not have a scope"),
+                .expect(&format!("symbol {} does not have a scope", s.name().data)),
         }
     }
 
@@ -84,7 +87,7 @@ impl Analysis {
             Some(s) => self
                 .symbol_scope_map
                 .get_mut(s)
-                .expect("symbol does not have a scope"),
+                .expect(&format!("symbol {} does not have a scope", s.name().data)),
         }
     }
 

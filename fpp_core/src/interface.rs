@@ -1,7 +1,9 @@
 use line_index::LineIndex;
 
 use crate::context::CompilerContext;
-use crate::{BytePos, Diagnostic, DiagnosticEmitter, Node, Position, SourceFile, Span};
+use crate::{
+    BytePos, Diagnostic, DiagnosticEmitter, GarbageCollectionSet, Node, Position, SourceFile, Span,
+};
 use std::cell::{Cell, Ref, RefCell};
 
 struct Container<'ctx, E: DiagnosticEmitter> {
@@ -40,32 +42,16 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
         node.post_annotation = post;
     }
 
-    fn file_new(&self, uri: &str, content: String) -> SourceFile {
-        self.ctx.borrow_mut().file_new(uri, content, None)
-    }
-
-    fn file_new_with_parent(&self, uri: &str, content: String, parent: SourceFile) -> SourceFile {
-        self.ctx.borrow_mut().file_new(uri, content, Some(parent))
-    }
-
-    fn file_get(&self, uri: &str) -> Option<SourceFile> {
-        self.ctx.borrow().file_get_from_uri(uri)
-    }
-
-    fn file_get_parent(&self, file: &SourceFile) -> Option<SourceFile> {
-        self.ctx
-            .borrow()
-            .file_get(file)
-            .parent
-            .map(|handle| SourceFile { handle })
+    fn file_new(&self, uri: &str, content: String, parent: Option<SourceFile>) -> SourceFile {
+        self.ctx.borrow_mut().file_new(uri, content, parent)
     }
 
     fn file_uri(&self, file: &SourceFile) -> String {
         self.ctx.borrow().file_get(file).uri.clone()
     }
 
-    fn file_drop(&self, file: SourceFile) {
-        self.ctx.borrow_mut().file_drop(file)
+    fn file_parent(&self, file: &SourceFile) -> Option<SourceFile> {
+        self.ctx.borrow_mut().file_get(file).parent
     }
 
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String> {
@@ -133,6 +119,18 @@ impl<'ctx, E: DiagnosticEmitter> CompilerInterface for Container<'ctx, E> {
     fn diagnostic_emit(&self, diag: Diagnostic) {
         self.ctx.borrow_mut().diagnostic_emit(diag)
     }
+
+    fn garbage_collection_start(&self) {
+        self.ctx.borrow_mut().garbage_collection_start();
+    }
+
+    fn garbage_collection_finish(&self) -> GarbageCollectionSet {
+        self.ctx.borrow_mut().garbage_collection_finish()
+    }
+
+    fn garbage_collection_cleanup(&self, gc: &GarbageCollectionSet) {
+        self.ctx.borrow_mut().garbage_collection_cleanup(gc);
+    }
 }
 
 pub(crate) trait CompilerInterface {
@@ -144,12 +142,9 @@ pub(crate) trait CompilerInterface {
     fn node_add_annotation(&self, node: &Node, pre: Vec<String>, post: Vec<String>);
 
     /** Source file related functions */
-    fn file_new(&self, uri: &str, content: String) -> SourceFile;
-    fn file_new_with_parent(&self, uri: &str, content: String, parent: SourceFile) -> SourceFile;
-    fn file_get(&self, uri: &str) -> Option<SourceFile>;
-    fn file_get_parent(&self, file: &SourceFile) -> Option<SourceFile>;
+    fn file_new(&self, uri: &str, content: String, parent: Option<SourceFile>) -> SourceFile;
     fn file_uri(&self, file: &SourceFile) -> String;
-    fn file_drop(&self, file: SourceFile);
+    fn file_parent(&self, file: &SourceFile) -> Option<SourceFile>;
     fn file_content(&self, file: &SourceFile) -> Ref<'_, String>;
     fn file_lines(&self, file: &SourceFile) -> Ref<'_, LineIndex>;
     fn file_len(&self, file: &SourceFile) -> usize;
@@ -170,6 +165,11 @@ pub(crate) trait CompilerInterface {
 
     /** Diagnostic related functions */
     fn diagnostic_emit(&self, diag: Diagnostic);
+
+    /** Garbage collection related functions */
+    fn garbage_collection_start(&self);
+    fn garbage_collection_finish(&self) -> GarbageCollectionSet;
+    fn garbage_collection_cleanup(&self, gc: &GarbageCollectionSet);
 }
 
 // A thread local variable that stores a pointer to [`CompilerInterface`].

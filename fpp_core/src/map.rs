@@ -1,5 +1,4 @@
 use rustc_hash::FxHashMap as HashMap;
-use std::collections::hash_map;
 
 /// A special map that will manage unique keys for you
 /// This will keep key IDs packed and reuse old IDs when items are removed
@@ -42,6 +41,10 @@ impl<V> IdMap<V> {
         key
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &V> {
+        self.store.values()
+    }
+
     /// Insert an item into the map given a predicate.
     /// The predicate will be given the new items key.
     /// This is to be used when they key is needed to construct the item
@@ -71,15 +74,6 @@ impl<V> IdMap<V> {
         self.store.get_mut(&key).unwrap()
     }
 
-    pub fn remove(&mut self, key: usize) -> V {
-        let out = self
-            .store
-            .remove(&key)
-            .expect("attempting to remove invalid item");
-        self.dropped.push(key);
-        out
-    }
-
     /// Retains only the elements specified by the predicate.
     ///
     /// In other words, remove all pairs `(k, v)` for which `f(&k, &mut v)` returns `false`.
@@ -106,10 +100,6 @@ impl<V> IdMap<V> {
         let dropped_keys: Vec<_> = self.store.extract_if(f).map(|(k, _)| k).collect();
         self.dropped.extend(dropped_keys.clone());
         dropped_keys
-    }
-
-    pub fn iter(&self) -> hash_map::Iter<'_, usize, V> {
-        self.store.iter()
     }
 }
 

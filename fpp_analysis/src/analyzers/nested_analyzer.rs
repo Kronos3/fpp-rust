@@ -1,6 +1,6 @@
+use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::semantics::Symbol;
-use crate::Analysis;
 use fpp_ast::{MoveWalkable, Node, Visitor, Walkable};
 use std::marker::PhantomData;
 use std::ops::ControlFlow;

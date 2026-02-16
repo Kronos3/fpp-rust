@@ -338,7 +338,7 @@ fn spec_param(p: &mut Parser) {
         m.complete(p, SAVE_OPCODE);
     }
 
-    m.complete(p, PARAM_KW);
+    m.complete(p, SPEC_PARAM);
 }
 
 fn spec_telemetry(p: &mut Parser) {

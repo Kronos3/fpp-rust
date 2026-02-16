@@ -5,7 +5,7 @@ use crate::interface::with;
 use crate::{BytePos, Spanned};
 use std::fmt::{Debug, Display, Formatter};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Span {
     pub(crate) handle: usize,
 }

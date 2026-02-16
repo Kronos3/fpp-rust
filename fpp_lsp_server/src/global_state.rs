@@ -1,9 +1,11 @@
+pub use crate::analysis::Task;
 use crate::diagnostics::LspDiagnosticsEmitter;
-use crate::progress::{CancellationToken, Progress};
+use crate::progress::CancellationToken;
 use crate::{lsp, vfs};
 use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
-use fpp_core::CompilerContext;
+use fpp_core::{CompilerContext, SourceFile};
+use lsp_server::RequestId;
 use lsp_types::{SemanticTokens, Uri};
 use rustc_hash::FxHashMap;
 use std::sync::{Arc, Mutex};
@@ -14,21 +16,32 @@ pub(crate) type ReqHandler = fn(&mut GlobalState, lsp_server::Response);
 type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
 
 #[derive(Debug)]
-pub enum Task {
-    Response(lsp_server::Response),
-    Notification(lsp_server::Notification),
-    // Retry(lsp_server::Request),
-    IndexWorkspace((Progress, Vec<(String, String)>)),
-    Parse(Uri),
-    Analysis(()),
+pub struct TranslationUnitCache {
+    pub file: SourceFile,
+    pub ast: fpp_ast::TransUnit,
+    pub include_context_map: FxHashMap<SourceFile, fpp_parser::IncludeParentKind>,
+    pub gc: fpp_core::GarbageCollectionSet,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub enum Workspace {
+    #[default]
+    None,
+    LocsFile(Uri),
+    FullWorkspace(Uri),
+}
+
+pub struct TaskWithReply {
+    task: Task,
+    reply_to: Option<RequestId>,
 }
 
 pub struct GlobalState {
     sender: Sender<lsp_server::Message>,
     req_queue: ReqQueue,
 
-    task_rx: Receiver<Task>,
-    task_tx: Sender<Task>,
+    task_rx: Receiver<TaskWithReply>,
+    task_tx: Sender<TaskWithReply>,
 
     pub(crate) cancellable: FxHashMap<lsp_types::ProgressToken, CancellationToken>,
 
@@ -37,15 +50,19 @@ pub struct GlobalState {
     pub(crate) task_pool: Arc<ThreadPool>,
     pub(crate) shutdown_requested: bool,
 
-    pub(crate) workspace_locs: String,
+    pub(crate) workspace: Workspace,
 
     pub(crate) diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
     pub(crate) context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
-    pub(crate) asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
+    /// Top level files in project pointing to their translation unit
+    pub(crate) cache: FxHashMap<SourceFile, Arc<TranslationUnitCache>>,
+    pub(crate) files: Arc<FxHashMap<String, Vec<SourceFile>>>,
+    /// Computed compiler analysis
     pub(crate) analysis: Arc<Analysis>,
 
     pub(crate) capabilities: Arc<lsp::capabilities::ClientCapabilities>,
 
+    /// Semantic tokens cache for computing deltas of semantic tokens
     pub(crate) semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
 }
 
@@ -68,10 +85,11 @@ impl GlobalState {
             vfs: vfs::Vfs::new(),
             task_pool: task_pool.clone(),
             shutdown_requested: false,
-            workspace_locs: "".to_string(),
+            workspace: Workspace::None,
             diagnostics: diagnostics.clone(),
             context: Arc::new(Mutex::new(CompilerContext::new(diagnostics))),
-            asts: Default::default(),
+            cache: Default::default(),
+            files: Default::default(),
             analysis: Arc::new(Analysis::new()),
             capabilities: Arc::new(capabilities),
             semantic_tokens: Default::default(),
@@ -130,7 +148,8 @@ impl GlobalState {
     pub(crate) fn snapshot(&self) -> GlobalStateSnapshot {
         GlobalStateSnapshot {
             analysis: self.analysis.clone(),
-            asts: self.asts.clone(),
+            cache: self.cache.clone(),
+            files: self.files.clone(),
             vfs: self.vfs.clone(),
             task_tx: self.task_tx.clone(),
             capabilities: self.capabilities.clone(),
@@ -166,7 +185,22 @@ impl GlobalState {
     }
 
     pub(crate) fn task(&self, task: Task) {
-        match self.task_tx.send(task) {
+        match self.task_tx.send(TaskWithReply {
+            task,
+            reply_to: None,
+        }) {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::error!(err = %e, "failed to queue task")
+            }
+        }
+    }
+
+    pub(crate) fn task_reply_to(&self, task: Task, reply_to: RequestId) {
+        match self.task_tx.send(TaskWithReply {
+            task,
+            reply_to: Some(reply_to),
+        }) {
             Ok(_) => {}
             Err(e) => {
                 tracing::error!(err = %e, "failed to queue task")
@@ -178,7 +212,15 @@ impl GlobalState {
         while !self.shutdown_requested {
             crossbeam_channel::select_biased! {
                 recv(self.task_rx) -> msg => {
-                    if let Ok(msg) = msg { self.on_task(msg) }
+                    if let Ok(msg) = msg {
+                        self.on_task(msg.task);
+                        if let Some(reply_id) = msg.reply_to {
+                            // The previous task might have put some more tasks on the queue
+                            // We don't want to synchronously respond here since it'll finish early
+                            // Instead we just place another 'response' task on the queue
+                            self.task(Task::Response(lsp_server::Response::new_ok(reply_id, &())))
+                        }
+                    }
                 }
                 recv(receiver) -> msg => {
                     if let Ok(msg) = msg {
@@ -199,11 +241,26 @@ impl GlobalState {
 }
 
 #[derive(Clone)]
-pub struct GlobalComm(Sender<Task>);
+pub struct GlobalComm(Sender<TaskWithReply>);
 
 impl GlobalComm {
-    pub(crate) fn send(&self, task: Task) {
-        match self.0.send(task) {
+    pub(crate) fn task(&self, task: Task) {
+        match self.0.send(TaskWithReply {
+            task,
+            reply_to: None,
+        }) {
+            Ok(_) => {}
+            Err(err) => {
+                tracing::error!(err = %err, "failed to queue task")
+            }
+        }
+    }
+
+    pub(crate) fn task_reply_to(&self, task: Task, reply_to: RequestId) {
+        match self.0.send(TaskWithReply {
+            task,
+            reply_to: Some(reply_to),
+        }) {
             Ok(_) => {}
             Err(err) => {
                 tracing::error!(err = %err, "failed to queue task")
@@ -216,7 +273,7 @@ impl GlobalComm {
         params: N::Params,
     ) {
         let not = lsp_server::Notification::new(N::METHOD.to_owned(), params);
-        self.send(Task::Notification(not.into()));
+        self.task(Task::Notification(not.into()));
     }
 }
 
@@ -224,19 +281,35 @@ pub struct GlobalStateSnapshot {
     pub context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
     pub analysis: Arc<Analysis>,
     pub diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
-    pub asts: FxHashMap<String, Arc<fpp_ast::TransUnit>>,
+    pub cache: FxHashMap<SourceFile, Arc<TranslationUnitCache>>,
+    pub files: Arc<FxHashMap<String, Vec<SourceFile>>>,
     pub semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
     pub vfs: vfs::Vfs,
     pub capabilities: Arc<lsp::capabilities::ClientCapabilities>,
-    pub task_tx: Sender<Task>,
+    pub task_tx: Sender<TaskWithReply>,
 }
 
 impl GlobalStateSnapshot {
     pub(crate) fn task(&self, task: Task) {
-        match self.task_tx.send(task) {
+        match self.task_tx.send(TaskWithReply {
+            task,
+            reply_to: None,
+        }) {
             Ok(_) => {}
             Err(e) => {
                 tracing::error!(err = %e, "failed to queue task")
+            }
+        }
+    }
+
+    pub(crate) fn task_reply_to(&self, task: Task, reply_to: RequestId) {
+        match self.task_tx.send(TaskWithReply {
+            task,
+            reply_to: Some(reply_to),
+        }) {
+            Ok(_) => {}
+            Err(err) => {
+                tracing::error!(err = %err, "failed to queue task")
             }
         }
     }

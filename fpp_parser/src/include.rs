@@ -5,16 +5,16 @@ use fpp_core::{FileReader, Position, SourceFile, Span, Spanned};
 use rustc_hash::FxHashMap;
 use std::ops::ControlFlow;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum IncludeParentKind {
-    Component,
-    Module,
-    TlmPacket,
     TlmPacketSet,
+    TlmPacket,
     Topology,
+    Module,
+    Component,
 }
 
-type ResolveIncludesState = FxHashMap<String, IncludeParentKind>;
+type ResolveIncludesState = FxHashMap<SourceFile, IncludeParentKind>;
 
 pub struct ResolveIncludes<Reader: FileReader> {
     reader: Reader,
@@ -90,8 +90,6 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
             }
         };
 
-        a.insert(file_path.clone(), kind);
-
         // Read the file
         let content = match self.reader.read(&file_path) {
             Ok(content) => content,
@@ -107,6 +105,7 @@ impl<Reader: FileReader> ResolveIncludes<Reader> {
         };
 
         let file = SourceFile::new_with_parent(&file_path, content, spec_include.span().file());
+        a.insert(file, kind);
 
         let members = parse(file, parser, Some(spec_include.span()));
         for member in members {

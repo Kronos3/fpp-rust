@@ -198,6 +198,7 @@ pub enum SyntaxKind {
     SPEC_STATE_MACHINE_INSTANCE,
     SPEC_STATE_TRANSITION,
     SPEC_TELEMETRY,
+    SPEC_PARAM,
     SPEC_INSTANCE,
     SPEC_TOP_PORT,
     SPEC_TLM_PACKET,
@@ -348,6 +349,7 @@ impl SyntaxKind {
                 | SPEC_STATE_MACHINE_INSTANCE
                 | SPEC_STATE_TRANSITION
                 | SPEC_TELEMETRY
+                | SPEC_PARAM
         )
     }
 

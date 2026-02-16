@@ -150,11 +150,13 @@ impl Vfs {
             },
         };
     }
-}
 
-impl fpp_core::FileReader for &Vfs {
-    fn resolve(&self, current: SourceFile, include: &str) -> Result<String, Error> {
-        let uri = match Uri::from_str(&current.uri()) {
+    pub fn resolve_uri_relative_path(
+        &self,
+        base_file: &str,
+        relative: &str,
+    ) -> Result<String, Error> {
+        let uri = match Uri::from_str(base_file) {
             Ok(it) => it,
             Err(err) => return Err(err.to_string().into()),
         };
@@ -164,11 +166,11 @@ impl fpp_core::FileReader for &Vfs {
         match parent_file_path.parent() {
             None => Err(format!("Cannot resolve parent directory of {}", &fs_path).into()),
             Some(parent_dir) => {
-                let final_path = parent_dir.join(include);
+                let final_path = parent_dir.join(relative);
                 match final_path.as_path().to_str() {
                     None => Err(format!(
                         "Failed to resolve path {} relative to {:?}",
-                        include, parent_dir
+                        relative, parent_dir
                     )
                     .into()),
                     Some(file_path) => {
@@ -181,6 +183,12 @@ impl fpp_core::FileReader for &Vfs {
                 }
             }
         }
+    }
+}
+
+impl fpp_core::FileReader for &Vfs {
+    fn resolve(&self, current: SourceFile, include: &str) -> Result<String, Error> {
+        self.resolve_uri_relative_path(&current.uri(), include)
     }
 
     fn read(&self, path: &str) -> Result<String, Error> {

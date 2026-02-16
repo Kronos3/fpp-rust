@@ -1,7 +1,7 @@
 //! See [RequestDispatcher].
 use std::{fmt::Debug, panic, thread};
 
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};
 
@@ -48,6 +48,32 @@ impl RequestDispatcher<'_> {
         if let Some(response) = result_to_response::<R>(req.id, result) {
             self.global_state.respond(response);
         }
+
+        self
+    }
+
+    pub(crate) fn on_run_task<R>(&mut self, t: fn(R::Params) -> anyhow::Result<Task>) -> &mut Self
+    where
+        R: lsp_types::request::Request,
+        R::Params: DeserializeOwned + panic::UnwindSafe + Debug + Clone,
+        R::Result: Serialize,
+    {
+        let (req, params) = match self.parse::<R>() {
+            Some(it) => it,
+            None => return self,
+        };
+        let _guard =
+            tracing::info_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
+        tracing::debug!(?params);
+
+        match t(params) {
+            Ok(task) => self.global_state.task_reply_to(task, req.id.clone()),
+            Err(err) => {
+                if let Some(response) = result_to_response::<R>(req.id, Err(err)) {
+                    self.global_state.respond(response);
+                }
+            }
+        };
 
         self
     }
@@ -117,7 +143,7 @@ impl RequestDispatcher<'_> {
         self.global_state.task_pool.execute(move || {
             let result = f(snapshot, params);
             if let Some(response) = result_to_response::<R>(req_id, result) {
-                sender.send(Task::Response(response));
+                sender.task(Task::Response(response));
             }
         });
 

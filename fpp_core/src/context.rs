@@ -1,10 +1,12 @@
 use crate::diagnostic::DiagnosticMessage;
 use crate::file::SourceFile;
+use crate::interface::with;
 use crate::map::IdMap;
 use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
 use line_index::LineIndex;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
+use std::ops::Deref;
 use std::sync::{Arc, Mutex, Weak};
 
 #[derive(Clone, Debug)]
@@ -14,9 +16,6 @@ pub struct SpanData {
     pub start: BytePos,
     pub length: BytePos,
     pub include_span: Option<Box<SpanData>>,
-
-    /// Exposed outside the weak reference for performance
-    file_handle: usize,
 }
 
 impl SpanData {
@@ -25,12 +24,47 @@ impl SpanData {
     }
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct GarbageCollectionSet {
+    pub files: FxHashSet<usize>,
+    pub spans: FxHashSet<usize>,
+    pub nodes: FxHashSet<usize>,
+}
+
+impl GarbageCollectionSet {
+    pub fn get_uri<E: DiagnosticEmitter>(
+        &self,
+        ctx: &CompilerContext<E>,
+        uri: &str,
+    ) -> Option<SourceFile> {
+        for file in &self.files {
+            if uri == ctx.files.get(*file).uri {
+                return Some(SourceFile { handle: *file });
+            }
+        }
+
+        None
+    }
+
+    pub fn start() {
+        with(|ctx| ctx.garbage_collection_start())
+    }
+
+    pub fn finish() -> GarbageCollectionSet {
+        with(|ctx| ctx.garbage_collection_finish())
+    }
+
+    pub fn cleanup(&self) {
+        with(|ctx| ctx.garbage_collection_cleanup(self));
+    }
+}
+
 pub struct SourceFileData {
     pub handle: usize,
     pub uri: String,
     pub content: String,
     pub lines: LineIndex,
-    pub parent: Option<usize>,
+    pub parent: Option<SourceFile>,
 }
 
 impl SourceFileData {
@@ -47,7 +81,7 @@ impl SourceFileData {
             uri,
             content,
             lines,
-            parent: parent.map(|p| p.handle),
+            parent,
         }
     }
 
@@ -157,9 +191,10 @@ pub trait DiagnosticEmitter {
 pub struct CompilerContext<E: DiagnosticEmitter> {
     spans: IdMap<SpanData>,
     files: IdMap<Arc<SourceFileData>>,
-    file_uris: FxHashMap<String, usize>,
     nodes: IdMap<NodeData>,
     emitter: Arc<Mutex<E>>,
+
+    gc: Option<GarbageCollectionSet>,
 }
 
 impl<E: DiagnosticEmitter> CompilerContext<E> {
@@ -167,9 +202,10 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         CompilerContext {
             spans: Default::default(),
             files: Default::default(),
-            file_uris: Default::default(),
             nodes: Default::default(),
             emitter,
+
+            gc: Default::default(),
         }
     }
 
@@ -179,71 +215,40 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         content: String,
         parent: Option<SourceFile>,
     ) -> SourceFile {
-        if let Some(old) = self.file_uris.get(uri).cloned() {
-            self.file_drop(SourceFile { handle: old });
-            let handle = self.files.push_with(|handle| {
-                Arc::new(SourceFileData::new(
-                    handle,
-                    uri.to_string(),
-                    content,
-                    parent,
-                ))
-            });
+        let handle = self.files.push_with(|handle| {
+            Arc::new(SourceFileData::new(
+                handle,
+                uri.to_string(),
+                content,
+                parent,
+            ))
+        });
 
-            // Handles should stay identical
-            assert_eq!(handle, old);
-            self.file_uris.insert(uri.to_string(), handle);
-            SourceFile { handle }
-        } else {
-            let handle = self.files.push_with(|handle| {
-                Arc::new(SourceFileData::new(
-                    handle,
-                    uri.to_string(),
-                    content,
-                    parent,
-                ))
-            });
+        self.gc.as_mut().map(|g| g.files.insert(handle));
 
-            self.file_uris.insert(uri.to_string(), handle);
+        SourceFile { handle }
+    }
 
-            SourceFile { handle }
+    pub(crate) fn garbage_collection_start(&mut self) {
+        assert!(self.gc.is_none(), "GC context is already set");
+        self.gc = Some(GarbageCollectionSet::default());
+    }
+
+    pub(crate) fn garbage_collection_finish(&mut self) -> GarbageCollectionSet {
+        match self.gc.take() {
+            Some(context) => context,
+            None => panic!("GC context is not set"),
         }
     }
 
-    pub(crate) fn file_drop(&mut self, file: SourceFile) {
-        // Clean up anything pointing to this file
-        let removed_spans =
-            FxHashSet::from_iter(self.spans.retain(|_, v| file.handle != v.file_handle));
-
-        self.nodes
-            .retain(|_, v| !removed_spans.contains(&v.span_handle));
-
-        // Remove all files that are parented by this file
-        let files_to_remove: Vec<usize> = self
-            .files
-            .iter()
-            .filter(|(_, v)| {
-                v.parent
-                    .map_or_else(|| false, |parent| parent == file.handle)
-            })
-            .map(|(k, _)| *k)
-            .collect();
-
-        for handle in files_to_remove {
-            self.file_drop(SourceFile { handle })
-        }
-
-        // Clean up the file itself
-        // This should be done last so that the final retained source file id
-        // is sitting at the of the 'reuse' stack.
-        let old = self.files.remove(file.handle);
-        self.file_uris.remove(&old.uri);
+    pub(crate) fn garbage_collection_cleanup(&mut self, gc: &GarbageCollectionSet) {
+        self.files.retain(|k, _| !gc.files.contains(k));
+        self.spans.retain(|k, _| !gc.spans.contains(k));
+        self.nodes.retain(|k, _| !gc.nodes.contains(k));
     }
 
-    pub(crate) fn file_get_from_uri(&self, uri: &str) -> Option<SourceFile> {
-        self.file_uris
-            .get(uri)
-            .map(|s| SourceFile { handle: s.clone() })
+    pub fn files(&self) -> impl Iterator<Item = &SourceFileData> {
+        self.files.iter().map(|f| f.deref())
     }
 
     pub(crate) fn node_add(&mut self, span: &Span) -> Node {
@@ -252,6 +257,8 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             pre_annotation: vec![],
             post_annotation: vec![],
         });
+
+        self.gc.as_mut().map(|g| g.nodes.insert(handle));
 
         Node { handle }
     }
@@ -271,8 +278,9 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
             start,
             length,
             include_span,
-            file_handle: file.handle,
         });
+
+        self.gc.as_mut().map(|g| g.spans.insert(handle));
 
         Span { handle }
     }

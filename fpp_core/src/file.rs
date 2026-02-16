@@ -79,29 +79,20 @@ impl SourceFile {
     ///
     /// returns: SourceFile
     pub fn new(uri: &str, content: String) -> SourceFile {
-        with(|w| w.file_new(uri, content))
+        with(|w| w.file_new(uri, content, None))
     }
 
-    /// Same as [SourceFile::new] but sets the parent source file
-    /// Use this for included files
     pub fn new_with_parent(uri: &str, content: String, parent: SourceFile) -> SourceFile {
-        with(|w| w.file_new_with_parent(uri, content, parent))
-    }
-
-    pub fn get(uri: &str) -> Option<SourceFile> {
-        with(|w| w.file_get(uri))
-    }
-
-    pub fn get_parent(&self) -> Option<SourceFile> {
-        with(|w| w.file_get_parent(self))
+        with(|w| w.file_new(uri, content, Some(parent)))
     }
 
     pub fn uri(&self) -> String {
         with(|w| w.file_uri(self))
     }
 
-    pub fn drop(self) {
-        with(|w| w.file_drop(self))
+    /// Get the parent file this file was included from (if any)
+    pub fn parent(&self) -> Option<SourceFile> {
+        with(|w| w.file_parent(self))
     }
 
     pub fn read(&self) -> SourceFileContent<'_> {

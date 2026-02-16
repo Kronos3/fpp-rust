@@ -332,7 +332,7 @@ ROOT@0..6806
             QUEUE_FULL@1219..1225
               ASSERT_KW@1219..1225 "assert"
           EOL@1225..1282 "\n    @< Command speci ..."
-          PARAM_KW@1282..1354
+          SPEC_PARAM@1282..1354
             EXTERNAL_KW@1282..1290 "external"
             WHITESPACE@1290..1291 " "
             PARAM_KW@1291..1296 "param"
