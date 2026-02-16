@@ -29,7 +29,7 @@ export class LocsFileScanner implements WorkspaceFileScanner {
             message: "Loading FPP workspace through locs file",
         });
 
-        await client.sendRequest(ext.setLocsWorkspace, this.locsFile.toString());
+        await client.sendRequest(ext.setLocsWorkspace, { uri: this.locsFile.toString() });
     }
 }
 
@@ -53,6 +53,8 @@ export class EntireWorkspaceScanner implements WorkspaceFileScanner {
             increment: 0
         });
 
-        await client.sendRequest(ext.setFilesWorkspace, vscode.workspace.workspaceFolders[0].toString());
+        await client.sendRequest(ext.setFilesWorkspace, {
+            uri: vscode.workspace.workspaceFolders[0].toString()
+        });
     }
 }

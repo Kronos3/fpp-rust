@@ -88,20 +88,20 @@ export class FppProject implements vscode.Disposable {
         }
     }
 
-    async locsFile(locsFile: vscode.Uri | undefined) {
+    async locsFile(client: LanguageClient, locsFile: vscode.Uri | undefined) {
         if (!locsFile) {
             this.workspace = undefined;
             this.refreshLanguageStatus();
         } else {
             this.workspace = new LocsFileScanner(locsFile);
             this.refreshLanguageStatus();
-            await this.reload();
+            await this.reload(client);
         }
     }
 
-    async workspaceScan() {
+    async workspaceScan(client: LanguageClient) {
         this.workspace = new EntireWorkspaceScanner();
-        await this.reload();
+        await this.reload(client);
     }
 
     dispose() {

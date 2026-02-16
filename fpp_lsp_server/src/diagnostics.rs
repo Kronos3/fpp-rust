@@ -15,7 +15,7 @@ pub enum DiagnosticType {
 #[derive(Clone, Default)]
 pub struct LspDiagnosticsEmitter {
     mode: DiagnosticType,
-    diagnostics: FxHashMap<Uri, Vec<(DiagnosticType, Diagnostic)>>,
+    diagnostics: FxHashMap<String, Vec<(DiagnosticType, Diagnostic)>>,
 }
 
 impl LspDiagnosticsEmitter {
@@ -35,12 +35,12 @@ impl LspDiagnosticsEmitter {
     }
 
     /// Clears all diagnostics for a specific URI
-    pub fn clear_for(&mut self, uri: &Uri) {
+    pub fn clear_for(&mut self, uri: &str) {
         self.diagnostics.get_mut(uri).map(|d| d.clear());
     }
 
     /// Returns all diagnostics for a specific URI
-    pub fn get(&self, uri: &Uri) -> Vec<Diagnostic> {
+    pub fn get(&self, uri: &str) -> Vec<Diagnostic> {
         self.diagnostics
             .get(uri)
             .map_or_else(|| vec![], |v| v.clone())
@@ -105,9 +105,9 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
             ..Diagnostic::default()
         };
 
-        match self.diagnostics.get_mut(&uri) {
+        match self.diagnostics.get_mut(&file.uri) {
             None => {
-                self.diagnostics.insert(uri, vec![(self.mode, lsp_diag)]);
+                self.diagnostics.insert(file.uri.clone(), vec![(self.mode, lsp_diag)]);
             }
             Some(c) => c.push((self.mode, lsp_diag)),
         }

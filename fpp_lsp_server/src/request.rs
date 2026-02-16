@@ -23,8 +23,8 @@ impl GlobalState {
             // Request handlers that must run on the main thread
             // because they mutate GlobalState:
             .on_run_task::<lsp_ext::ReloadWorkspace>(|_| Ok(Task::ReloadWorkspace))
-            .on_run_task::<lsp_ext::SetFilesWorkspace>(|p| Ok(Task::LoadFullWorkspace(p)))
-            .on_run_task::<lsp_ext::SetLocsWorkspace>(|p| Ok(Task::LoadLocsFile(p)))
+            .on_run_task::<lsp_ext::SetFilesWorkspace>(|p| Ok(Task::LoadFullWorkspace(p.uri)))
+            .on_run_task::<lsp_ext::SetLocsWorkspace>(|p| Ok(Task::LoadLocsFile(p.uri)))
             // .on_sync::<lsp_request::SelectionRangeRequest>(handlers::handle_selection_range)
             // .on::<lsp_request::Completion>(handlers::handle_completion)
             // .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)

@@ -184,7 +184,7 @@ pub fn handle_document_diagnostics(
                     .diagnostics
                     .lock()
                     .unwrap()
-                    .get(&request.text_document.uri),
+                    .get(&request.text_document.uri.as_str()),
                 ..Default::default()
             },
             ..Default::default()

@@ -7,6 +7,8 @@ import {
 } from "vscode-languageclient/node";
 
 import * as Settings from "./settings";
+import { FppProject } from "./project";
+import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
 
 let extension: FppExtension;
 
@@ -16,12 +18,14 @@ class FppExtension implements vscode.Disposable {
     private traceOutputChannel: vscode.OutputChannel;
 
     client?: LanguageClient;
+    project: FppProject;
 
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {
         this.outputChannel = vscode.window.createOutputChannel("FPP", { log: true });
         this.traceOutputChannel = vscode.window.createOutputChannel("FPP Trace", { log: true });
+        this.project = new FppProject({ language: "fpp" });
 
         this.subscriptions = [
             Settings.onLspServerPathChanged(() => {
@@ -90,16 +94,62 @@ class FppExtension implements vscode.Disposable {
 
     async setProjectLocs(locsFile: vscode.Uri | undefined) {
         await this.context.workspaceState.update('fpp.locsFile', locsFile?.path);
-        await this.project.locsFile(locsFile);
+        if (this.client) {
+            await this.project.locsFile(this.client, locsFile);
+        }
     }
 
     async setProjectScanWorkspace() {
         await this.context.workspaceState.update('fpp.locsFile', '*');
-        await this.project.workspaceScan();
+        if (this.client) {
+            await this.project.workspaceScan(this.client);
+        }
     }
 
-    reload() {
-        return this.project.reload();
+    async reload() {
+        if (this.client) {
+            await this.project.reload(this.client);
+        }
+    }
+
+    /**
+     * Searches through the locs search paths in order to find an `fpp.locs` file
+     * @returns Promise to locs file or `undefined` if not found
+     */
+    async searchForLocs() {
+        try {
+            return await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Window,
+                title: "Searching for fpp.locs",
+                cancellable: true
+            }, async (progress, token) => {
+                const searchPaths = Settings.locsSearch();
+                const excludeGlob = Settings.excludeLocs();
+
+                for (const searchPath of searchPaths) {
+                    progress.report({
+                        message: `Searching ${searchPath}`,
+                        increment: (100 / searchPath.length)
+                    });
+
+                    const found = await vscode.workspace.findFiles(
+                        searchPath,
+                        excludeGlob,
+                        1,
+                        token
+                    );
+
+                    if (found.length > 0) {
+                        return found[0];
+                    }
+                }
+
+                return undefined;
+            });
+        }
+        catch (e) {
+            vscode.window.showWarningMessage(`Failed to find locs.fpp: ${e}`);
+        }
     }
 
     async deactivate() {

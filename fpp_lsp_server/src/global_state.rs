@@ -17,6 +17,7 @@ type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
 
 #[derive(Debug)]
 pub struct TranslationUnitCache {
+    pub uri: String,
     pub file: SourceFile,
     pub ast: fpp_ast::TransUnit,
     pub include_context_map: FxHashMap<SourceFile, fpp_parser::IncludeParentKind>,

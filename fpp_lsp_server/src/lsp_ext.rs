@@ -1,6 +1,13 @@
 use lsp_types::request::Request;
+use serde::{Deserialize, Serialize};
 
 pub enum ReloadWorkspace {}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UriRequest {
+    pub uri: lsp_types::Uri
+}
 
 impl Request for ReloadWorkspace {
     type Params = ();
@@ -11,7 +18,7 @@ impl Request for ReloadWorkspace {
 pub enum SetLocsWorkspace {}
 
 impl Request for SetLocsWorkspace {
-    type Params = lsp_types::Uri;
+    type Params = UriRequest;
     type Result = ();
     const METHOD: &'static str = "fpp/setLocsWorkspace";
 }
@@ -19,7 +26,7 @@ impl Request for SetLocsWorkspace {
 pub enum SetFilesWorkspace {}
 
 impl Request for SetFilesWorkspace {
-    type Params = lsp_types::Uri;
+    type Params = UriRequest;
     type Result = ();
     const METHOD: &'static str = "fpp/setFilesWorkspace";
 }

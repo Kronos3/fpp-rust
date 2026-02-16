@@ -35,7 +35,7 @@ impl Vfs {
         }
     }
 
-    pub(crate) fn read(&mut self, path: &str) -> anyhow::Result<String> {
+    pub(crate) fn read(&self, path: &str) -> anyhow::Result<String> {
         match self.files.read().unwrap().get(path) {
             None => {}
             Some(file) => return Ok(file.content.text().to_string()),
@@ -59,7 +59,7 @@ impl Vfs {
         }
     }
 
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         let _ = self
             .files
             .write()
@@ -134,8 +134,7 @@ impl Vfs {
                     );
 
                     // Read the file asynchronously
-                    let mut this = self.clone();
-                    tokio::task::spawn_blocking(move || match this.read(uri.as_str()) {
+                    match self.read(uri.as_str()) {
                         Ok(_) => {}
                         Err(err) => {
                             tracing::error!(
@@ -145,7 +144,7 @@ impl Vfs {
                                 uri.path().to_string(),
                             );
                         }
-                    });
+                    }
                 }
             },
         };
@@ -166,7 +165,7 @@ impl Vfs {
         match parent_file_path.parent() {
             None => Err(format!("Cannot resolve parent directory of {}", &fs_path).into()),
             Some(parent_dir) => {
-                let final_path = parent_dir.join(relative);
+                let final_path = parent_dir.join(relative).canonicalize()?;
                 match final_path.as_path().to_str() {
                     None => Err(format!(
                         "Failed to resolve path {} relative to {:?}",

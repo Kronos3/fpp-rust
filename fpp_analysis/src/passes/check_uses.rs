@@ -25,16 +25,15 @@ impl<'ast> CheckUses<'ast> {
         qualifier: &QualIdent,
         name: &Ident,
     ) -> SemanticResult<Symbol> {
-        self.visit_qual_ident_impl(a, ng, qualifier)?;
+        let qual_sym = self.visit_qual_ident_impl(a, ng, qualifier)?;
         let scope = {
-            let symbol = a.use_def_map.get(&qualifier.id()).unwrap();
-            match a.symbol_scope_map.get(symbol) {
+            match a.symbol_scope_map.get(&qual_sym) {
                 None => {
                     return Err(SemanticError::InvalidSymbol {
-                        symbol_name: symbol.name().data.clone(),
+                        symbol_name: qual_sym.name().data.clone(),
                         msg: "not a qualifier".to_string(),
                         loc: qualifier.span(),
-                        def_loc: symbol.node().span(),
+                        def_loc: qual_sym.node().span(),
                     });
                 }
                 Some(scope) => scope,
@@ -69,6 +68,7 @@ impl<'ast> CheckUses<'ast> {
                 }),
                 Some(sym) => {
                     a.use_def_map.insert(name.id(), sym.clone());
+                    a.use_def_map.insert(node.id(), sym.clone());
                     Ok(sym)
                 }
             },

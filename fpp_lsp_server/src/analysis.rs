@@ -7,6 +7,7 @@ use lsp_types::Uri;
 use rustc_hash::FxHashMap;
 use std::sync::{Arc, Mutex};
 
+use fpp_parser::ResolveIncludes;
 use ignore::WalkBuilder;
 use std::ffi::OsStr;
 use std::str::FromStr;
@@ -32,11 +33,20 @@ pub enum Task {
 }
 
 impl GlobalState {
-    fn new_translation_unit_cache(&self, uri: &str) -> TranslationUnitCache {
+    fn new_translation_unit_cache(&self, uri: &str) -> anyhow::Result<TranslationUnitCache> {
         tracing::info_span!("parsing file {}", uri = uri);
 
+        GarbageCollectionSet::start();
+
+        // Clear all diagnostics for this file
+        self.diagnostics.lock().unwrap().clear_for(uri);
+        self.diagnostics
+            .lock()
+            .unwrap()
+            .set_mode(DiagnosticType::Syntax);
+
         // Read the file from VFS and produce the initial AST
-        let content = self.vfs.read_sync(uri).unwrap();
+        let content = self.vfs.read(uri)?;
         let file = SourceFile::new(uri, content);
 
         let mut ast = fpp_ast::TransUnit(fpp_parser::parse(
@@ -46,15 +56,16 @@ impl GlobalState {
         ));
 
         let mut include_context_map = Default::default();
-        let _ = fpp_parser::ResolveIncludes::new(&self.vfs)
-            .visit_trans_unit(&mut include_context_map, &mut ast);
+        let _ =
+            ResolveIncludes::new(&self.vfs).visit_trans_unit(&mut include_context_map, &mut ast);
 
-        TranslationUnitCache {
+        Ok(TranslationUnitCache {
+            uri: uri.to_string(),
             file,
             ast,
             include_context_map,
             gc: GarbageCollectionSet::finish(),
-        }
+        })
     }
 
     pub(crate) fn on_task(&mut self, task: Task) {
@@ -88,6 +99,8 @@ impl GlobalState {
                 self.analysis = Arc::new(Analysis::new());
                 self.workspace = Workspace::LocsFile(locs_uri.clone());
 
+                let vfs = self.vfs.clone();
+
                 let cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
                     let mut locs: Vec<fpp_ast::SpecLoc> = fpp_parser::parse(
                         SourceFile::new(&locs_uri.as_str(), locs_content),
@@ -105,14 +118,19 @@ impl GlobalState {
 
                     let mut cache = FxHashMap::default();
                     for loc in locs {
-                        match self
-                            .vfs
-                            .resolve_uri_relative_path(locs_uri.as_str(), &loc.file.data)
-                        {
-                            Ok(file_uri) => {
-                                let tu_cache = self.new_translation_unit_cache(&file_uri);
-                                cache.insert(tu_cache.file, Arc::new(tu_cache));
-                            }
+                        match vfs.resolve_uri_relative_path(locs_uri.as_str(), &loc.file.data) {
+                            Ok(file_uri) => match self.new_translation_unit_cache(&file_uri) {
+                                Ok(tu_cache) => {
+                                    cache.insert(tu_cache.file, Arc::new(tu_cache));
+                                }
+                                Err(err) => Diagnostic::new(
+                                    loc,
+                                    Level::Error,
+                                    "failed to process location specifier",
+                                )
+                                .annotation(err.to_string())
+                                .emit(),
+                            },
                             Err(err) => Diagnostic::new(
                                 loc,
                                 Level::Error,
@@ -179,16 +197,18 @@ impl GlobalState {
                 self.analysis = Arc::new(Analysis::new());
                 self.workspace = Workspace::FullWorkspace(workspace_uri.clone());
 
-                let mut vfs = self.vfs.clone();
-
                 let cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
                     let mut cache = FxHashMap::default();
                     for file in files {
-                        match vfs.read(file.as_str()) {
-                            Ok(file_uri) => {
-                                let tu_cache = self.new_translation_unit_cache(&file_uri);
-                                cache.insert(tu_cache.file, Arc::new(tu_cache));
-                            }
+                        match self.vfs.read(file.as_str()) {
+                            Ok(file_uri) => match self.new_translation_unit_cache(&file_uri) {
+                                Ok(tu_cache) => {
+                                    cache.insert(tu_cache.file, Arc::new(tu_cache));
+                                }
+                                Err(err) => {
+                                    tracing::error!(context = "load full workspace", uri = %file.as_str(), err = ?err, "failed to process file in workspace");
+                                }
+                            },
                             Err(err) => {
                                 tracing::error!(context = "load full workspace", uri = %file.as_str(), err = ?err, "failed to read file in workspace");
                             }
@@ -216,13 +236,6 @@ impl GlobalState {
                     return;
                 }
 
-                // Clear all diagnostics for this file
-                self.diagnostics.lock().unwrap().clear_for(&uri);
-                self.diagnostics
-                    .lock()
-                    .unwrap()
-                    .set_mode(DiagnosticType::Syntax);
-
                 // Check if this file is currently part of the compiler context
                 match self.files.get(uri.as_str()) {
                     None => {
@@ -238,24 +251,30 @@ impl GlobalState {
             }
             Task::Reprocess(source_file) => {
                 let old_cache = self.cache.remove(&source_file).unwrap();
-                let new_cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let new_cache = match fpp_core::run(&mut self.context.lock().unwrap(), || {
                     assert!(source_file.parent().is_none());
                     let uri = source_file.uri();
 
                     // Clean up the old file cache in the compiler context
                     old_cache.gc.cleanup();
 
-                    self.new_translation_unit_cache(uri.as_str())
-                });
+                    (
+                        self.new_translation_unit_cache(uri.as_str()),
+                        uri.as_str().to_string(),
+                    )
+                }) {
+                    (Ok(tu_cache), _) => tu_cache,
+                    (Err(err), uri) => {
+                        tracing::error!(context = "reprocess file", uri = %uri, err = ?err, "failed to reprocess file");
+                        return;
+                    }
+                };
 
                 self.cache.insert(new_cache.file, Arc::new(new_cache));
                 self.task(Task::Analysis);
             }
             Task::Analysis => {
                 tracing::info!(context = "task", "analysis");
-
-                let mut analysis = Analysis::new();
-                analysis.include_context_map = self.analysis.include_context_map.clone();
 
                 // Clear all analysis diagnostics
                 self.diagnostics
@@ -264,11 +283,45 @@ impl GlobalState {
                     .set_mode(DiagnosticType::Analysis);
                 self.diagnostics.lock().unwrap().clear_all_analysis();
 
-                fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let analysis = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                    let mut files = FxHashMap::default();
+                    let mut analysis = Analysis::new();
+
+                    for (file, cache) in &self.cache {
+
+                        for (included, include_context) in &cache.include_context_map {
+                            analysis.include_context_map.insert(*included, *include_context);
+                            let included_uri = included.uri();
+
+                            match files.get_mut(&included_uri) {
+                                None => {
+                                    files.insert(included_uri, vec![*included]);
+                                }
+                                Some(v) => {
+                                    v.push(*included);
+                                }
+                            }
+                        }
+
+                        let file_uri = file.uri();
+                        match files.get_mut(&file_uri) {
+                            None => {
+                                files.insert(file_uri, vec![*file]);
+                            }
+                            Some(v) => {
+                                v.push(*file);
+                            }
+                        }
+                    }
+
+                    self.files = Arc::new(files);
+
                     let _ = fpp_analysis::check_semantics(
                         &mut analysis,
                         self.cache.values().map(|v| &v.ast).collect(),
                     );
+
+                    analysis
                 });
 
                 self.analysis = Arc::new(analysis)
