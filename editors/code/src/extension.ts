@@ -23,7 +23,7 @@ class FppExtension implements vscode.Disposable {
     constructor(
         private readonly context: vscode.ExtensionContext
     ) {
-        this.outputChannel = vscode.window.createOutputChannel("FPP", { log: true });
+        this.outputChannel = vscode.window.createOutputChannel("FPP");
         this.traceOutputChannel = vscode.window.createOutputChannel("FPP Trace", { log: true });
         this.project = new FppProject({ language: "fpp" });
 

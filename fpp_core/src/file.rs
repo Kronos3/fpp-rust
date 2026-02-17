@@ -56,7 +56,7 @@ impl<'a> AsRef<str> for SourceFileContent<'a> {
 
 impl Debug for SourceFile {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.uri())
+        f.write_fmt(format_args!("SourceFile {{ {} }}", self.handle))
     }
 }
 

@@ -43,7 +43,6 @@ impl Vfs {
 
         let path_uri = Uri::from_str(&path)?;
         let fs_path = path_uri.path().to_string();
-        tracing::info!(fs_path = %fs_path, "reading file");
         match std::fs::read_to_string(&fs_path) {
             Ok(text) => {
                 self.files.write().unwrap().insert(
@@ -53,9 +52,9 @@ impl Vfs {
                         text: text.clone(),
                     })),
                 );
-                return Ok(text);
+                Ok(text)
             }
-            Err(e) => return Err(e.into()),
+            Err(e) => Err(e.into()),
         }
     }
 

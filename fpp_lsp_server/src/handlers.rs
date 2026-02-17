@@ -88,6 +88,8 @@ fn parse_text_document(
         fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
     };
 
+    tracing::info!(uri = %uri_s, entry = ?entry_kind, "parsing document for semantic tokens");
+
     let parse = fpp_lsp_parser::parse(&text, entry_kind);
     Ok((text, parse))
 }

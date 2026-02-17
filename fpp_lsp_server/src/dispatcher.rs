@@ -1,6 +1,6 @@
 //! See [RequestDispatcher].
 use std::{fmt::Debug, panic, thread};
-
+use log::info;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};
@@ -64,7 +64,7 @@ impl RequestDispatcher<'_> {
         };
         let _guard =
             tracing::info_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
-        tracing::debug!(?params);
+        tracing::info!(?params);
 
         match t(params) {
             Ok(task) => self.global_state.task_reply_to(task, req.id.clone()),

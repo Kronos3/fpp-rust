@@ -94,9 +94,7 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
                 identifier: Some("fpp".to_owned()),
                 inter_file_dependencies: true,
                 workspace_diagnostics: false,
-                work_done_progress_options: WorkDoneProgressOptions {
-                    work_done_progress: None,
-                },
+                work_done_progress_options: Default::default(),
             },
         )),
         ..Default::default()

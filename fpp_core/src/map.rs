@@ -93,7 +93,7 @@ impl<V> IdMap<V> {
     ///
     /// In the current implementation, this operation takes O(capacity) time
     /// instead of O(len) because it internally visits empty buckets too.
-    pub fn retain<F>(&mut self, f: F) -> Vec<usize>
+    pub fn extract_if<F>(&mut self, f: F) -> Vec<usize>
     where
         F: FnMut(&usize, &mut V) -> bool,
     {

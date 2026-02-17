@@ -58,13 +58,13 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let lsp_types::InitializeParams {
         capabilities,
         // workspace_folders,
-        initialization_options,
+        // initialization_options,
         // client_info,
         ..
     } = from_json::<lsp_types::InitializeParams>("InitializeParams", &initialize_params)?;
 
-    let client_capabilties = lsp::capabilities::ClientCapabilities::new(capabilities);
-    let server_capabilities = lsp::capabilities::server_capabilities(&client_capabilties);
+    let client_capabilities = lsp::capabilities::ClientCapabilities::new(capabilities);
+    let server_capabilities = lsp::capabilities::server_capabilities(&client_capabilities);
 
     let initialize_result = lsp_types::InitializeResult {
         capabilities: server_capabilities,
@@ -84,7 +84,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     }
 
     tracing::info!("server is starting up");
-    GlobalState::run(connection, client_capabilties);
+    GlobalState::run(connection, client_capabilities);
     io_threads.join()?;
     log::info!("shutting down server");
 

@@ -250,22 +250,6 @@ struct SemanticTokenVisitor {}
 impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     type State = SemanticTokensState;
 
-    fn visit_token(&self, state: &mut Self::State, token: &SyntaxToken) {
-        let kind = match token.kind() {
-            pk if pk.is_type_primitive_keyword() => SemanticTokenKind::Type,
-            SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
-                SemanticTokenKind::Annotation
-            }
-            // TODO(tumbar) Port all the tmLanguage tokens/highlights to LSP
-            // keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
-            SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
-            SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
-            _ => return,
-        };
-
-        state.add_token(token, kind);
-    }
-
     fn visit_node(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult {
         match node.kind() {
             SyntaxKind::EXPR => {
@@ -343,6 +327,10 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_SPECIAL => SemanticTokenKind::PortInstance,
                         SyntaxKind::SPEC_PORT_INSTANCE_INTERNAL => SemanticTokenKind::PortInstance,
+                        SyntaxKind::SPEC_COMMAND => SemanticTokenKind::Command,
+                        SyntaxKind::SPEC_EVENT => SemanticTokenKind::Event,
+                        SyntaxKind::SPEC_PARAM => SemanticTokenKind::Parameter,
+                        SyntaxKind::SPEC_TELEMETRY => SemanticTokenKind::Telemetry,
                         SyntaxKind::DEF_MODULE => SemanticTokenKind::Module,
                         SyntaxKind::DEF_PORT => SemanticTokenKind::Port,
                         SyntaxKind::DEF_ACTION => SemanticTokenKind::Action,
@@ -366,6 +354,22 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
             // Keep going deeper to look at children
             _ => VisitorResult::Recurse,
         }
+    }
+
+    fn visit_token(&self, state: &mut Self::State, token: &SyntaxToken) {
+        let kind = match token.kind() {
+            pk if pk.is_type_primitive_keyword() => SemanticTokenKind::Type,
+            SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
+                SemanticTokenKind::Annotation
+            }
+            // TODO(tumbar) Port all the tmLanguage tokens/highlights to LSP
+            // keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
+            SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
+            SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
+            _ => return,
+        };
+
+        state.add_token(token, kind);
     }
 }
 
