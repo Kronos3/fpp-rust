@@ -7,7 +7,7 @@ use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
 use line_index::LineIndex;
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Weak};
 
 #[derive(Clone, Debug)]
 pub struct SpanData {
@@ -192,13 +192,13 @@ pub struct CompilerContext<E: DiagnosticEmitter> {
     spans: IdMap<SpanData>,
     files: IdMap<Arc<SourceFileData>>,
     nodes: IdMap<NodeData>,
-    emitter: Arc<Mutex<E>>,
+    emitter: E,
 
     gc: Option<GarbageCollectionSet>,
 }
 
 impl<E: DiagnosticEmitter> CompilerContext<E> {
-    pub fn new(emitter: Arc<Mutex<E>>) -> CompilerContext<E> {
+    pub fn new(emitter: E) -> CompilerContext<E> {
         CompilerContext {
             spans: Default::default(),
             files: Default::default(),
@@ -332,6 +332,6 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     pub(crate) fn diagnostic_emit(&mut self, diag: Diagnostic) {
         // Convert a standard diagnostic to a flattened diagnostic
         // Send to the emitter
-        self.emitter.lock().unwrap().emit(self.diagnostic_get(diag));
+        self.emitter.emit(self.diagnostic_get(diag));
     }
 }

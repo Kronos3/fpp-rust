@@ -3,7 +3,10 @@ use lsp_types::{
     Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location, Position, Range, Uri,
 };
 use rustc_hash::FxHashMap;
-use std::str::FromStr;
+use std::{
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
 pub enum DiagnosticType {
@@ -12,13 +15,16 @@ pub enum DiagnosticType {
     Analysis,
 }
 
-#[derive(Clone, Default)]
-pub struct LspDiagnosticsEmitter {
+#[derive(Default)]
+struct LspDiagnosticsEmitterInner {
     mode: DiagnosticType,
     diagnostics: FxHashMap<String, Vec<(DiagnosticType, Diagnostic)>>,
 }
 
-impl LspDiagnosticsEmitter {
+#[derive(Clone, Default)]
+pub struct LspDiagnosticsEmitter(Arc<Mutex<LspDiagnosticsEmitterInner>>);
+
+impl LspDiagnosticsEmitterInner {
     pub fn clear(&mut self) {
         self.diagnostics.clear();
     }
@@ -47,6 +53,31 @@ impl LspDiagnosticsEmitter {
             .into_iter()
             .map(|d| d.1)
             .collect()
+    }
+}
+
+impl LspDiagnosticsEmitter {
+    pub fn clear(&mut self) {
+        self.0.lock().unwrap().clear();
+    }
+
+    pub fn set_mode(&self, mode: DiagnosticType) {
+        self.0.lock().unwrap().set_mode(mode);
+    }
+
+    /// Clears all diagnostics of type Analysis
+    pub fn clear_all_analysis(&self) {
+        self.0.lock().unwrap().clear_all_analysis();
+    }
+
+    /// Clears all diagnostics for a specific URI
+    pub fn clear_for(&self, uri: &str) {
+        self.0.lock().unwrap().clear_for(uri);
+    }
+
+    /// Returns all diagnostics for a specific URI
+    pub fn get(&self, uri: &str) -> Vec<Diagnostic> {
+        self.0.lock().unwrap().get(uri)
     }
 }
 
@@ -105,11 +136,15 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
             ..Diagnostic::default()
         };
 
-        match self.diagnostics.get_mut(&file.uri) {
+        let mut state = self.0.lock().unwrap();
+        let mode = state.mode;
+        match state.diagnostics.get_mut(&file.uri) {
             None => {
-                self.diagnostics.insert(file.uri.clone(), vec![(self.mode, lsp_diag)]);
+                state
+                    .diagnostics
+                    .insert(file.uri.clone(), vec![(mode, lsp_diag)]);
             }
-            Some(c) => c.push((self.mode, lsp_diag)),
+            Some(c) => c.push((mode, lsp_diag)),
         }
     }
 }

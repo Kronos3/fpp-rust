@@ -36,37 +36,27 @@ pub enum Task {
 impl Display for Task {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Task::Response(r) => {
-                match &r.error {
-                    None => {
-                        f.write_fmt(format_args!("Response {{ id = {} }}", r.id))
-                    }
-                    Some(err) => {
-                        f.write_fmt(format_args!("Response {{ id = {}, err = {:?} }}", r.id, err))
-                    }
-                }
-            }
+            Task::Response(r) => match &r.error {
+                None => f.write_fmt(format_args!("Response {{ id = {} }}", r.id)),
+                Some(err) => f.write_fmt(format_args!(
+                    "Response {{ id = {}, err = {:?} }}",
+                    r.id, err
+                )),
+            },
             Task::Notification(n) => {
                 f.write_fmt(format_args!("Notification {{ method = {} }}", n.method))
             }
-            Task::ReloadWorkspace => {
-                f.write_str("ReloadWorkspace")
-            }
+            Task::ReloadWorkspace => f.write_str("ReloadWorkspace"),
             Task::LoadLocsFile(uri) => {
                 f.write_fmt(format_args!("LoadLocsFile {{ uri = {} }}", uri.as_str()))
             }
-            Task::LoadFullWorkspace(uri) => {
-                f.write_fmt(format_args!("LoadFullWorkspace {{ uri = {} }}", uri.as_str()))
-            }
-            Task::Update(uri) => {
-                f.write_fmt(format_args!("Update {{ uri = {} }}", uri.as_str()))
-            }
-            Task::Reprocess(_) => {
-                f.write_str("Reprocess")
-            }
-            Task::Analysis => {
-                f.write_str("Analysis")
-            }
+            Task::LoadFullWorkspace(uri) => f.write_fmt(format_args!(
+                "LoadFullWorkspace {{ uri = {} }}",
+                uri.as_str()
+            )),
+            Task::Update(uri) => f.write_fmt(format_args!("Update {{ uri = {} }}", uri.as_str())),
+            Task::Reprocess(_) => f.write_str("Reprocess"),
+            Task::Analysis => f.write_str("Analysis"),
         }
     }
 }
@@ -76,14 +66,8 @@ impl GlobalState {
         GarbageCollectionSet::start();
 
         // Clear all diagnostics for this file
-        {
-            let mut diagnostics = self.diagnostics
-                .lock()
-                .unwrap();
-
-            diagnostics.set_mode(DiagnosticType::Syntax);
-            diagnostics.clear_for(uri);
-        }
+        self.diagnostics.set_mode(DiagnosticType::Syntax);
+        self.diagnostics.clear_for(uri);
 
         // Read the file from VFS and produce the initial AST
         let content = self.vfs.read(uri)?;
@@ -138,7 +122,7 @@ impl GlobalState {
 
                 // Refresh the context and all caches
                 self.context = Arc::new(Mutex::new(CompilerContext::new(self.diagnostics.clone())));
-                self.diagnostics.lock().unwrap().clear();
+                self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
@@ -157,8 +141,8 @@ impl GlobalState {
                     );
                     let locs_gc = GarbageCollectionSet::finish();
 
-                    let files: FxHashSet<String> =
-                        locs_tu.into_iter()
+                    let files: FxHashSet<String> = locs_tu
+                        .into_iter()
                         .filter_map(|loc| match loc {
                             fpp_ast::ModuleMember::SpecLoc(loc) => Some(loc),
                             _ => None,
@@ -168,38 +152,39 @@ impl GlobalState {
                                 Ok(file_uri) => {
                                     file_locs.insert(file_uri.clone(), loc);
                                     Some(file_uri)
-                                },
+                                }
                                 Err(err) => {
                                     Diagnostic::new(
                                         loc,
                                         Level::Error,
                                         "failed to resolve location specifier",
                                     )
-                                        .annotation(err.to_string())
-                                        .emit();
+                                    .annotation(err.to_string())
+                                    .emit();
                                     None
                                 }
                             }
                         })
                         .collect();
 
-                    let out = files.into_iter().filter_map(|file_uri| {
-                        match self.new_translation_unit_cache(&file_uri) {
-                            Ok(tu_cache) => {
-                                Some((tu_cache.file, Arc::new(tu_cache)))
-                            }
-                            Err(err) => {
-                                Diagnostic::new(
-                                    file_locs.get(&file_uri).unwrap().span(),
-                                    Level::Error,
-                                    "failed to process location specifier",
-                                )
+                    let out = files
+                        .into_iter()
+                        .filter_map(
+                            |file_uri| match self.new_translation_unit_cache(&file_uri) {
+                                Ok(tu_cache) => Some((tu_cache.file, Arc::new(tu_cache))),
+                                Err(err) => {
+                                    Diagnostic::new(
+                                        file_locs.get(&file_uri).unwrap().span(),
+                                        Level::Error,
+                                        "failed to process location specifier",
+                                    )
                                     .annotation(err.to_string())
                                     .emit();
-                                None
-                            }
-                        }
-                    }).collect();
+                                    None
+                                }
+                            },
+                        )
+                        .collect();
 
                     locs_gc.cleanup();
                     out
@@ -253,7 +238,7 @@ impl GlobalState {
 
                 // Refresh the context and all caches
                 self.context = Arc::new(Mutex::new(CompilerContext::new(self.diagnostics.clone())));
-                self.diagnostics.lock().unwrap().clear();
+                self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
@@ -303,7 +288,7 @@ impl GlobalState {
                 // Check if this file is currently part of the compiler context
                 match self.files.get(uri.as_str()) {
                     None => {
-                        tracing::warn!( "not part of the compiler context, ignoring analysis");
+                        tracing::warn!("not part of the compiler context, ignoring analysis");
                     }
                     Some(files) => {
                         let update_set = fpp_core::run(&mut self.context.lock().unwrap(), || {
@@ -370,14 +355,8 @@ impl GlobalState {
                 tracing::info!("computing compiler analysis");
 
                 // Clear all analysis diagnostics
-                {
-                    let mut diagnostics = self.diagnostics
-                        .lock()
-                        .unwrap();
-
-                    diagnostics.set_mode(DiagnosticType::Analysis);
-                    diagnostics.clear_all_analysis();
-                }
+                self.diagnostics.set_mode(DiagnosticType::Analysis);
+                self.diagnostics.clear_all_analysis();
 
                 let (analysis, files) = fpp_core::run(&mut self.context.lock().unwrap(), || {
                     let mut files = FxHashMap::default();
@@ -385,7 +364,9 @@ impl GlobalState {
 
                     for (file, cache) in &self.cache {
                         for (included, include_context) in &cache.include_context_map {
-                            analysis.include_context_map.insert(*included, *include_context);
+                            analysis
+                                .include_context_map
+                                .insert(*included, *include_context);
                             let included_uri = included.uri();
 
                             match files.get_mut(&included_uri) {
@@ -409,7 +390,10 @@ impl GlobalState {
                         }
                     }
 
-                    tracing::info!("computing compiler analysis on {} Translation Units", self.cache.len());
+                    tracing::info!(
+                        "computing compiler analysis on {} Translation Units",
+                        self.cache.len()
+                    );
                     let _ = fpp_analysis::check_semantics(
                         &mut analysis,
                         self.cache.values().map(|v| &v.ast).collect(),

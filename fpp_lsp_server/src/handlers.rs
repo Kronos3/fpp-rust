@@ -186,11 +186,7 @@ pub fn handle_document_diagnostics(
     Ok(DocumentDiagnosticReportResult::Report(
         lsp_types::DocumentDiagnosticReport::Full(lsp_types::RelatedFullDocumentDiagnosticReport {
             full_document_diagnostic_report: lsp_types::FullDocumentDiagnosticReport {
-                items: state
-                    .diagnostics
-                    .lock()
-                    .unwrap()
-                    .get(&request.text_document.uri.as_str()),
+                items: state.diagnostics.get(&request.text_document.uri.as_str()),
                 ..Default::default()
             },
             ..Default::default()

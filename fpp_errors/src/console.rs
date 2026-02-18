@@ -28,7 +28,7 @@ impl ConsoleEmitter {
     }
 }
 
-impl fpp_core::DiagnosticEmitter for ConsoleEmitter {
+impl fpp_core::DiagnosticEmitter for &mut ConsoleEmitter {
     fn emit(&mut self, diagnostic: DiagnosticData) {
         if diagnostic.level == Level::Error {
             self.seen_errors = true;

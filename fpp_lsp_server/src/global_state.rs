@@ -53,7 +53,7 @@ pub struct GlobalState {
 
     pub(crate) workspace: Workspace,
 
-    pub(crate) diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
+    pub(crate) diagnostics: LspDiagnosticsEmitter,
     pub(crate) context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
     /// Top level files in project pointing to their translation unit
     pub(crate) cache: FxHashMap<SourceFile, Arc<TranslationUnitCache>>,
@@ -75,7 +75,7 @@ impl GlobalState {
         let (task_tx, task_rx) = crossbeam_channel::unbounded();
         let task_pool = Arc::new(ThreadPool::new(10));
 
-        let diagnostics: Arc<Mutex<LspDiagnosticsEmitter>> = Default::default();
+        let diagnostics: LspDiagnosticsEmitter = Default::default();
 
         GlobalState {
             sender,
@@ -281,7 +281,7 @@ impl GlobalComm {
 pub struct GlobalStateSnapshot {
     pub context: Arc<Mutex<CompilerContext<LspDiagnosticsEmitter>>>,
     pub analysis: Arc<Analysis>,
-    pub diagnostics: Arc<Mutex<LspDiagnosticsEmitter>>,
+    pub diagnostics: LspDiagnosticsEmitter,
     pub cache: FxHashMap<SourceFile, Arc<TranslationUnitCache>>,
     pub files: Arc<FxHashMap<String, Vec<SourceFile>>>,
     pub semantic_tokens: Arc<Mutex<FxHashMap<Uri, SemanticTokens>>>,
