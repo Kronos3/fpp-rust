@@ -1,7 +1,7 @@
 mod file;
 pub use file::*;
 
-use fpp_core::{Error, SourceFile};
+use fpp_core::{Error, LineIndex, SourceFile};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, Uri,
 };
@@ -21,6 +21,17 @@ impl Vfs {
     pub fn new() -> Vfs {
         Vfs {
             files: Default::default(),
+        }
+    }
+
+    pub(crate) fn get_lines(&self, path: &str) -> anyhow::Result<Arc<LineIndex>> {
+        match self.files.read().unwrap().get(path) {
+            None => Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("file not in vfs: {}", path),
+            )
+            .into()),
+            Some(file) => Ok(file.lines.clone()),
         }
     }
 

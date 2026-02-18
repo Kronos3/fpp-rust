@@ -1,6 +1,5 @@
 //! See [RequestDispatcher].
 use std::{fmt::Debug, panic, thread};
-use log::info;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};

@@ -1,7 +1,7 @@
 //! Advertises the capabilities of the LSP Server.
 use fpp_core::WideEncoding;
 use lsp_types::{
-    FileOperationFilter, FileOperationPattern, FileOperationPatternKind, FileOperationRegistrationOptions, OneOf, PositionEncodingKind, SaveOptions, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions, WorkDoneProgressOptions, WorkspaceFileOperationsServerCapabilities, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities
+    FileOperationFilter, FileOperationPattern, FileOperationPatternKind, FileOperationRegistrationOptions, OneOf, PositionEncodingKind, SaveOptions, SemanticTokensFullOptions, SemanticTokensLegend, SemanticTokensOptions, ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions, WorkspaceFileOperationsServerCapabilities, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities
 };
 
 use crate::lsp::semantic_tokens::SemanticTokenKind;
@@ -97,6 +97,15 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
                 work_done_progress_options: Default::default(),
             },
         )),
+        // definition_provider: Some(OneOf::Left(true)),
+        // hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
+        // references_provider: Some(OneOf::Left(true)),
+        // document_symbol_provider: Some(OneOf::Left(true)),
+        // workspace_symbol_provider: Some(OneOf::Left(true)),
+        document_link_provider: Some(lsp_types::DocumentLinkOptions {
+            resolve_provider: Some(true),
+            work_done_progress_options: Default::default(),
+        }),
         ..Default::default()
     }
 }

@@ -1,5 +1,6 @@
 use fpp_core::LineIndex;
 use lsp_types::{DidChangeTextDocumentParams, DidOpenTextDocumentParams};
+use std::sync::Arc;
 
 use crate::lsp::{capabilities::PositionEncoding, utils::apply_document_changes};
 
@@ -27,7 +28,7 @@ pub enum FileContent {
 
 pub struct File {
     pub content: FileContent,
-    pub lines: LineIndex,
+    pub lines: Arc<LineIndex>,
 }
 
 impl FileContent {
@@ -52,7 +53,7 @@ impl FileContent {
         })
     }
 
-    pub(crate) fn open_over(self, open: DidOpenTextDocumentParams) -> FileContent {
+    pub(crate) fn open_over(&self, open: DidOpenTextDocumentParams) -> FileContent {
         match self {
             FileContent::Fs(_) => {
                 tracing::debug!(
@@ -86,7 +87,7 @@ impl FileContent {
 
 impl File {
     pub(crate) fn new(content: FileContent) -> File {
-        let lines = LineIndex::new(content.text());
+        let lines = Arc::new(LineIndex::new(content.text()));
         File { content, lines }
     }
 
@@ -94,8 +95,8 @@ impl File {
         File::new(FileContent::open_new(open))
     }
 
-    pub(crate) fn open_over(self, open: DidOpenTextDocumentParams) -> File {
-        File::new(FileContent::open_over(self.content, open))
+    pub(crate) fn open_over(&self, open: DidOpenTextDocumentParams) -> File {
+        File::new(FileContent::open_over(&self.content, open))
     }
 
     pub(crate) fn update(

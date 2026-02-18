@@ -32,6 +32,8 @@ impl GlobalState {
             .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
             .on::<lsp_request::SemanticTokensRangeRequest>(handlers::handle_semantic_tokens_range)
             .on::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics)
+            .on::<lsp_request::DocumentLinkRequest>(handlers::handle_document_link_request)
+            .on::<lsp_request::DocumentLinkResolve>(handlers::handle_document_link_resolve)
             // .on::<lsp_request::DocumentSymbolRequest>(handlers::handle_document_symbol)
             // .on::<lsp_request::FoldingRangeRequest>(handlers::handle_folding_range)
             // .on::<lsp_request::SignatureHelpRequest>(handlers::handle_signature_help)

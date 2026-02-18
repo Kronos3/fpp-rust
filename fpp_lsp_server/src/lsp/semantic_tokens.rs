@@ -137,7 +137,7 @@ impl SemanticTokenKind {
     }
 
     pub fn type_and_modifier(self) -> (u32, u32) {
-        (self.token_type() as u32, self.token_modifiers() as u32)
+        (self.token_type() as u32, self.token_modifiers())
     }
 }
 
