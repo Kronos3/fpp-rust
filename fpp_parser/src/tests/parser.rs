@@ -4,7 +4,6 @@ use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use std::{env, fs};
 
 fn run_test(file_path: &str) {
@@ -22,9 +21,9 @@ fn run_test(file_path: &str) {
     let file_reader = FsReader {};
 
     let mut diagnostics_str = vec![];
-    let mut ctx = fpp_core::CompilerContext::new(Arc::new(Mutex::new(
-        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
-    )));
+    let mut ctx =
+        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
+
     let ast: String = fpp_core::run(&mut ctx, || {
         let source_file_path = fpp_file.to_str().unwrap();
         let src = match file_reader.read(source_file_path) {

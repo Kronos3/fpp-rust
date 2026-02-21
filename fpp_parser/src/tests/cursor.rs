@@ -3,7 +3,6 @@ use crate::token::Token;
 use fpp_core::SourceFile;
 use fpp_lexer::TokenKind::*;
 use fpp_lexer::{KeywordKind, TokenKind};
-use std::sync::{Arc, Mutex};
 
 struct Index(usize);
 
@@ -17,9 +16,8 @@ impl Index {
 
 fn lex(content: &str) -> Vec<Token> {
     let mut diagnostics_str = vec![];
-    let mut ctx = fpp_core::CompilerContext::new(Arc::new(Mutex::new(
-        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
-    )));
+    let mut ctx =
+        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
 
     fpp_core::run(&mut ctx, || {
         let file = SourceFile::new("<stdin>", content.to_string());

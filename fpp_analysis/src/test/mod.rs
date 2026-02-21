@@ -2,7 +2,6 @@ use fpp_core::{FileReader, SourceFile};
 use fpp_fs::FsReader;
 use pretty_assertions::assert_eq;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 use std::{env, fs};
 
 pub(crate) fn run_test(file_path: &str) {
@@ -22,9 +21,8 @@ pub(crate) fn run_test(file_path: &str) {
 
     // Set up the compiler context to capture diagnostic messages into a buffer
     let mut diagnostics_str = vec![];
-    let mut ctx = fpp_core::CompilerContext::new(Arc::new(Mutex::new(
-        fpp_errors::WriteEmitter::new(&mut diagnostics_str),
-    )));
+    let mut ctx =
+        fpp_core::CompilerContext::new(fpp_errors::WriteEmitter::new(&mut diagnostics_str));
 
     // Parse the input and run the semantic checker on the AST
     fpp_core::run(&mut ctx, || {
