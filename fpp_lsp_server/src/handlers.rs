@@ -466,6 +466,84 @@ pub fn handle_goto_definition(
     }
 }
 
+fn hover_for_symbol(state: &GlobalState, node: Node, symbol: &Symbol) -> Hover {
+    let node_data = state.context.node_get(&symbol.node());
+    let span_data = state
+        .context
+        .span_get(&state.context.node_get_span(&node.id()));
+    let file = span_data.file.upgrade().unwrap();
+    let start = file.position(span_data.start);
+    let end = file.position(span_data.start + span_data.length);
+
+    let symbol_kind = match symbol {
+        Symbol::AbsType(_) => "Abstract Type",
+        Symbol::AliasType(_) => "Type Alias",
+        Symbol::Array(_) => "Array",
+        Symbol::Component(_) => "Component",
+        Symbol::ComponentInstance(_) => "Component Instance",
+        Symbol::Constant(_) => "Constant",
+        Symbol::Enum(_) => "Enum",
+        Symbol::EnumConstant(_) => "Enum Constant",
+        Symbol::Interface(_) => "Interface",
+        Symbol::Module(_) => "Module",
+        Symbol::Port(_) => "Port",
+        Symbol::StateMachine(_) => "State Machine",
+        Symbol::Struct(_) => "Struct",
+        Symbol::Topology(_) => "Topology",
+    };
+
+    // Convert the name into a fully qualified name by following the parent symbols
+    let mut qualified_name = vec![symbol];
+    let mut current = symbol;
+    loop {
+        match state.analysis.parent_symbol_map.get(current) {
+            None => break,
+            Some(parent) => {
+                qualified_name.push(parent);
+                current = parent;
+            }
+        }
+    }
+
+    qualified_name.reverse();
+    let qualified_idents: Vec<&str> = qualified_name
+        .into_iter()
+        .map(|n| n.name().data.as_str())
+        .collect();
+    let qual_ident = qualified_idents.join(".");
+
+    let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
+
+    let markdown_lines: Vec<String> = node_data
+        .pre_annotation
+        .clone()
+        .into_iter()
+        .chain(vec![
+            "```typescript".to_string(),
+            symbol_kind_line,
+            "```".to_string(),
+        ])
+        .chain(node_data.post_annotation.clone().into_iter())
+        .collect();
+
+    Hover {
+        contents: HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: markdown_lines.join("\n"),
+        }),
+        range: Some(Range {
+            start: Position {
+                line: start.line(),
+                character: start.column(),
+            },
+            end: Position {
+                line: end.line(),
+                character: end.column(),
+            },
+        }),
+    }
+}
+
 pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<Hover>> {
     let nodes = match nodes_at_position(
         state,
@@ -476,94 +554,33 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
         Some(nodes) => nodes,
     };
 
-    let mut found = vec![];
-
-    for node in nodes {
+    // Check if this node is a use/reference to definition
+    if let Some((node, symbol)) = nodes.iter().find_map(|node| {
         if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-            found.push((node, def));
+            Some((*node, def))
+        } else {
+            None
+        }
+    }) {
+        return Ok(Some(hover_for_symbol(state, node, symbol)));
+    }
+
+    // Check if this node is a definition
+    if let Some((_, symbol)) = nodes.iter().find_map(|node| {
+        if let Some(def) = state.analysis.symbol_map.get(&node.id()) {
+            Some((*node, def))
+        } else {
+            None
+        }
+    }) {
+        // We are hovering over _some_ part of the definition
+        // We only _actually_ want to show this hover information over the 'name' of the symbol
+        if let Some(name_node) = nodes.first()
+            && name_node.id() == symbol.name().node_id
+        {
+            return Ok(Some(hover_for_symbol(state, *name_node, symbol)));
         }
     }
 
-    found.dedup_by(|a, b| a.1 == b.1);
-    let symbol_at_position = found.pop();
-
-    if let Some((node, symbol)) = symbol_at_position {
-        let node_data = state.context.node_get(&symbol.node());
-        let span_data = state
-            .context
-            .span_get(&state.context.node_get_span(&node.id()));
-        let file = span_data.file.upgrade().unwrap();
-        let start = file.position(span_data.start);
-        let end = file.position(span_data.start + span_data.length);
-
-        let symbol_kind = match symbol {
-            Symbol::AbsType(_) => "Abstract Type",
-            Symbol::AliasType(_) => "Type Alias",
-            Symbol::Array(_) => "Array",
-            Symbol::Component(_) => "Component",
-            Symbol::ComponentInstance(_) => "Component Instance",
-            Symbol::Constant(_) => "Constant",
-            Symbol::Enum(_) => "Enum",
-            Symbol::EnumConstant(_) => "Enum Constant",
-            Symbol::Interface(_) => "Interface",
-            Symbol::Module(_) => "Module",
-            Symbol::Port(_) => "Port",
-            Symbol::StateMachine(_) => "State Machine",
-            Symbol::Struct(_) => "Struct",
-            Symbol::Topology(_) => "Topology",
-        };
-
-        // Convert the name into a fully qualified name by following the parent symbols
-        let mut qualified_name = vec![symbol];
-        let mut current = symbol;
-        loop {
-            match state.analysis.parent_symbol_map.get(current) {
-                None => break,
-                Some(parent) => {
-                    qualified_name.push(parent);
-                    current = parent;
-                }
-            }
-        }
-
-        qualified_name.reverse();
-        let qualified_idents: Vec<&str> = qualified_name
-            .into_iter()
-            .map(|n| n.name().data.as_str())
-            .collect();
-        let qual_ident = qualified_idents.join(".");
-
-        let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
-
-        let markdown_lines: Vec<String> = node_data
-            .pre_annotation
-            .clone()
-            .into_iter()
-            .chain(vec![
-                "```typescript".to_string(),
-                symbol_kind_line,
-                "```".to_string(),
-            ])
-            .chain(node_data.post_annotation.clone().into_iter())
-            .collect();
-
-        Ok(Some(Hover {
-            contents: HoverContents::Markup(MarkupContent {
-                kind: MarkupKind::Markdown,
-                value: markdown_lines.join("\n"),
-            }),
-            range: Some(Range {
-                start: Position {
-                    line: start.line(),
-                    character: start.column(),
-                },
-                end: Position {
-                    line: end.line(),
-                    character: end.column(),
-                },
-            }),
-        }))
-    } else {
-        Ok(None)
-    }
+    Ok(None)
 }
