@@ -99,7 +99,7 @@ pub fn server_capabilities(caps: &ClientCapabilities) -> ServerCapabilities {
         )),
         definition_provider: Some(OneOf::Left(true)),
         hover_provider: Some(lsp_types::HoverProviderCapability::Simple(true)),
-        // references_provider: Some(OneOf::Left(true)),
+        references_provider: Some(OneOf::Left(true)),
         // document_symbol_provider: Some(OneOf::Left(true)),
         // workspace_symbol_provider: Some(OneOf::Left(true)),
         document_link_provider: Some(lsp_types::DocumentLinkOptions {

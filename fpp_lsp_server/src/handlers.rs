@@ -11,7 +11,8 @@ use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentDiagnosticReportResult, DocumentLink, GotoDefinitionParams, GotoDefinitionResponse,
     Hover, HoverContents, HoverParams, Location, MarkupContent, MarkupKind, Position, Range,
-    SemanticTokensFullDeltaResult, SemanticTokensRangeResult, SemanticTokensResult, Uri,
+    ReferenceParams, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
+    SemanticTokensResult, Uri,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::ControlFlow;
@@ -413,22 +414,60 @@ fn symbol_at_position<'a>(
     state: &'a GlobalState,
     document: &Uri,
     position: &Position,
-) -> Option<(Node<'a>, &'a Symbol)> {
+) -> Option<(Node<'a>, Symbol)> {
     let nodes = match nodes_at_position(state, document, position) {
         None => return None,
         Some(nodes) => nodes,
     };
 
-    let mut found = vec![];
-
-    for node in nodes {
+    nodes.iter().find_map(|node| {
         if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-            found.push((node, def));
+            return Some((*node, def.clone()));
+        } else {
+            None
         }
-    }
+    })
+}
 
-    found.dedup_by(|a, b| a.1 == b.1);
-    found.pop()
+fn node_to_range(state: &GlobalState, node: fpp_core::Node) -> Range {
+    let span = state.context.span_get(&state.context.node_get_span(&node));
+    let file = span.file.upgrade().unwrap();
+
+    let start = file.position(span.start);
+    let end = file.position(span.start + span.length);
+
+    Range {
+        start: Position {
+            line: start.line(),
+            character: start.column(),
+        },
+        end: Position {
+            line: end.line(),
+            character: end.column(),
+        },
+    }
+}
+
+fn node_to_location(state: &GlobalState, node: fpp_core::Node) -> Location {
+    let span = state.context.span_get(&state.context.node_get_span(&node));
+    let file = span.file.upgrade().unwrap();
+
+    let start = file.position(span.start);
+    let end = file.position(span.start + span.length);
+
+    Location {
+        uri: Uri::from_str(&file.uri).unwrap(),
+        range: Range {
+            start: Position {
+                line: start.line(),
+                character: start.column(),
+            },
+            end: Position {
+                line: end.line(),
+                character: end.column(),
+            },
+        },
+    }
 }
 
 pub fn handle_goto_definition(
@@ -440,40 +479,17 @@ pub fn handle_goto_definition(
         &request.text_document_position_params.text_document.uri,
         &request.text_document_position_params.position,
     ) {
-        let span = state
-            .context
-            .span_get(&state.context.node_get_span(&symbol.name().node_id));
-        let file = span.file.upgrade().unwrap();
-
-        let start = file.position(span.start);
-        let end = file.position(span.start + span.length);
-
-        Ok(Some(GotoDefinitionResponse::Scalar(Location {
-            uri: Uri::from_str(&file.uri)?,
-            range: Range {
-                start: Position {
-                    line: start.line(),
-                    character: start.column(),
-                },
-                end: Position {
-                    line: end.line(),
-                    character: end.column(),
-                },
-            },
-        })))
+        Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
+            state,
+            symbol.name().id(),
+        ))))
     } else {
         Ok(None)
     }
 }
 
-fn hover_for_symbol(state: &GlobalState, node: Node, symbol: &Symbol) -> Hover {
+fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) -> Hover {
     let node_data = state.context.node_get(&symbol.node());
-    let span_data = state
-        .context
-        .span_get(&state.context.node_get_span(&node.id()));
-    let file = span_data.file.upgrade().unwrap();
-    let start = file.position(span_data.start);
-    let end = file.position(span_data.start + span_data.length);
 
     let symbol_kind = match symbol {
         Symbol::AbsType(_) => "Abstract Type",
@@ -531,16 +547,7 @@ fn hover_for_symbol(state: &GlobalState, node: Node, symbol: &Symbol) -> Hover {
             kind: MarkupKind::Markdown,
             value: markdown_lines.join("\n"),
         }),
-        range: Some(Range {
-            start: Position {
-                line: start.line(),
-                character: start.column(),
-            },
-            end: Position {
-                line: end.line(),
-                character: end.column(),
-            },
-        }),
+        range: Some(node_to_range(state, hover_node.id())),
     }
 }
 
@@ -581,12 +588,6 @@ fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) -> Opt
     };
 
     let node_data = state.context.node_get(&def_node.id());
-    let span_data = state
-        .context
-        .span_get(&state.context.node_get_span(&hover_node.id()));
-    let file = span_data.file.upgrade().unwrap();
-    let start = file.position(span_data.start);
-    let end = file.position(span_data.start + span_data.length);
 
     // Convert the name into a fully qualified name by following the parent symbols
     let qual_ident = {
@@ -634,16 +635,7 @@ fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) -> Opt
             kind: MarkupKind::Markdown,
             value: markdown_lines.join("\n"),
         }),
-        range: Some(Range {
-            start: Position {
-                line: start.line(),
-                character: start.column(),
-            },
-            end: Position {
-                line: end.line(),
-                character: end.column(),
-            },
-        }),
+        range: Some(node_to_range(state, hover_node.id())),
     })
 }
 
@@ -676,6 +668,61 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
         Ok(nodes
             .iter()
             .find_map(|node| hover_for_node(state, name, *node)))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn handle_references(
+    state: &GlobalState,
+    request: ReferenceParams,
+) -> Result<Option<Vec<Location>>> {
+    if let Some(nodes) = nodes_at_position(
+        state,
+        &request.text_document_position.text_document.uri,
+        &request.text_document_position.position,
+    ) {
+        let symbol = {
+            // Check if this is a use to a symbol
+            if let Some(symbol) = nodes.iter().find_map(|node| {
+                if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
+                    return Some(def);
+                } else {
+                    None
+                }
+            }) {
+                Some(symbol)
+            // Check if this is a symbol definition
+            } else if let Some(symbol) = nodes
+                .iter()
+                .find_map(|node| state.analysis.symbol_map.get(&node.id()))
+                && let Some(Node::Name(_)) = nodes.first()
+            {
+                Some(symbol)
+            } else {
+                None
+            }
+        };
+
+        if let Some(symbol) = symbol {
+            // Look for all use-def resolutions that map to this symbol
+            Ok(Some(
+                state
+                    .analysis
+                    .use_def_map
+                    .iter()
+                    .filter_map(|(node, i_symbol)| {
+                        if symbol.node() == i_symbol.node() {
+                            Some(node_to_location(state, *node))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+            ))
+        } else {
+            Ok(None)
+        }
     } else {
         Ok(None)
     }

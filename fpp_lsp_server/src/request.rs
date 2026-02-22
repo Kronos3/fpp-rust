@@ -42,18 +42,13 @@ impl GlobalState {
             .on::<lsp_request::HoverRequest>(handlers::handle_hover)
             // .on::<lsp_request::GotoDeclaration>(handlers::handle_goto_declaration)
             // .on::<lsp_request::GotoImplementation>(handlers::handle_goto_implementation)
-            // .on::<lsp_request::GotoTypeDefinition>(handlers::handle_goto_type_definition)
             // .on::<lsp_request::InlayHintRequest>(handlers::handle_inlay_hints)
             // .on_identity::<lsp_request::InlayHintResolveRequest, _>(handlers::handle_inlay_hints_resolve)
             // .on::<lsp_request::CodeLensRequest>(handlers::handle_code_lens)
             // .on_identity::<NO_RETRY, lsp_request::CodeLensResolve, _>(handlers::handle_code_lens_resolve)
             // .on::<lsp_request::PrepareRenameRequest>(handlers::handle_prepare_rename)
             // .on::<lsp_request::Rename>(handlers::handle_rename)
-            // .on::<lsp_request::References>(handlers::handle_references)
-            // .on::<lsp_request::DocumentHighlightRequest>(handlers::handle_document_highlight)
-            // .on::<lsp_request::CallHierarchyPrepare>(handlers::handle_call_hierarchy_prepare)
-            // .on::<lsp_request::CallHierarchyIncomingCalls>(handlers::handle_call_hierarchy_incoming)
-            // .on::<lsp_request::CallHierarchyOutgoingCalls>(handlers::handle_call_hierarchy_outgoing)
+            .on::<lsp_request::References>(handlers::handle_references)
             .finish();
     }
 }
