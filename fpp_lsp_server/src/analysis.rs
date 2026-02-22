@@ -247,17 +247,12 @@ impl GlobalState {
                 let cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
                     let mut cache = FxHashMap::default();
                     for file in files {
-                        match self.vfs.read(file.as_str()) {
-                            Ok(file_uri) => match self.new_translation_unit_cache(&file_uri) {
-                                Ok(tu_cache) => {
-                                    cache.insert(tu_cache.file, Arc::new(tu_cache));
-                                }
-                                Err(err) => {
-                                    tracing::error!(err = ?err, "failed to process file in workspace");
-                                }
-                            },
+                        match self.new_translation_unit_cache(&file.as_str()) {
+                            Ok(tu_cache) => {
+                                cache.insert(tu_cache.file, Arc::new(tu_cache));
+                            }
                             Err(err) => {
-                                tracing::error!(err = ?err, "failed to read file in workspace");
+                                tracing::error!(file_uri = %file.as_str(), err = ?err, "failed to process file in workspace");
                             }
                         }
                     }

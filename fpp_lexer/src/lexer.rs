@@ -335,7 +335,6 @@ impl<'a> Lexer<'a> {
 
             // Comment
             '#' => {
-                self.bump();
                 self.eat_until('\n' as u8);
                 Comment
             }

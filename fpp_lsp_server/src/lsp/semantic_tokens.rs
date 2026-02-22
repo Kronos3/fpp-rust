@@ -5,7 +5,7 @@ use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SemanticTokenKind {
     Module,
     Topology,
@@ -363,7 +363,8 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                 SemanticTokenKind::Annotation
             }
             // TODO(tumbar) Port all the tmLanguage tokens/highlights to LSP
-            // keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
+            keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
+            SyntaxKind::COMMENT => SemanticTokenKind::Comment,
             SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
             SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
             _ => return,
