@@ -18,7 +18,7 @@ use url::Url;
 #[derive(Debug)]
 pub enum Task {
     Response(lsp_server::Response),
-    Notification(lsp_server::Notification),
+    // Notification(lsp_server::Notification),
     // Retry(lsp_server::Request),
     ReloadWorkspace,
     LoadLocsFile(Uri),
@@ -44,9 +44,9 @@ impl Display for Task {
                     r.id, err
                 )),
             },
-            Task::Notification(n) => {
-                f.write_fmt(format_args!("Notification {{ method = {} }}", n.method))
-            }
+            // Task::Notification(n) => {
+            //     f.write_fmt(format_args!("Notification {{ method = {} }}", n.method))
+            // }
             Task::ReloadWorkspace => f.write_str("ReloadWorkspace"),
             Task::LoadLocsFile(uri) => {
                 f.write_fmt(format_args!("LoadLocsFile {{ uri = {} }}", uri.as_str()))
@@ -87,7 +87,6 @@ impl GlobalState {
         tracing::info!(file = %file, file_dbg = ?file, "computed translation unit cache");
 
         Ok(TranslationUnitCache {
-            uri: uri.to_string(),
             file,
             ast,
             include_context_map,
@@ -290,9 +289,9 @@ impl GlobalState {
                 self.task(Task::Analysis);
             }
             Task::Response(response) => self.respond(response),
-            Task::Notification(notification) => {
-                self.send(lsp_server::Message::Notification(notification))
-            }
+            // Task::Notification(notification) => {
+            //     self.send(lsp_server::Message::Notification(notification))
+            // }
             Task::Update(uri) => {
                 tracing::info!("updating file");
 
