@@ -16,7 +16,7 @@ impl GlobalState {
 
         #[rustfmt::skip]
         dispatcher
-            .on_sync_mut::<lsp_request::Shutdown>(|s, ()| {
+            .on_mut::<lsp_request::Shutdown>(|s, ()| {
                 s.shutdown_requested = true;
                 Ok(())
             })
@@ -28,17 +28,18 @@ impl GlobalState {
             // .on_sync::<lsp_request::SelectionRangeRequest>(handlers::handle_selection_range)
             // .on::<lsp_request::Completion>(handlers::handle_completion)
             // .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)
-            .on::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
-            .on::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
+            .on_mut::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
+            .on_mut::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)
             .on::<lsp_request::SemanticTokensRangeRequest>(handlers::handle_semantic_tokens_range)
-            .on::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics)
+            .on_mut::<lsp_request::DocumentDiagnosticRequest>(handlers::handle_document_diagnostics)
             .on::<lsp_request::DocumentLinkRequest>(handlers::handle_document_link_request)
             .on::<lsp_request::DocumentLinkResolve>(handlers::handle_document_link_resolve)
             // .on::<lsp_request::DocumentSymbolRequest>(handlers::handle_document_symbol)
             // .on::<lsp_request::FoldingRangeRequest>(handlers::handle_folding_range)
             // .on::<lsp_request::SignatureHelpRequest>(handlers::handle_signature_help)
             // .on::<lsp_request::WillRenameFiles>(handlers::handle_will_rename_files)
-            // .on::<lsp_request::GotoDefinition>(handlers::handle_goto_definition)
+            .on::<lsp_request::GotoDefinition>(handlers::handle_goto_definition)
+            .on::<lsp_request::HoverRequest>(handlers::handle_hover)
             // .on::<lsp_request::GotoDeclaration>(handlers::handle_goto_declaration)
             // .on::<lsp_request::GotoImplementation>(handlers::handle_goto_implementation)
             // .on::<lsp_request::GotoTypeDefinition>(handlers::handle_goto_type_definition)

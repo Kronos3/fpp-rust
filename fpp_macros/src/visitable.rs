@@ -189,7 +189,24 @@ pub(super) fn walkable_direct_ref_derive(
         quote_spanned! { span => crate::visit::Walkable::walk(#bind, a, __visitor)? }
     });
 
+    let node_get = s.each(|bind| {
+        let span = bind.ast().span();
+        quote_spanned! { span => #bind.id() }
+    });
+
     s.gen_impl(quote! {
+        gen impl crate::AstNode for @Self {
+            fn id(&self) -> fpp_core::Node {
+                match self { #node_get }
+            }
+        }
+
+        gen impl fpp_core::Spanned for @Self {
+            fn span(&self) -> Span {
+                self.id().span()
+            }
+        }
+
         gen impl<__V> crate::visit::MoveWalkable<'a, __V> for @Self
             where __V: crate::visit::Visitor<'a>,
         {

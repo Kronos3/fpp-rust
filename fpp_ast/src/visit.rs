@@ -116,6 +116,14 @@ pub trait Visitor<'ast>: Sized {
         ControlFlow::Continue(())
     }
 
+    fn visit_trans_unit(
+        &self,
+        a: &mut Self::State,
+        node: &'ast crate::TransUnit,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
     fn visit_trans_units<I: Iterator<Item = &'ast crate::TransUnit>>(
         &self,
         a: &mut Self::State,
@@ -129,7 +137,6 @@ pub trait Visitor<'ast>: Sized {
     }
 
     visit_signatures!(
-        (TransUnit, visit_trans_unit),
         /* Definitions */
         (DefAbsType, visit_def_abs_type),
         (DefAction, visit_def_action),

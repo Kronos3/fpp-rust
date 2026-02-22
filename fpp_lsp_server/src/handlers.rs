@@ -1,15 +1,20 @@
-use crate::global_state::{GlobalState, GlobalStateSnapshot, Task};
+use crate::diagnostics::LspDiagnosticsEmitter;
+use crate::global_state::{GlobalState, Task};
 use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
 use anyhow::Result;
-use fpp_core::LineIndex;
+use fpp_analysis::semantics::{Symbol, SymbolInterface};
+use fpp_ast::{AstNode, MoveWalkable, Node, Visitor};
+use fpp_core::{BytePos, CompilerContext, LineCol, LineIndex, SourceFile};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    DocumentDiagnosticReportResult, DocumentLink, Position, Range, SemanticTokensFullDeltaResult,
-    SemanticTokensRangeResult, SemanticTokensResult, Uri,
+    DocumentDiagnosticReportResult, DocumentLink, GotoDefinitionParams, GotoDefinitionResponse,
+    Hover, HoverContents, HoverParams, Location, MarkupContent, MarkupKind, Position, Range,
+    SemanticTokensFullDeltaResult, SemanticTokensRangeResult, SemanticTokensResult, Uri,
 };
 use serde::{Deserialize, Serialize};
+use std::ops::ControlFlow;
 use std::str::FromStr;
 
 pub fn handle_did_open_text_document(
@@ -43,11 +48,7 @@ pub fn handle_did_close_text_document(
     tracing::info!(uri = %not.text_document.uri.as_str(), "DidCloseTextDocument");
     let uri = not.text_document.uri.clone();
 
-    state
-        .semantic_tokens
-        .lock()
-        .unwrap()
-        .remove(&not.text_document.uri);
+    state.semantic_tokens.remove(&not.text_document.uri);
 
     state.vfs.did_close(not);
     state.task(Task::Update(uri));
@@ -60,10 +61,7 @@ pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
     Ok(())
 }
 
-fn parse_text_document(
-    state: &GlobalStateSnapshot,
-    uri: &Uri,
-) -> Result<(String, fpp_lsp_parser::Parse)> {
+fn parse_text_document(state: &GlobalState, uri: &Uri) -> Result<(String, fpp_lsp_parser::Parse)> {
     let uri_c = &uri.clone();
     let uri_s = uri_c.as_str();
     let text: String = state.vfs.read_sync(uri_s)?;
@@ -99,7 +97,7 @@ fn parse_text_document(
 }
 
 pub fn handle_semantic_tokens_full(
-    state: GlobalStateSnapshot,
+    state: &mut GlobalState,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
@@ -111,15 +109,13 @@ pub fn handle_semantic_tokens_full(
     // Unconditionally cache the tokens
     state
         .semantic_tokens
-        .lock()
-        .unwrap()
         .insert(request.text_document.uri, semantic_tokens.clone());
 
     Ok(Some(semantic_tokens.into()))
 }
 
 pub fn handle_semantic_tokens_range(
-    state: GlobalStateSnapshot,
+    state: &GlobalState,
     request: lsp_types::SemanticTokensRangeParams,
 ) -> Result<Option<SemanticTokensRangeResult>> {
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
@@ -133,7 +129,7 @@ pub fn handle_semantic_tokens_range(
 }
 
 pub fn handle_semantic_tokens_full_delta(
-    state: GlobalStateSnapshot,
+    state: &mut GlobalState,
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
     tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
@@ -143,11 +139,7 @@ pub fn handle_semantic_tokens_full_delta(
 
     let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
 
-    let cached_tokens = state
-        .semantic_tokens
-        .lock()
-        .unwrap()
-        .remove(&request.text_document.uri);
+    let cached_tokens = state.semantic_tokens.remove(&request.text_document.uri);
 
     if let Some(
         cached_tokens @ lsp_types::SemanticTokens {
@@ -160,8 +152,6 @@ pub fn handle_semantic_tokens_full_delta(
         let delta = semantic_token_delta(cached_tokens, &semantic_tokens);
         state
             .semantic_tokens
-            .lock()
-            .unwrap()
             .insert(request.text_document.uri, semantic_tokens);
         return Ok(Some(delta.into()));
     }
@@ -170,15 +160,13 @@ pub fn handle_semantic_tokens_full_delta(
     let semantic_tokens_clone = semantic_tokens.clone();
     state
         .semantic_tokens
-        .lock()
-        .unwrap()
         .insert(request.text_document.uri, semantic_tokens_clone);
 
     Ok(Some(semantic_tokens.into()))
 }
 
 pub fn handle_document_diagnostics(
-    state: GlobalStateSnapshot,
+    state: &mut GlobalState,
     request: lsp_types::DocumentDiagnosticParams,
 ) -> Result<DocumentDiagnosticReportResult> {
     tracing::info!(uri = %request.text_document.uri.as_str(), "document diagnostics");
@@ -193,22 +181,6 @@ pub fn handle_document_diagnostics(
         }),
     ))
 }
-
-// fn span_to_range(span: fpp_core::Span) -> Range {
-//     let start = span.start();
-//     let end = span.end();
-//
-//     Range {
-//         start: Position {
-//             line: start.line(),
-//             character: start.column(),
-//         },
-//         end: Position {
-//             line: end.line(),
-//             character: end.column(),
-//         },
-//     }
-// }
 
 fn text_range_to_range(lines: &LineIndex, text_range: TextRange) -> Range {
     let start = lines.line_col(text_range.start());
@@ -308,7 +280,7 @@ impl<'a> fpp_lsp_parser::Visitor for DocumentLinksVisitor<'a> {
 }
 
 pub fn handle_document_link_request(
-    state: GlobalStateSnapshot,
+    state: &GlobalState,
     request: lsp_types::DocumentLinkParams,
 ) -> Result<Option<Vec<DocumentLink>>> {
     tracing::info!(uri = %request.text_document.uri.as_str(), "document link request");
@@ -334,7 +306,7 @@ pub fn handle_document_link_request(
 }
 
 pub fn handle_document_link_resolve(
-    state: GlobalStateSnapshot,
+    state: &GlobalState,
     request: DocumentLink,
 ) -> Result<DocumentLink> {
     let data: DocumentLinkData = match request.data {
@@ -351,4 +323,247 @@ pub fn handle_document_link_resolve(
         tooltip: None,
         data: None,
     })
+}
+
+struct FindPositionVisitor<'a> {
+    source_file: SourceFile,
+    looking_for: BytePos,
+    context: &'a CompilerContext<LspDiagnosticsEmitter>,
+}
+
+impl<'ast> Visitor<'ast> for FindPositionVisitor<'ast> {
+    type Break = ();
+    type State = Vec<Node<'ast>>;
+
+    /// The default node visiting before.
+    /// By default, this will just continue without visiting the children of `node`
+    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        let span = self
+            .context
+            .span_get(&self.context.node_get_span(&node.id()));
+
+        let src_file: SourceFile = span.file.upgrade().unwrap().as_ref().into();
+
+        if src_file == self.source_file {
+            // Check if this node spans the range we are looking for
+            if span.start <= self.looking_for && span.start + span.length >= self.looking_for {
+                // Depth first
+                let out = node.walk(a, self);
+
+                a.push(node);
+                out
+            } else {
+                // This node does not span the range
+                // We don't need to walk it since it's children won't span it either
+                ControlFlow::Continue(())
+            }
+        } else {
+            // The files don't match
+            // We could be looking for something inside an include
+            // Keep recursing
+            match node {
+                Node::DefAction(_) => node.walk(a, self),
+                Node::DefComponent(_) => node.walk(a, self),
+                Node::DefModule(_) => node.walk(a, self),
+                Node::DefState(_) => node.walk(a, self),
+                Node::DefStateMachine(_) => node.walk(a, self),
+                Node::DefTopology(_) => node.walk(a, self),
+                Node::SpecInclude(_) => node.walk(a, self),
+                _ => ControlFlow::Continue(()),
+            }
+        }
+    }
+}
+
+fn nodes_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: &Position,
+) -> Option<Vec<Node<'a>>> {
+    let files = match state.files.get(document.as_str()) {
+        None => return None,
+        Some(files) => files,
+    };
+
+    Some(
+        files
+            .into_iter()
+            .flat_map(|file| {
+                let cache = state.cache.get(file).unwrap();
+                let pos = state.context.file_get(file).offset_of(LineCol {
+                    line: position.line,
+                    col: position.character,
+                });
+
+                let visitor = FindPositionVisitor {
+                    source_file: *file,
+                    looking_for: pos,
+                    context: &state.context,
+                };
+
+                let mut out = vec![];
+                let _ = visitor.visit_trans_unit(&mut out, &cache.ast);
+                out
+            })
+            .collect(),
+    )
+}
+
+fn symbol_at_position<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    position: &Position,
+) -> Option<(Node<'a>, &'a Symbol)> {
+    let nodes = match nodes_at_position(state, document, position) {
+        None => return None,
+        Some(nodes) => nodes,
+    };
+
+    let mut found = vec![];
+
+    for node in nodes {
+        if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
+            found.push((node, def));
+        }
+    }
+
+    found.dedup_by(|a, b| a.1 == b.1);
+    found.pop()
+}
+
+pub fn handle_goto_definition(
+    state: &GlobalState,
+    request: GotoDefinitionParams,
+) -> Result<Option<GotoDefinitionResponse>> {
+    if let Some((_, symbol)) = symbol_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        &request.text_document_position_params.position,
+    ) {
+        let span = state
+            .context
+            .span_get(&state.context.node_get_span(&symbol.name().node_id));
+        let file = span.file.upgrade().unwrap();
+
+        let start = file.position(span.start);
+        let end = file.position(span.start + span.length);
+
+        Ok(Some(GotoDefinitionResponse::Scalar(Location {
+            uri: Uri::from_str(&file.uri)?,
+            range: Range {
+                start: Position {
+                    line: start.line(),
+                    character: start.column(),
+                },
+                end: Position {
+                    line: end.line(),
+                    character: end.column(),
+                },
+            },
+        })))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<Hover>> {
+    let nodes = match nodes_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        &request.text_document_position_params.position,
+    ) {
+        None => return Ok(None),
+        Some(nodes) => nodes,
+    };
+
+    let mut found = vec![];
+
+    for node in nodes {
+        if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
+            found.push((node, def));
+        }
+    }
+
+    found.dedup_by(|a, b| a.1 == b.1);
+    let symbol_at_position = found.pop();
+
+    if let Some((node, symbol)) = symbol_at_position {
+        let node_data = state.context.node_get(&node.id());
+        let span_data = state
+            .context
+            .span_get(&state.context.node_get_span(&node.id()));
+        let file = span_data.file.upgrade().unwrap();
+        let start = file.position(span_data.start);
+        let end = file.position(span_data.start + span_data.length);
+
+        let symbol_kind = match symbol {
+            Symbol::AbsType(_) => "Abstract Type",
+            Symbol::AliasType(_) => "Type Alias",
+            Symbol::Array(_) => "Array",
+            Symbol::Component(_) => "Component",
+            Symbol::ComponentInstance(_) => "Component Instance",
+            Symbol::Constant(_) => "Constant",
+            Symbol::Enum(_) => "Enum",
+            Symbol::EnumConstant(_) => "Enum Constant",
+            Symbol::Interface(_) => "Interface",
+            Symbol::Module(_) => "Module",
+            Symbol::Port(_) => "Port",
+            Symbol::StateMachine(_) => "State Machine",
+            Symbol::Struct(_) => "Struct",
+            Symbol::Topology(_) => "Topology",
+        };
+
+        // Convert the name into a fully qualified name by following the parent symbols
+        let mut qualified_name = vec![symbol];
+        let mut current = symbol;
+        loop {
+            match state.analysis.parent_symbol_map.get(current) {
+                None => break,
+                Some(parent) => {
+                    qualified_name.push(parent);
+                    current = parent;
+                }
+            }
+        }
+
+        qualified_name.reverse();
+        let qualified_idents: Vec<&str> = qualified_name
+            .into_iter()
+            .map(|n| n.name().data.as_str())
+            .collect();
+        let qual_ident = qualified_idents.join(".");
+
+        let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
+
+        let markdown_lines: Vec<String> = node_data
+            .post_annotation
+            .clone()
+            .into_iter()
+            .chain(vec![
+                "```typescript".to_string(),
+                symbol_kind_line,
+                "```".to_string(),
+            ])
+            .chain(node_data.post_annotation.clone().into_iter())
+            .collect();
+
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: markdown_lines.join("\n"),
+            }),
+            range: Some(Range {
+                start: Position {
+                    line: start.line(),
+                    character: start.column(),
+                },
+                end: Position {
+                    line: end.line(),
+                    character: end.column(),
+                },
+            }),
+        }))
+    } else {
+        Ok(None)
+    }
 }

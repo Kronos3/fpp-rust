@@ -4,7 +4,6 @@ mod global_state;
 mod handlers;
 mod lsp_ext;
 mod notification;
-mod progress;
 mod request;
 mod analysis;
 mod util;

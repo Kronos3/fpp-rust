@@ -4,7 +4,7 @@ pub mod state_machine;
 pub mod topology;
 pub mod visit;
 
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 
 use fpp_core::Annotated;
 use fpp_macros::{ast, AstAnnotated, DirectWalkable, VisitorWalkable};
@@ -19,14 +19,8 @@ pub trait AstNode: fpp_core::Spanned + Sized {
     fn id(&self) -> fpp_core::Node;
 }
 
-#[derive(VisitorWalkable)]
+#[derive(Debug, Clone, VisitorWalkable)]
 pub struct TransUnit(pub Vec<ModuleMember>);
-
-impl Debug for TransUnit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(self.0.iter()).finish()
-    }
-}
 
 pub enum QualIdentKind {
     Component,

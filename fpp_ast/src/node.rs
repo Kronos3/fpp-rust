@@ -1,4 +1,5 @@
 use crate::*;
+use fpp_core::Span;
 use fpp_macros::DirectRefWalkable;
 
 /// This enum is a super variant of all the types of nodes in the AST
@@ -9,7 +10,6 @@ use fpp_macros::DirectRefWalkable;
 /// parts of the AST and build .
 #[derive(Debug, Clone, Copy, DirectRefWalkable)]
 pub enum Node<'a> {
-    TransUnit(&'a TransUnit),
     /* Definitions */
     DefAbsType(&'a DefAbsType),
     DefAction(&'a DefAction),

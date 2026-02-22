@@ -8,7 +8,7 @@ use crate::semantics::{
 use crate::Analysis;
 use fpp_ast::{
     AstNode, DefAliasType, DefArray, DefEnum, DefStruct, Expr, Node, TransUnit, TypeName,
-    TypeNameKind, Visitor,
+    TypeNameKind, Visitor, Walkable,
 };
 use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};
@@ -114,7 +114,7 @@ impl<'ast> Visitor<'ast> for FinalizeTypeDefs<'ast> {
         node: &'ast TransUnit,
     ) -> ControlFlow<Self::Break> {
         a.visited_symbol_set.clear();
-        self.super_visit(a, Node::TransUnit(node))
+        node.walk(a, self)
     }
 
     fn visit_def_alias_type(

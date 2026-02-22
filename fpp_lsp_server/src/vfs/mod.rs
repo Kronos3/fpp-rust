@@ -113,9 +113,13 @@ impl Vfs {
     pub fn did_close(&mut self, close: DidCloseTextDocumentParams) {
         let uri = close.text_document.uri.clone();
         let key = close.text_document.uri.as_str().to_string();
-        let mut files = self.files.write().unwrap();
 
-        match files.remove(&key) {
+        let file = {
+            let mut files = self.files.write().unwrap();
+            files.remove(&key)
+        };
+
+        match file {
             None => {
                 tracing::warn!(
                     uri = key,
@@ -129,7 +133,7 @@ impl Vfs {
                         "received a close event to a file not being traced by the LSP, dropping event"
                     );
 
-                    files.insert(
+                    self.files.write().unwrap().insert(
                         key,
                         File {
                             content: FileContent::Fs(fs_file),

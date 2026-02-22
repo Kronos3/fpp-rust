@@ -1,7 +1,7 @@
-use crate::Analysis;
 use crate::analyzers::analyzer::Analyzer;
 use crate::semantics::Symbol;
-use fpp_ast::{MoveWalkable, Node, Visitor, Walkable};
+use crate::Analysis;
+use fpp_ast::{MoveWalkable, Node, Visitor};
 use std::marker::PhantomData;
 use std::ops::ControlFlow;
 
@@ -43,7 +43,6 @@ impl<'ast, V: Visitor<'ast, State = Analysis>> Analyzer<'ast, V> for NestedAnaly
             Node::DefComponent(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             Node::DefEnum(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
             Node::DefModule(def) => self.walk_symbol(visitor, a, a.get_symbol(def), node),
-            Node::TransUnit(tu) => tu.walk(a, visitor),
             _ => match self.mode {
                 NestedAnalyzerMode::SHALLOW => ControlFlow::Continue(()),
                 NestedAnalyzerMode::DEEP => node.walk(a, visitor),

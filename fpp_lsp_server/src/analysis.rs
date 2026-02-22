@@ -5,12 +5,13 @@ use fpp_ast::MutVisitor;
 use fpp_core::{CompilerContext, Diagnostic, GarbageCollectionSet, Level, SourceFile, Spanned};
 use lsp_types::Uri;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use fpp_parser::ResolveIncludes;
 use ignore::WalkBuilder;
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter};
+use std::mem;
 use std::str::FromStr;
 use url::Url;
 
@@ -121,7 +122,7 @@ impl GlobalState {
                 };
 
                 // Refresh the context and all caches
-                self.context = Arc::new(Mutex::new(CompilerContext::new(self.diagnostics.clone())));
+                self.context = CompilerContext::new(self.diagnostics.clone());
                 self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
@@ -130,7 +131,11 @@ impl GlobalState {
 
                 let vfs = self.vfs.clone();
 
-                self.cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let mut ctx = mem::replace(
+                    &mut self.context,
+                    CompilerContext::new(self.diagnostics.clone()),
+                );
+                self.cache = fpp_core::run(&mut ctx, || {
                     let mut file_locs = FxHashMap::default();
 
                     GarbageCollectionSet::start();
@@ -190,6 +195,7 @@ impl GlobalState {
                     out
                 });
 
+                let _ = mem::replace(&mut self.context, ctx);
                 self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
 
                 tracing::info!("finished reparsing workspace");
@@ -237,14 +243,18 @@ impl GlobalState {
                 tracing::info!("found {} FPP files", files.len());
 
                 // Refresh the context and all caches
-                self.context = Arc::new(Mutex::new(CompilerContext::new(self.diagnostics.clone())));
+                self.context = CompilerContext::new(self.diagnostics.clone());
                 self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
                 self.workspace = Workspace::FullWorkspace(workspace_uri.clone());
 
-                let cache = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let mut ctx = mem::replace(
+                    &mut self.context,
+                    CompilerContext::new(self.diagnostics.clone()),
+                );
+                let cache = fpp_core::run(&mut ctx, || {
                     let mut cache = FxHashMap::default();
                     for file in files {
                         match self.new_translation_unit_cache(&file.as_str()) {
@@ -260,6 +270,7 @@ impl GlobalState {
                     cache
                 });
 
+                let _ = mem::replace(&mut self.context, ctx);
                 self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
 
                 tracing::info!("finished reparsing workspace");
@@ -286,7 +297,7 @@ impl GlobalState {
                         tracing::warn!("not part of the compiler context, ignoring analysis");
                     }
                     Some(files) => {
-                        let update_set = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                        let update_set = fpp_core::run(&mut self.context, || {
                             let mut update_set = FxHashSet::default();
 
                             // This file is added in one or more ways to the compiler analysis
@@ -321,7 +332,11 @@ impl GlobalState {
             }
             Task::Reprocess(source_file) => {
                 let old_cache = self.cache.remove(&source_file).unwrap();
-                let new_cache = match fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let mut ctx = mem::replace(
+                    &mut self.context,
+                    CompilerContext::new(self.diagnostics.clone()),
+                );
+                let new_cache = match fpp_core::run(&mut ctx, || {
                     assert!(source_file.parent().is_none());
                     assert_eq!(old_cache.file, source_file);
                     let uri = source_file.uri();
@@ -343,6 +358,7 @@ impl GlobalState {
                     }
                 };
 
+                let _ = mem::replace(&mut self.context, ctx);
                 self.cache.insert(new_cache.file, Arc::new(new_cache));
                 self.task(Task::Analysis);
             }
@@ -353,7 +369,7 @@ impl GlobalState {
                 self.diagnostics.set_mode(DiagnosticType::Analysis);
                 self.diagnostics.clear_all_analysis();
 
-                let (analysis, files) = fpp_core::run(&mut self.context.lock().unwrap(), || {
+                let (analysis, files) = fpp_core::run(&mut self.context, || {
                     let mut files = FxHashMap::default();
                     let mut analysis = Analysis::new();
 
@@ -397,7 +413,7 @@ impl GlobalState {
                     (analysis, files)
                 });
 
-                self.files = Arc::new(files);
+                self.files = files;
                 self.analysis = Arc::new(analysis)
             }
         }

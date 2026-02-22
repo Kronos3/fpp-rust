@@ -4,7 +4,7 @@ use crate::interface::with;
 use crate::map::IdMap;
 use crate::span::Span;
 use crate::{BytePos, Diagnostic, DiagnosticMessageKind, Level, Node, Position};
-use line_index::LineIndex;
+use line_index::{LineCol, LineIndex};
 use rustc_hash::FxHashSet;
 use std::ops::Deref;
 use std::sync::{Arc, Weak};
@@ -97,6 +97,10 @@ impl SourceFileData {
         }
     }
 
+    pub fn offset_of(&self, pos: LineCol) -> BytePos {
+        self.lines.offset(pos).unwrap().into()
+    }
+
     pub fn include_loc(&self, span: &SpanData) -> DiagnosticDataIncludeLocation {
         let pos = self.position(span.start);
 
@@ -146,7 +150,15 @@ impl SourceFileData {
     }
 }
 
-pub(crate) struct NodeData {
+impl From<&SourceFileData> for SourceFile {
+    fn from(value: &SourceFileData) -> Self {
+        SourceFile {
+            handle: value.handle,
+        }
+    }
+}
+
+pub struct NodeData {
     pub span_handle: usize,
     pub pre_annotation: Vec<String>,
     pub post_annotation: Vec<String>,
@@ -286,7 +298,7 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         Span { handle }
     }
 
-    pub(crate) fn node_get(&self, node: &Node) -> &NodeData {
+    pub fn node_get(&self, node: &Node) -> &NodeData {
         self.nodes.get(node.handle)
     }
 
@@ -294,17 +306,17 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
         self.nodes.get_mut(node.handle)
     }
 
-    pub(crate) fn node_get_span(&self, node: &Node) -> Span {
+    pub fn node_get_span(&self, node: &Node) -> Span {
         Span {
             handle: self.nodes.get(node.handle).span_handle,
         }
     }
 
-    pub(crate) fn span_get(&self, span: &Span) -> &SpanData {
+    pub fn span_get(&self, span: &Span) -> &SpanData {
         self.spans.get(span.handle)
     }
 
-    pub(crate) fn file_get(&self, file: &SourceFile) -> &SourceFileData {
+    pub fn file_get(&self, file: &SourceFile) -> &SourceFileData {
         self.files.get(file.handle)
     }
 
