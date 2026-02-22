@@ -65,6 +65,14 @@ impl<'a> Parser<'a> {
         ))
     }
 
+    fn name(&mut self) -> ParseResult<Name> {
+        let ident = self.consume(Identifier)?;
+        Ok(Name {
+            node_id: self.node(ident.span()),
+            data: ident.text().to_string(),
+        })
+    }
+
     fn ident(&mut self) -> ParseResult<Ident> {
         let ident = self.consume(Identifier)?;
         Ok(Ident {
@@ -75,7 +83,7 @@ impl<'a> Parser<'a> {
 
     fn alias_type(&mut self) -> ParseResult<DefAliasType> {
         let first = self.consume_keyword(Type)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Equals)?;
         let type_name = self.type_name()?;
 
@@ -88,7 +96,7 @@ impl<'a> Parser<'a> {
 
     fn abs_type(&mut self) -> ParseResult<DefAbsType> {
         let first = self.consume_keyword(Type)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         Ok(DefAbsType {
             node_id: self.node(first.span()),
@@ -98,7 +106,7 @@ impl<'a> Parser<'a> {
 
     fn def_action(&mut self) -> ParseResult<DefAction> {
         let first = self.consume_keyword(Action)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let type_name = match self.peek(0) {
             Colon => {
                 self.next();
@@ -116,7 +124,7 @@ impl<'a> Parser<'a> {
 
     fn def_array(&mut self) -> ParseResult<DefArray> {
         let first = self.consume_keyword(Array)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(Equals)?;
 
@@ -151,7 +159,7 @@ impl<'a> Parser<'a> {
 
     fn def_choice(&mut self) -> ParseResult<DefChoice> {
         let first = self.consume_keyword(Choice)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(LeftCurly)?;
 
@@ -176,7 +184,7 @@ impl<'a> Parser<'a> {
     fn def_component(&mut self) -> ParseResult<DefComponent> {
         let (kind, first) = self.component_kind()?;
         self.consume_keyword(Component)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(LeftCurly)?;
         let members = self.component_members();
@@ -307,7 +315,7 @@ impl<'a> Parser<'a> {
 
     fn def_module(&mut self) -> ParseResult<DefModule> {
         let first = self.consume_keyword(Module)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(LeftCurly)?;
         let members = self.module_members();
         self.consume(RightCurly)?;
@@ -372,7 +380,7 @@ impl<'a> Parser<'a> {
 
     fn def_port(&mut self) -> ParseResult<DefPort> {
         let first = self.consume_keyword(Port)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let params = self.formal_param_list()?;
         let return_type = match self.peek(0) {
             RightArrow => {
@@ -451,7 +459,7 @@ impl<'a> Parser<'a> {
 
     fn def_topology(&mut self) -> ParseResult<DefTopology> {
         let first = self.consume_keyword(Topology)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let implements = match self.peek(0) {
             Keyword(Implements) => {
                 self.next();
@@ -591,7 +599,7 @@ impl<'a> Parser<'a> {
 
     fn spec_connection_graph_direct(&mut self) -> ParseResult<SpecConnectionGraph> {
         let first = self.consume_keyword(Connections)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(LeftCurly)?;
         let connections = self.element_sequence(&Parser::connection, Comma, RightCurly);
         self.consume(RightCurly)?;
@@ -658,7 +666,7 @@ impl<'a> Parser<'a> {
     fn spec_tlm_packet_set(&mut self) -> ParseResult<SpecTlmPacketSet> {
         let first = self.consume_keyword(Telemetry)?;
         self.consume_keyword(Packets)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(LeftCurly)?;
         let members = self.tlm_packet_set_members();
         self.consume(RightCurly)?;
@@ -700,7 +708,7 @@ impl<'a> Parser<'a> {
 
     fn spec_tlm_packet(&mut self) -> ParseResult<SpecTlmPacket> {
         let first = self.consume_keyword(Packet)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let id = self.opt_expr(Id)?;
         self.consume_keyword(Group)?;
         let group = self.expr()?;
@@ -783,7 +791,7 @@ impl<'a> Parser<'a> {
 
     fn spec_top_port(&mut self) -> ParseResult<SpecTopPort> {
         let first = self.consume_keyword(Port)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Equals)?;
         let underlying_port = self.port_instance_identifier()?;
 
@@ -796,7 +804,7 @@ impl<'a> Parser<'a> {
 
     fn def_component_instance(&mut self) -> ParseResult<DefComponentInstance> {
         let first = self.consume_keyword(Instance)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Colon)?;
         let component = self.qual_ident()?;
 
@@ -890,7 +898,7 @@ impl<'a> Parser<'a> {
 
     fn def_interface(&mut self) -> ParseResult<DefInterface> {
         let first = self.consume_keyword(Interface)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(LeftCurly)?;
         let members = self.annotated_element_sequence(&Parser::interface_member, Semi, RightCurly);
         self.consume(RightCurly)?;
@@ -915,7 +923,7 @@ impl<'a> Parser<'a> {
 
     fn def_constant(&mut self) -> ParseResult<DefConstant> {
         let first = self.consume_keyword(Constant)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(Equals)?;
         let value = self.expr()?;
@@ -929,7 +937,7 @@ impl<'a> Parser<'a> {
 
     fn def_enum(&mut self) -> ParseResult<DefEnum> {
         let first = self.consume_keyword(Enum)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         let type_name = match self.peek(0) {
             Colon => {
@@ -962,7 +970,7 @@ impl<'a> Parser<'a> {
     }
 
     fn def_enum_constant(&mut self) -> ParseResult<DefEnumConstant> {
-        let name = self.ident()?;
+        let name = self.name()?;
         let first_span = name.span();
 
         let value = match self.peek(0) {
@@ -985,7 +993,7 @@ impl<'a> Parser<'a> {
         self.consume_keyword(Machine)?;
         self.consume_keyword(Instance)?;
 
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(Colon)?;
         let state_machine = self.qual_ident()?;
@@ -1025,7 +1033,7 @@ impl<'a> Parser<'a> {
         let first = self.consume_keyword(State)?;
         self.consume_keyword(Machine)?;
 
-        let name = self.ident()?;
+        let name = self.name()?;
         let members = match self.peek(0) {
             LeftCurly => {
                 self.next();
@@ -1216,7 +1224,7 @@ impl<'a> Parser<'a> {
 
     fn def_guard(&mut self) -> ParseResult<DefGuard> {
         let first = self.consume_keyword(Guard)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let type_name = match self.peek(0) {
             Colon => {
                 self.next();
@@ -1235,7 +1243,7 @@ impl<'a> Parser<'a> {
     fn spec_container(&mut self) -> ParseResult<SpecContainer> {
         let first = self.consume_keyword(Product)?;
         self.consume_keyword(Container)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let id = self.opt_expr(Id)?;
         let default_priority = match self.peek(0) {
             Keyword(Default) => {
@@ -1257,7 +1265,7 @@ impl<'a> Parser<'a> {
     fn spec_record(&mut self) -> ParseResult<SpecRecord> {
         let first = self.consume_keyword(Product)?;
         self.consume_keyword(Record)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Colon)?;
         let record_type = self.type_name()?;
         let is_array = match self.peek(0) {
@@ -1280,7 +1288,7 @@ impl<'a> Parser<'a> {
 
     fn spec_event(&mut self) -> ParseResult<SpecEvent> {
         let first = self.consume_keyword(Event)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let params = self.formal_param_list()?;
         self.consume_keyword(Severity)?;
         let severity = match self.peek(0) {
@@ -1394,7 +1402,7 @@ impl<'a> Parser<'a> {
     fn spec_internal_port(&mut self) -> ParseResult<SpecInternalPort> {
         let first = self.consume_keyword(Internal)?;
         self.consume_keyword(Port)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let params = self.formal_param_list()?;
         let priority = self.opt_expr(Priority)?;
         let queue_full = self.opt_queue_full()?;
@@ -1430,7 +1438,7 @@ impl<'a> Parser<'a> {
         };
 
         self.consume_keyword(Param)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Colon)?;
         let type_name = self.type_name()?;
         let default = self.opt_expr(Default)?;
@@ -1468,7 +1476,7 @@ impl<'a> Parser<'a> {
 
     fn spec_tlm_channel(&mut self) -> ParseResult<SpecTlmChannel> {
         let first = self.consume_keyword(Telemetry)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Colon)?;
         let type_name = self.type_name()?;
         let id = self.opt_expr(Id)?;
@@ -1572,7 +1580,7 @@ impl<'a> Parser<'a> {
 
     fn def_struct(&mut self) -> ParseResult<DefStruct> {
         let first = self.consume_keyword(Struct)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(LeftCurly)?;
         let members =
@@ -1596,7 +1604,7 @@ impl<'a> Parser<'a> {
     }
 
     fn struct_type_member(&mut self) -> ParseResult<StructTypeMember> {
-        let name = self.ident()?;
+        let name = self.name()?;
         let first_span = name.span();
 
         self.consume(Colon)?;
@@ -1625,7 +1633,7 @@ impl<'a> Parser<'a> {
 
     fn def_state(&mut self) -> ParseResult<DefState> {
         let first = self.consume_keyword(State)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         let members = match self.peek(0) {
             LeftCurly => {
@@ -1647,7 +1655,7 @@ impl<'a> Parser<'a> {
 
     fn def_signal(&mut self) -> ParseResult<DefSignal> {
         let first = self.consume_keyword(Signal)?;
-        let name = self.ident()?;
+        let name = self.name()?;
         let type_name = match self.peek(0) {
             Colon => {
                 self.next();
@@ -1711,7 +1719,7 @@ impl<'a> Parser<'a> {
         }?;
 
         self.consume_keyword(Port)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         self.consume(Colon)?;
         let size = match self.peek(0) {
@@ -1885,7 +1893,7 @@ impl<'a> Parser<'a> {
         }?;
 
         self.consume_keyword(Port)?;
-        let name = self.ident()?;
+        let name = self.name()?;
 
         let priority = match self.peek(0) {
             Keyword(Priority) => {
@@ -1943,7 +1951,7 @@ impl<'a> Parser<'a> {
             )),
         }?;
 
-        let name = self.ident()?;
+        let name = self.name()?;
         let params = self.formal_param_list()?;
         let opcode = self.opt_expr(Opcode)?;
         let priority = self.opt_expr(Priority)?;
@@ -2488,7 +2496,7 @@ impl<'a> Parser<'a> {
     }
 
     fn struct_expr_member(&mut self) -> ParseResult<StructExprMember> {
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Equals)?;
         let value = self.expr()?;
         Ok(StructExprMember {
@@ -2561,7 +2569,7 @@ impl<'a> Parser<'a> {
             _ => FormalParamKind::Value,
         };
 
-        let name = self.ident()?;
+        let name = self.name()?;
         self.consume(Colon)?;
 
         let type_name = self.type_name()?;

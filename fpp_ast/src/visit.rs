@@ -186,6 +186,7 @@ pub trait Visitor<'ast>: Sized {
         /* Other AST nodes */
         (Expr, visit_expr),
         (FormalParam, visit_formal_param),
+        (Name, visit_name),
         (Ident, visit_ident),
         (LitString, visit_lit_string),
         (QualIdent, visit_qual_ident),
@@ -282,6 +283,7 @@ pub trait MutVisitor: Sized {
         /* Other AST nodes */
         (Expr, visit_expr),
         (FormalParam, visit_formal_param),
+        (Name, visit_name),
         (Ident, visit_ident),
         (LitString, visit_lit_string),
         (QualIdent, visit_qual_ident),

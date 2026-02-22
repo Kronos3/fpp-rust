@@ -3,13 +3,13 @@ use std::sync::Arc;
 
 pub trait SymbolInterface: Clone {
     fn node(&self) -> Node;
-    fn name(&self) -> &fpp_ast::Ident;
+    fn name(&self) -> &fpp_ast::Name;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DefModuleStub {
     pub node_id: Node,
-    pub name: fpp_ast::Ident,
+    pub name: fpp_ast::Name,
 }
 
 impl From<&fpp_ast::DefModule> for DefModuleStub {
@@ -59,7 +59,7 @@ impl SymbolInterface for Symbol {
         }
     }
 
-    fn name(&self) -> &fpp_ast::Ident {
+    fn name(&self) -> &fpp_ast::Name {
         match self {
             Symbol::AbsType(def) => &def.name,
             Symbol::AliasType(def) => &def.name,

@@ -4,7 +4,7 @@ use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
 use anyhow::Result;
 use fpp_analysis::semantics::{Symbol, SymbolInterface};
-use fpp_ast::{AstNode, MoveWalkable, Node, Visitor};
+use fpp_ast::{AstNode, MoveWalkable, Name, Node, Visitor};
 use fpp_core::{BytePos, CompilerContext, LineCol, LineIndex, SourceFile};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{
@@ -544,6 +544,109 @@ fn hover_for_symbol(state: &GlobalState, node: Node, symbol: &Symbol) -> Hover {
     }
 }
 
+fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) -> Option<Hover> {
+    let symbol_kind = match def_node {
+        Node::DefAbsType(_) => "Abstract Type",
+        Node::DefAliasType(_) => "Type Alias",
+        Node::DefArray(_) => "Array",
+        Node::DefComponent(_) => "Component",
+        Node::DefComponentInstance(_) => "Component Instance",
+        Node::DefConstant(_) => "Constant",
+        Node::DefEnum(_) => "Enum",
+        Node::DefEnumConstant(_) => "Enum Constant",
+        Node::DefInterface(_) => "Interface",
+        Node::DefModule(_) => "Module",
+        Node::DefPort(_) => "Port",
+        Node::DefStateMachine(_) => "State Machine",
+        Node::DefStruct(_) => "Struct",
+        Node::DefTopology(_) => "Topology",
+        Node::DefChoice(_) => "Choice",
+        Node::DefGuard(_) => "Guard",
+        Node::DefSignal(_) => "Signal",
+        Node::DefState(_) => "State",
+        Node::SpecCommand(_) => "Command",
+        Node::SpecConnectionGraph(_) => "Connection Graph",
+        Node::SpecContainer(_) => "Container",
+        Node::SpecEvent(_) => "Event",
+        Node::SpecGeneralPortInstance(_) => "Port Instance",
+        Node::SpecParam(_) => "Parameter",
+        Node::SpecRecord(_) => "Record",
+        Node::SpecSpecialPortInstance(_) => "Special Port Instance",
+        Node::SpecStateMachineInstance(_) => "State Machine Instance",
+        Node::SpecTlmChannel(_) => "Telemetry Channel",
+        Node::SpecTlmPacket(_) => "Telemetry Packet",
+        Node::SpecTlmPacketSet(_) => "Telemetry Packet Set",
+        Node::SpecTopPort(_) => "Topology Port",
+        _ => return None,
+    };
+
+    let node_data = state.context.node_get(&def_node.id());
+    let span_data = state
+        .context
+        .span_get(&state.context.node_get_span(&hover_node.id()));
+    let file = span_data.file.upgrade().unwrap();
+    let start = file.position(span_data.start);
+    let end = file.position(span_data.start + span_data.length);
+
+    // Convert the name into a fully qualified name by following the parent symbols
+    let qual_ident = {
+        if let Some(symbol) = state.analysis.symbol_map.get(&def_node.id()) {
+            let mut qualified_name = vec![symbol];
+            let mut current = symbol;
+            loop {
+                match state.analysis.parent_symbol_map.get(current) {
+                    None => break,
+                    Some(parent) => {
+                        qualified_name.push(parent);
+                        current = parent;
+                    }
+                }
+            }
+
+            qualified_name.reverse();
+            let qualified_idents: Vec<&str> = qualified_name
+                .into_iter()
+                .map(|n| n.name().data.as_str())
+                .collect();
+
+            qualified_idents.join(".")
+        } else {
+            hover_node.data.clone()
+        }
+    };
+
+    let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
+
+    let markdown_lines: Vec<String> = node_data
+        .pre_annotation
+        .clone()
+        .into_iter()
+        .chain(vec![
+            "```typescript".to_string(),
+            symbol_kind_line,
+            "```".to_string(),
+        ])
+        .chain(node_data.post_annotation.clone().into_iter())
+        .collect();
+
+    Some(Hover {
+        contents: HoverContents::Markup(MarkupContent {
+            kind: MarkupKind::Markdown,
+            value: markdown_lines.join("\n"),
+        }),
+        range: Some(Range {
+            start: Position {
+                line: start.line(),
+                character: start.column(),
+            },
+            end: Position {
+                line: end.line(),
+                character: end.column(),
+            },
+        }),
+    })
+}
+
 pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<Hover>> {
     let nodes = match nodes_at_position(
         state,
@@ -565,22 +668,15 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
         return Ok(Some(hover_for_symbol(state, node, symbol)));
     }
 
-    // Check if this node is a definition
-    if let Some((_, symbol)) = nodes.iter().find_map(|node| {
-        if let Some(def) = state.analysis.symbol_map.get(&node.id()) {
-            Some((*node, def))
-        } else {
-            None
-        }
-    }) {
-        // We are hovering over _some_ part of the definition
-        // We only _actually_ want to show this hover information over the 'name' of the symbol
-        if let Some(name_node) = nodes.first()
-            && name_node.id() == symbol.name().node_id
-        {
-            return Ok(Some(hover_for_symbol(state, *name_node, symbol)));
-        }
+    // This is not a use/reference to another definition
+    // From here on in we should only show hover information for definitions if we are hovering over
+    // the definition's name
+    if let Some(Node::Name(name)) = nodes.first() {
+        // We are hovering over a name
+        Ok(nodes
+            .iter()
+            .find_map(|node| hover_for_node(state, name, *node)))
+    } else {
+        Ok(None)
     }
-
-    Ok(None)
 }

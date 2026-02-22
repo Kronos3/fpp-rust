@@ -423,6 +423,11 @@ impl<'a> Lexer<'a> {
 
     fn eat_string_literal(&mut self) -> TokenKind {
         loop {
+            if self.first() == '\n' {
+                self.error(0, "unclosed string literal");
+                return LiteralString;
+            }
+
             match self.bump() {
                 // Search for triple quotes "".to_string()"
                 Some('\"') => {
@@ -430,12 +435,12 @@ impl<'a> Lexer<'a> {
                     return LiteralString;
                 }
 
-                Some('\n') => {
-                    self.error(0, "unclosed string literal");
-                    return LiteralString;
-                }
-
                 Some('\\') => {
+                    if self.first() == '\n' {
+                        self.error(0, "unclosed string literal");
+                        return LiteralString;
+                    }
+
                     // Skip over escaped character
                     self.bump();
                 }

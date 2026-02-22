@@ -59,6 +59,7 @@ pub enum Node<'a> {
     /* Other AST nodes */
     Expr(&'a Expr),
     FormalParam(&'a FormalParam),
+    Name(&'a Name),
     Ident(&'a Ident),
     LitString(&'a LitString),
     QualIdent(&'a QualIdent),

@@ -4,7 +4,7 @@ use crate::*;
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefTopology {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<TopologyMember>,
     pub implements: Vec<QualIdent>,
 }
@@ -57,7 +57,7 @@ pub enum ConnectionPatternKind {
 #[derive(Debug, Clone, DirectWalkable)]
 pub enum SpecConnectionGraphKind {
     Direct {
-        name: Ident,
+        name: Name,
         connections: Vec<Connection>,
     },
     Pattern {
@@ -84,14 +84,14 @@ pub struct TlmChannelIdentifier {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTopPort {
-    pub name: Ident,
+    pub name: Name,
     pub underlying_port: PortInstanceIdentifier,
 }
 
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmPacketSet {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<TlmPacketSetMember>,
     pub omitted: Vec<TlmChannelIdentifier>,
 }
@@ -106,7 +106,7 @@ pub enum TlmPacketSetMember {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmPacket {
-    pub name: Ident,
+    pub name: Name,
     pub id: Option<Expr>,
     pub group: Expr,
     pub members: Vec<TlmPacketMember>,

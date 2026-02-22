@@ -42,6 +42,14 @@ pub struct LitString {
     pub inner_span: fpp_core::Span,
 }
 
+/** Definition name */
+#[ast]
+#[derive(Debug, Clone, VisitorWalkable)]
+pub struct Name {
+    #[visitable(ignore)]
+    pub data: String,
+}
+
 /** Identifier */
 #[ast]
 #[derive(Debug, Clone, VisitorWalkable)]
@@ -103,7 +111,7 @@ pub enum QualIdent {
 #[ast]
 #[derive(Debug, Clone, VisitorWalkable)]
 pub struct StructExprMember {
-    pub name: Ident,
+    pub name: Name,
     pub value: Expr,
 }
 
@@ -160,7 +168,7 @@ pub enum FormalParamKind {
 pub struct FormalParam {
     #[visitable(ignore)]
     pub kind: FormalParamKind,
-    pub name: Ident,
+    pub name: Name,
     pub type_name: TypeName,
 }
 
@@ -184,14 +192,14 @@ pub enum Unop {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefAbsType {
-    pub name: Ident,
+    pub name: Name,
 }
 
 /** Aliased type definition */
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefAliasType {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: TypeName,
 }
 
@@ -199,7 +207,7 @@ pub struct DefAliasType {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefArray {
-    pub name: Ident,
+    pub name: Name,
     pub size: Expr,
     pub elt_type: TypeName,
     pub default: Option<Expr>,
@@ -220,7 +228,7 @@ pub enum ComponentKind {
 pub struct DefComponent {
     #[visitable(ignore)]
     pub kind: ComponentKind,
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<ComponentMember>,
 }
 
@@ -228,7 +236,7 @@ pub struct DefComponent {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefComponentInstance {
-    pub name: Ident,
+    pub name: Name,
     pub component: QualIdent,
     pub base_id: Expr,
     #[visitable(ignore)]
@@ -255,7 +263,7 @@ pub struct SpecInit {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefConstant {
-    pub name: Ident,
+    pub name: Name,
     pub value: Expr,
 }
 
@@ -263,7 +271,7 @@ pub struct DefConstant {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefEnum {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: Option<TypeName>,
     pub constants: Vec<DefEnumConstant>,
     pub default: Option<Expr>,
@@ -273,7 +281,7 @@ pub struct DefEnum {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefEnumConstant {
-    pub name: Ident,
+    pub name: Name,
     pub value: Option<Expr>,
 }
 
@@ -281,7 +289,7 @@ pub struct DefEnumConstant {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefModule {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<ModuleMember>,
 }
 
@@ -332,7 +340,7 @@ pub struct SpecLoc {
 pub struct SpecGeneralPortInstance {
     #[visitable(ignore)]
     pub kind: GeneralPortInstanceKind,
-    pub name: Ident,
+    pub name: Name,
     pub size: Option<Expr>,
     pub port: Option<QualIdent>,
     pub priority: Option<Expr>,
@@ -347,7 +355,7 @@ pub struct SpecSpecialPortInstance {
     pub input_kind: Option<InputPortKind>,
     #[visitable(ignore)]
     pub kind: SpecialPortInstanceKind,
-    pub name: Ident,
+    pub name: Name,
     pub priority: Option<Expr>,
     #[visitable(ignore)]
     pub queue_full: Option<QueueFull>,
@@ -372,14 +380,14 @@ pub enum InterfaceMember {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefInterface {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<InterfaceMember>,
 }
 
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct StructTypeMember {
-    pub name: Ident,
+    pub name: Name,
     pub size: Option<Expr>,
     pub type_name: TypeName,
     #[visitable(ignore)]
@@ -390,7 +398,7 @@ pub struct StructTypeMember {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefStruct {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<StructTypeMember>,
     pub default: Option<Expr>,
 }
@@ -398,7 +406,7 @@ pub struct DefStruct {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefPort {
-    pub name: Ident,
+    pub name: Name,
     pub params: FormalParamList,
     pub return_type: Option<TypeName>,
 }

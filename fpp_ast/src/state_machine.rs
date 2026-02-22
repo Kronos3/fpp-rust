@@ -3,7 +3,7 @@ use crate::*;
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefStateMachine {
-    pub name: Ident,
+    pub name: Name,
     pub members: Option<Vec<StateMachineMember>>,
 }
 
@@ -22,7 +22,7 @@ pub enum StateMachineMember {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefAction {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: Option<TypeName>,
 }
 
@@ -30,7 +30,7 @@ pub struct DefAction {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefChoice {
-    pub name: Ident,
+    pub name: Name,
     pub guard: Ident,
     pub if_transition: TransitionExpr,
     pub else_transition: TransitionExpr,
@@ -40,7 +40,7 @@ pub struct DefChoice {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefGuard {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: Option<TypeName>,
 }
 
@@ -56,14 +56,14 @@ pub struct TransitionExpr {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefSignal {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: Option<TypeName>,
 }
 
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct DefState {
-    pub name: Ident,
+    pub name: Name,
     pub members: Vec<StateMember>,
 }
 

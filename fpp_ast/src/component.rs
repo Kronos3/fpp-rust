@@ -45,7 +45,7 @@ pub enum QueueFull {
 pub struct SpecCommand {
     #[visitable(ignore)]
     pub kind: InputPortKind,
-    pub name: Ident,
+    pub name: Name,
     pub params: FormalParamList,
     pub opcode: Option<Expr>,
     pub priority: Option<Expr>,
@@ -56,7 +56,7 @@ pub struct SpecCommand {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecContainer {
-    pub name: Ident,
+    pub name: Name,
     pub id: Option<Expr>,
     pub default_priority: Option<Expr>,
 }
@@ -82,7 +82,7 @@ pub struct EventThrottle {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecEvent {
-    pub name: Ident,
+    pub name: Name,
     pub params: FormalParamList,
     #[visitable(ignore)]
     pub severity: EventSeverity,
@@ -96,7 +96,7 @@ pub struct SpecEvent {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInternalPort {
-    pub name: Ident,
+    pub name: Name,
     pub params: FormalParamList,
     pub priority: Option<Expr>,
     #[visitable(ignore)]
@@ -106,7 +106,7 @@ pub struct SpecInternalPort {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecParam {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: TypeName,
     pub default: Option<Expr>,
     pub id: Option<Expr>,
@@ -149,7 +149,7 @@ pub struct SpecPortMatching {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecRecord {
-    pub name: Ident,
+    pub name: Name,
     pub record_type: TypeName,
     #[visitable(ignore)]
     pub is_array: bool,
@@ -159,7 +159,7 @@ pub struct SpecRecord {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecStateMachineInstance {
-    pub name: Ident,
+    pub name: Name,
     pub state_machine: QualIdent,
     pub priority: Option<Expr>,
     #[visitable(ignore)]
@@ -190,7 +190,7 @@ pub struct TlmChannelLimit {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecTlmChannel {
-    pub name: Ident,
+    pub name: Name,
     pub type_name: TypeName,
     pub id: Option<Expr>,
     #[visitable(ignore)]
