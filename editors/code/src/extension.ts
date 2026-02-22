@@ -90,6 +90,8 @@ class FppExtension implements vscode.Disposable {
         } catch (e) {
             vscode.window.showErrorMessage(`Failed to start language server: ${e}`);
         }
+
+        await this.reload();
     }
 
     async setProjectLocs(locsFile: vscode.Uri | undefined) {

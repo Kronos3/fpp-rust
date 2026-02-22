@@ -389,8 +389,8 @@ fn nodes_at_position<'a>(
         files
             .into_iter()
             .flat_map(|file| {
-                let cache = state.cache.get(file).unwrap();
-                let pos = state.context.file_get(file).offset_of(LineCol {
+                let cache = state.cache.get(&state.parent_file(*file)).unwrap();
+                let pos = state.context.file_get(&file).offset_of(LineCol {
                     line: position.line,
                     col: position.character,
                 });
@@ -488,7 +488,7 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
     let symbol_at_position = found.pop();
 
     if let Some((node, symbol)) = symbol_at_position {
-        let node_data = state.context.node_get(&node.id());
+        let node_data = state.context.node_get(&symbol.node());
         let span_data = state
             .context
             .span_get(&state.context.node_get_span(&node.id()));
@@ -536,7 +536,7 @@ pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<
         let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
 
         let markdown_lines: Vec<String> = node_data
-            .post_annotation
+            .pre_annotation
             .clone()
             .into_iter()
             .chain(vec![

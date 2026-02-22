@@ -95,6 +95,18 @@ impl GlobalState {
         })
     }
 
+    pub fn parent_file(&self, file: SourceFile) -> SourceFile {
+        let mut parent = file;
+        loop {
+            match self.context.file_get(&parent).parent {
+                None => return parent,
+                Some(p) => {
+                    parent = p;
+                }
+            }
+        }
+    }
+
     pub(crate) fn on_task(&mut self, task: Task) {
         let span = tracing::info_span!("task", task = %task);
         let _enter = span.enter();
@@ -297,32 +309,10 @@ impl GlobalState {
                         tracing::warn!("not part of the compiler context, ignoring analysis");
                     }
                     Some(files) => {
-                        let update_set = fpp_core::run(&mut self.context, || {
-                            let mut update_set = FxHashSet::default();
-
-                            // This file is added in one or more ways to the compiler analysis
-                            // Select the top level parent that needs to be updated
-                            for file in files {
-                                let mut parent = *file;
-                                loop {
-                                    match file.parent() {
-                                        None => break,
-                                        Some(p) => {
-                                            parent = p;
-                                        }
-                                    }
-                                }
-
-                                update_set.insert(parent);
-                            }
-
-                            tracing::info!("reprocessing {} files", files.len());
-                            for i in files {
-                                tracing::info!(file = %i, file_dbg = ?i, "reprocessing");
-                            }
-
-                            update_set
-                        });
+                        // This file is added in one or more ways to the compiler analysis
+                        // Select the top level parent that needs to be updated
+                        let update_set: FxHashSet<SourceFile> =
+                            files.iter().map(|file| self.parent_file(*file)).collect();
 
                         for file in update_set {
                             self.task(Task::Reprocess(file))
