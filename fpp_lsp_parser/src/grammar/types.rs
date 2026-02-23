@@ -4,8 +4,9 @@ use crate::SyntaxKind::*;
 use super::*;
 
 pub(super) fn type_alias_or_abstract(p: &mut Parser) {
-    assert!(p.at(TYPE_KW));
+    assert!(p.at(TYPE_KW) || p.at(DICTIONARY_KW));
     let m = p.start();
+    p.eat(DICTIONARY_KW);
     p.bump(TYPE_KW);
     name_r(p, MEMBER_RECOVERY_SET);
     if p.at(EQUALS) {
@@ -18,8 +19,9 @@ pub(super) fn type_alias_or_abstract(p: &mut Parser) {
 }
 
 pub(super) fn def_array(p: &mut Parser) {
-    assert!(p.at(ARRAY_KW));
+    assert!(p.at(ARRAY_KW) || p.at(DICTIONARY_KW));
     let m = p.start();
+    p.eat(DICTIONARY_KW);
     p.bump(ARRAY_KW);
     name_r(p, MEMBER_RECOVERY_SET);
 
@@ -41,9 +43,10 @@ pub(super) fn def_array(p: &mut Parser) {
 }
 
 pub(super) fn def_struct(p: &mut Parser) {
-    assert!(p.at(STRUCT_KW));
+    assert!(p.at(STRUCT_KW) || p.at(DICTIONARY_KW));
 
     let m = p.start();
+    p.eat(DICTIONARY_KW);
     p.bump(STRUCT_KW);
     name_r(p, MEMBER_RECOVERY_SET);
 
@@ -83,8 +86,9 @@ pub(super) fn struct_field(p: &mut Parser) {
 }
 
 pub(super) fn def_enum(p: &mut Parser) {
-    assert!(p.at(ENUM_KW));
+    assert!(p.at(ENUM_KW) || p.at(DICTIONARY_KW));
     let m = p.start();
+    p.eat(DICTIONARY_KW);
     p.bump(ENUM_KW);
 
     name_r(p, MEMBER_RECOVERY_SET);

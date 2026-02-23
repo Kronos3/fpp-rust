@@ -20,6 +20,7 @@ pub enum KeywordKind {
     Cpu,
     Default,
     Diagnostic,
+    Dictionary,
     Do,
     Drop,
     Else,

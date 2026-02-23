@@ -30,14 +30,21 @@ pub(super) fn def_component(p: &mut Parser) {
 }
 
 pub(super) fn component_member(p: &mut Parser) {
+    p.eat(DICTIONARY_KW);
+
     match p.current() {
+        DICTIONARY_KW if p.nth_at(1, TYPE_KW) => types::type_alias_or_abstract(p),
         TYPE_KW => types::type_alias_or_abstract(p),
+        DICTIONARY_KW if p.nth_at(1, ARRAY_KW) => types::def_array(p),
         ARRAY_KW => types::def_array(p),
+        DICTIONARY_KW if p.nth_at(1, CONSTANT_KW) => module::def_constant(p),
         CONSTANT_KW => module::def_constant(p),
+        DICTIONARY_KW if p.nth_at(1, ENUM_KW) => types::def_enum(p),
         ENUM_KW => types::def_enum(p),
+        DICTIONARY_KW if p.nth_at(1, STRUCT_KW) => types::def_struct(p),
+        STRUCT_KW => types::def_struct(p),
         STATE_KW if p.nth_at(2, INSTANCE_KW) => spec_state_machine_instance(p),
         STATE_KW => state_machine::def_state_machine(p),
-        STRUCT_KW => types::def_struct(p),
         ASYNC_KW | GUARDED_KW | SYNC_KW if p.nth_at(1, COMMAND_KW) => {
             spec_command(p);
         }

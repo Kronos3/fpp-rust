@@ -171,6 +171,7 @@ impl From<TokenKind> for SyntaxKind {
                 KeywordKind::Cpu => CPU_KW,
                 KeywordKind::Default => DEFAULT_KW,
                 KeywordKind::Diagnostic => DIAGNOSTIC_KW,
+                KeywordKind::Dictionary => DICTIONARY_KW,
                 KeywordKind::Do => DO_KW,
                 KeywordKind::Drop => DROP_KW,
                 KeywordKind::Else => ELSE_KW,

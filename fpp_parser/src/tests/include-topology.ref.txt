@@ -1,37 +1,39 @@
-[
-    DefTopology {
-        name: Ident {
-            data: "T",
-            node_id: Span {
-                start: [ local path prefix ]/include-topology.fpp:1:10,
-                end: [ local path prefix ]/include-topology.fpp:1:11,
+TransUnit(
+    [
+        DefTopology {
+            name: Name {
+                data: "T",
+                node_id: Span {
+                    start: [ local path prefix ]/include-topology.fpp:1:10,
+                    end: [ local path prefix ]/include-topology.fpp:1:11,
+                },
             },
-        },
-        members: [
-            SpecInstance {
-                instance: Ident {
-                    data: "x",
+            members: [
+                SpecInstance {
+                    instance: Ident {
+                        data: "x",
+                        node_id: Span {
+                            start: [ local path prefix ]/instance.fppi:2:10,
+                            end: [ local path prefix ]/instance.fppi:2:11,
+                        },
+                    },
                     node_id: Span {
-                        start: [ local path prefix ]/instance.fppi:2:10,
+                        start: [ local path prefix ]/instance.fppi:2:1,
                         end: [ local path prefix ]/instance.fppi:2:11,
                     },
+                    pre_annotation: [
+                        "Included instance",
+                    ],
+                    post_annotation: [
+                        "Included instance",
+                    ],
                 },
-                node_id: Span {
-                    start: [ local path prefix ]/instance.fppi:2:1,
-                    end: [ local path prefix ]/instance.fppi:2:11,
-                },
-                pre_annotation: [
-                    "Included instance",
-                ],
-                post_annotation: [
-                    "Included instance",
-                ],
+            ],
+            implements: [],
+            node_id: Span {
+                start: [ local path prefix ]/include-topology.fpp:1:1,
+                end: [ local path prefix ]/include-topology.fpp:5:2,
             },
-        ],
-        implements: [],
-        node_id: Span {
-            start: [ local path prefix ]/include-topology.fpp:1:1,
-            end: [ local path prefix ]/include-topology.fpp:5:2,
         },
-    },
-]
+    ],
+)

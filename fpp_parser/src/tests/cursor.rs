@@ -143,11 +143,12 @@ fn escape_newline() {
 fn invalid_tokens() {
     let tokens = lex(r#"1ee 	 $ 1e1e "
     ""#);
-    assert_eq!(tokens.len(), 4);
+    assert_eq!(tokens.len(), 5);
     let mut idx = Index(0);
     assert_token_eq(&tokens[idx.next()], LiteralFloat, "1ee");
     assert_token_eq(&tokens[idx.next()], LiteralFloat, "1e1e");
     assert_token_eq(&tokens[idx.next()], LiteralString, "");
+    assert_token_eq(&tokens[idx.next()], Eol, "");
     assert_token_eq(&tokens[idx.next()], LiteralString, "");
 
     let tokens = lex(r#"""" asdaldkasl"#);

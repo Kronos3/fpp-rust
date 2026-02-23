@@ -154,7 +154,8 @@ fn invalid_tokens() {
         TokenStr(" ", Whitespace),
         TokenStr("1e1e", LiteralFloat),
         TokenStr(" ", Whitespace),
-        TokenStr("\"\n", LiteralString),
+        TokenStr("\"", LiteralString),
+        TokenStr("\n", Eol),
         TokenStr("    ", Whitespace),
         TokenStr("\"", LiteralString),
     ]);

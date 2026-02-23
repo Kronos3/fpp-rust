@@ -40,6 +40,7 @@ pub enum SyntaxKind {
     CPU_KW,
     DEFAULT_KW,
     DIAGNOSTIC_KW,
+    DICTIONARY_KW,
     DO_KW,
     DROP_KW,
     ELSE_KW,
@@ -406,6 +407,7 @@ impl SyntaxKind {
                 | CPU_KW
                 | DEFAULT_KW
                 | DIAGNOSTIC_KW
+                | DICTIONARY_KW
                 | DO_KW
                 | DROP_KW
                 | ELSE_KW

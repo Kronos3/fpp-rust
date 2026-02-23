@@ -108,7 +108,7 @@ error 38..38: module member expected
 error 40..40: expected `;`
 error 43..43: module member expected
 error 45..45: expected `;`
-error 125..125: expected PORT_KW
+error 125..126: expected PORT_KW
 error 131..131: expected `SEMI`
 error 134..134: component member expected
 error 206..206: expected RIGHT_CURLY

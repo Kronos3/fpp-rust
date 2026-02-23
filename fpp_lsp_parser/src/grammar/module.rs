@@ -176,8 +176,9 @@ fn interface_member(p: &mut Parser) {
 }
 
 pub(super) fn def_constant(p: &mut Parser) {
-    assert!(p.at(CONSTANT_KW));
+    assert!(p.at(CONSTANT_KW) || p.at(DICTIONARY_KW));
     let m = p.start();
+    p.eat(DICTIONARY_KW);
     p.bump(CONSTANT_KW);
 
     name_r(p, MEMBER_RECOVERY_SET);

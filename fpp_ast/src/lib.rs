@@ -201,6 +201,8 @@ pub struct DefAbsType {
 pub struct DefAliasType {
     pub name: Name,
     pub type_name: TypeName,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 /** Array definition */
@@ -213,6 +215,8 @@ pub struct DefArray {
     pub default: Option<Expr>,
     #[visitable(ignore)]
     pub format: Option<LitString>,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -265,6 +269,8 @@ pub struct SpecInit {
 pub struct DefConstant {
     pub name: Name,
     pub value: Expr,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 /** Enum definition */
@@ -275,6 +281,8 @@ pub struct DefEnum {
     pub type_name: Option<TypeName>,
     pub constants: Vec<DefEnumConstant>,
     pub default: Option<Expr>,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 /** Enum constant definition */
@@ -333,6 +341,8 @@ pub struct SpecLoc {
     pub symbol: QualIdent,
     #[visitable(ignore)]
     pub file: LitString,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 #[ast]
@@ -401,6 +411,8 @@ pub struct DefStruct {
     pub name: Name,
     pub members: Vec<StructTypeMember>,
     pub default: Option<Expr>,
+    #[visitable(ignore)]
+    pub is_dictionary_def: bool,
 }
 
 #[ast]

@@ -103,6 +103,7 @@ impl<'a> Iterator for Lexer<'a> {
                             "cpu" => Keyword(Cpu),
                             "default" => Keyword(Default),
                             "diagnostic" => Keyword(Diagnostic),
+                            "dictionary" => Keyword(Dictionary),
                             "do" => Keyword(Do),
                             "drop" => Keyword(Drop),
                             "else" => Keyword(Else),

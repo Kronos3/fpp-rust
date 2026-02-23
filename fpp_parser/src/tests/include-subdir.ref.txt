@@ -1,30 +1,33 @@
-[
-    DefConstant {
-        name: Ident {
-            data: "x",
-            node_id: Span {
-                start: [ local path prefix ]/subdir/constant.fppi:2:10,
-                end: [ local path prefix ]/subdir/constant.fppi:2:11,
+TransUnit(
+    [
+        DefConstant {
+            name: Name {
+                data: "x",
+                node_id: Span {
+                    start: [ local path prefix ]/subdir/constant.fppi:2:10,
+                    end: [ local path prefix ]/subdir/constant.fppi:2:11,
+                },
             },
-        },
-        value: Expr {
-            kind: LiteralInt(
-                "0",
-            ),
+            value: Expr {
+                kind: LiteralInt(
+                    "0",
+                ),
+                node_id: Span {
+                    start: [ local path prefix ]/subdir/constant.fppi:2:14,
+                    end: [ local path prefix ]/subdir/constant.fppi:2:15,
+                },
+            },
+            is_dictionary_def: false,
             node_id: Span {
-                start: [ local path prefix ]/subdir/constant.fppi:2:14,
+                start: [ local path prefix ]/subdir/constant.fppi:2:1,
                 end: [ local path prefix ]/subdir/constant.fppi:2:15,
             },
+            pre_annotation: [
+                "Included constant",
+            ],
+            post_annotation: [
+                "Included constant",
+            ],
         },
-        node_id: Span {
-            start: [ local path prefix ]/subdir/constant.fppi:2:1,
-            end: [ local path prefix ]/subdir/constant.fppi:2:15,
-        },
-        pre_annotation: [
-            "Included constant",
-        ],
-        post_annotation: [
-            "Included constant",
-        ],
-    },
-]
+    ],
+)

@@ -81,8 +81,19 @@ impl<'a> Parser<'a> {
         })
     }
 
+    fn dictionary_opt(&mut self, next: KeywordKind) -> ParseResult<(Token, bool)> {
+        if self.peek(0) == Keyword(Dictionary) {
+            let first = self.consume_keyword(Dictionary)?;
+            self.consume_keyword(next)?;
+            Ok((first, true))
+        } else {
+            Ok((self.consume_keyword(next)?, false))
+        }
+    }
+
     fn alias_type(&mut self) -> ParseResult<DefAliasType> {
-        let first = self.consume_keyword(Type)?;
+        let (first, is_dictionary_def) = self.dictionary_opt(Type)?;
+
         let name = self.name()?;
         self.consume(Equals)?;
         let type_name = self.type_name()?;
@@ -91,6 +102,7 @@ impl<'a> Parser<'a> {
             node_id: self.node(first.span()),
             name,
             type_name,
+            is_dictionary_def,
         })
     }
 
@@ -123,7 +135,8 @@ impl<'a> Parser<'a> {
     }
 
     fn def_array(&mut self) -> ParseResult<DefArray> {
-        let first = self.consume_keyword(Array)?;
+        let (first, is_dictionary_def) = self.dictionary_opt(Array)?;
+
         let name = self.name()?;
 
         self.consume(Equals)?;
@@ -154,6 +167,7 @@ impl<'a> Parser<'a> {
             elt_type,
             default,
             format,
+            is_dictionary_def,
         })
     }
 
@@ -222,6 +236,18 @@ impl<'a> Parser<'a> {
 
     fn component_member(&mut self) -> ParseResult<ComponentMember> {
         match self.peek(0) {
+            Keyword(Dictionary) => match self.peek(1) {
+                Keyword(Type) => match self.peek(3) {
+                    Equals => Ok(ComponentMember::DefAliasType(self.alias_type()?)),
+                    _ => Ok(ComponentMember::DefAbsType(self.abs_type()?)),
+                },
+                Keyword(Array) => Ok(ComponentMember::DefArray(self.def_array()?)),
+                Keyword(Constant) => Ok(ComponentMember::DefConstant(self.def_constant()?)),
+                Keyword(Enum) => Ok(ComponentMember::DefEnum(self.def_enum()?)),
+                Keyword(Struct) => Ok(ComponentMember::DefStruct(self.def_struct()?)),
+                _ => Err(self.cursor.err("dictionary definition expected")),
+            },
+
             Keyword(Type) => match self.peek(2) {
                 Equals => Ok(ComponentMember::DefAliasType(self.alias_type()?)),
                 _ => Ok(ComponentMember::DefAbsType(self.abs_type()?)),
@@ -333,6 +359,18 @@ impl<'a> Parser<'a> {
 
     fn module_member(&mut self) -> ParseResult<ModuleMember> {
         match self.peek(0) {
+            Keyword(Dictionary) => match self.peek(1) {
+                Keyword(Type) => match self.peek(3) {
+                    Equals => Ok(ModuleMember::DefAliasType(self.alias_type()?)),
+                    _ => Ok(ModuleMember::DefAbsType(self.abs_type()?)),
+                },
+                Keyword(Array) => Ok(ModuleMember::DefArray(self.def_array()?)),
+                Keyword(Constant) => Ok(ModuleMember::DefConstant(self.def_constant()?)),
+                Keyword(Enum) => Ok(ModuleMember::DefEnum(self.def_enum()?)),
+                Keyword(Struct) => Ok(ModuleMember::DefStruct(self.def_struct()?)),
+                _ => Err(self.cursor.err("dictionary definition expected")),
+            },
+
             Keyword(Type) => match self.peek(2) {
                 Equals => Ok(ModuleMember::DefAliasType(self.alias_type()?)),
                 _ => Ok(ModuleMember::DefAbsType(self.abs_type()?)),
@@ -446,6 +484,15 @@ impl<'a> Parser<'a> {
             }
         };
 
+        let is_dictionary_def = {
+            if self.peek(0) == Keyword(Dictionary) {
+                self.consume_keyword(Dictionary)?;
+                true
+            } else {
+                false
+            }
+        };
+
         let symbol = self.qual_ident()?;
         self.consume_keyword(At)?;
         let file = self.lit_string()?;
@@ -454,6 +501,7 @@ impl<'a> Parser<'a> {
             kind,
             symbol,
             file,
+            is_dictionary_def,
         })
     }
 
@@ -922,7 +970,7 @@ impl<'a> Parser<'a> {
     }
 
     fn def_constant(&mut self) -> ParseResult<DefConstant> {
-        let first = self.consume_keyword(Constant)?;
+        let (first, is_dictionary_def) = self.dictionary_opt(Constant)?;
         let name = self.name()?;
 
         self.consume(Equals)?;
@@ -932,11 +980,12 @@ impl<'a> Parser<'a> {
             node_id: self.node(first.span()),
             name,
             value,
+            is_dictionary_def,
         })
     }
 
     fn def_enum(&mut self) -> ParseResult<DefEnum> {
-        let first = self.consume_keyword(Enum)?;
+        let (first, is_dictionary_def) = self.dictionary_opt(Enum)?;
         let name = self.name()?;
 
         let type_name = match self.peek(0) {
@@ -966,6 +1015,7 @@ impl<'a> Parser<'a> {
             type_name,
             constants,
             default,
+            is_dictionary_def,
         })
     }
 
@@ -1579,7 +1629,7 @@ impl<'a> Parser<'a> {
     }
 
     fn def_struct(&mut self) -> ParseResult<DefStruct> {
-        let first = self.consume_keyword(Struct)?;
+        let (first, is_dictionary_def) = self.dictionary_opt(Struct)?;
         let name = self.name()?;
 
         self.consume(LeftCurly)?;
@@ -1600,6 +1650,7 @@ impl<'a> Parser<'a> {
             name,
             members,
             default,
+            is_dictionary_def,
         })
     }
 
