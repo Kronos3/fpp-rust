@@ -1,4 +1,3 @@
-use crate::diagnostics::DiagnosticType;
 use crate::global_state::{GlobalState, TranslationUnitCache, Workspace};
 use fpp_analysis::Analysis;
 use fpp_ast::MutVisitor;
@@ -65,10 +64,7 @@ impl Display for Task {
 impl GlobalState {
     fn new_translation_unit_cache(&self, uri: &str) -> anyhow::Result<TranslationUnitCache> {
         GarbageCollectionSet::start();
-
-        // Clear all diagnostics for this file
-        self.diagnostics.set_mode(DiagnosticType::Syntax);
-        self.diagnostics.clear_for(uri);
+        self.diagnostics.start_garbage_collection();
 
         // Read the file from VFS and produce the initial AST
         let content = self.vfs.read(uri)?;
@@ -91,6 +87,7 @@ impl GlobalState {
             ast,
             include_context_map,
             gc: GarbageCollectionSet::finish(),
+            diagnostics: self.diagnostics.finish_garbage_collection(),
         })
     }
 
@@ -321,6 +318,9 @@ impl GlobalState {
             }
             Task::Reprocess(source_file) => {
                 let old_cache = self.cache.remove(&source_file).unwrap();
+                self.diagnostics
+                    .cleanup_garbage_collection(&old_cache.diagnostics);
+
                 let mut ctx = mem::replace(
                     &mut self.context,
                     CompilerContext::new(self.diagnostics.clone()),
@@ -353,8 +353,9 @@ impl GlobalState {
             }
             Task::Analysis => {
                 // Clear all analysis diagnostics
-                self.diagnostics.set_mode(DiagnosticType::Analysis);
-                self.diagnostics.clear_all_analysis();
+                self.diagnostics
+                    .cleanup_garbage_collection(&self.analysis_diagnostics);
+                self.diagnostics.start_garbage_collection();
 
                 let (analysis, files) = fpp_core::run(&mut self.context, || {
                     let mut files = FxHashMap::default();
@@ -388,10 +389,7 @@ impl GlobalState {
                         }
                     }
 
-                    tracing::info!(
-                        "analyzing {} Translation Units",
-                        self.cache.len()
-                    );
+                    tracing::info!("analyzing {} Translation Units", self.cache.len());
                     let _ = fpp_analysis::check_semantics(
                         &mut analysis,
                         self.cache.values().map(|v| &v.ast).collect(),
@@ -400,6 +398,7 @@ impl GlobalState {
                     (analysis, files)
                 });
 
+                self.analysis_diagnostics = self.diagnostics.finish_garbage_collection();
                 self.files = files;
                 self.analysis = Arc::new(analysis)
             }

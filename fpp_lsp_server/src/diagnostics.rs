@@ -2,23 +2,23 @@ use fpp_core::{DiagnosticData, DiagnosticEmitter};
 use lsp_types::{
     Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, Location, Position, Range, Uri,
 };
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::{
     str::FromStr,
     sync::{Arc, Mutex},
 };
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
-pub enum DiagnosticType {
-    #[default]
-    Syntax,
-    Analysis,
+#[derive(Clone, Debug)]
+pub struct LspDiagnostic {
+    id: usize,
+    diagnostic: Diagnostic,
 }
 
 #[derive(Default)]
 struct LspDiagnosticsEmitterInner {
-    mode: DiagnosticType,
-    diagnostics: FxHashMap<String, Vec<(DiagnosticType, Diagnostic)>>,
+    next_id: usize,
+    diagnostics: FxHashMap<String, Vec<LspDiagnostic>>,
+    garbage_collection_set: Option<FxHashSet<usize>>,
 }
 
 #[derive(Clone, Default)]
@@ -29,29 +29,13 @@ impl LspDiagnosticsEmitterInner {
         self.diagnostics.clear();
     }
 
-    pub fn set_mode(&mut self, mode: DiagnosticType) {
-        self.mode = mode;
-    }
-
-    /// Clears all diagnostics of type Analysis
-    pub fn clear_all_analysis(&mut self) {
-        self.diagnostics.iter_mut().for_each(|(_, diagnostics)| {
-            diagnostics.retain(|(t, _)| *t != DiagnosticType::Analysis);
-        });
-    }
-
-    /// Clears all diagnostics for a specific URI
-    pub fn clear_for(&mut self, uri: &str) {
-        self.diagnostics.get_mut(uri).map(|d| d.clear());
-    }
-
     /// Returns all diagnostics for a specific URI
     pub fn get(&self, uri: &str) -> Vec<Diagnostic> {
         self.diagnostics
             .get(uri)
             .map_or_else(|| vec![], |v| v.clone())
             .into_iter()
-            .map(|d| d.1)
+            .map(|d| d.diagnostic)
             .collect()
     }
 }
@@ -61,23 +45,30 @@ impl LspDiagnosticsEmitter {
         self.0.lock().unwrap().clear();
     }
 
-    pub fn set_mode(&self, mode: DiagnosticType) {
-        self.0.lock().unwrap().set_mode(mode);
-    }
-
-    /// Clears all diagnostics of type Analysis
-    pub fn clear_all_analysis(&self) {
-        self.0.lock().unwrap().clear_all_analysis();
-    }
-
-    /// Clears all diagnostics for a specific URI
-    pub fn clear_for(&self, uri: &str) {
-        self.0.lock().unwrap().clear_for(uri);
-    }
-
     /// Returns all diagnostics for a specific URI
     pub fn get(&self, uri: &str) -> Vec<Diagnostic> {
         self.0.lock().unwrap().get(uri)
+    }
+
+    /// Start tracking all diagnostics 
+    pub fn start_garbage_collection(&self) {
+        let mut state = self.0.lock().unwrap();
+        assert!(state.garbage_collection_set.is_none());
+        state.garbage_collection_set = Some(FxHashSet::default());
+    }
+
+    pub fn finish_garbage_collection(&self) -> FxHashSet<usize> {
+        let mut state = self.0.lock().unwrap();
+        let gc = std::mem::replace(&mut state.garbage_collection_set, None);
+        gc.expect("diagnostic garbage collection was not set")
+    }
+
+    pub fn cleanup_garbage_collection(&self, set: &FxHashSet<usize>) {
+        let mut state = self.0.lock().unwrap();
+        state.diagnostics.retain(|_, diagnostics| {
+            diagnostics.retain(|diagnostic| !set.contains(&diagnostic.id));
+            !diagnostics.is_empty()
+        })
     }
 }
 
@@ -127,24 +118,37 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
                 .collect(),
         );
 
-        let lsp_diag = Diagnostic {
-            range,
-            severity: Some(diagnostic_level_to_severity(diagnostic.level)),
-            source: Some("fpp".to_owned()),
-            message: diagnostic.message,
-            related_information,
-            ..Diagnostic::default()
+        let mut state = self.0.lock().unwrap();
+        let id = state.next_id;
+
+        let lsp_diagnostic = LspDiagnostic {
+            id,
+            diagnostic: Diagnostic {
+                range,
+                severity: Some(diagnostic_level_to_severity(diagnostic.level)),
+                source: Some("fpp".to_owned()),
+                message: diagnostic.message,
+                related_information,
+                ..Diagnostic::default()
+            },
         };
 
-        let mut state = self.0.lock().unwrap();
-        let mode = state.mode;
+        match &mut state.garbage_collection_set {
+            None => {}
+            Some(gc) => {
+                gc.insert(id);
+            }
+        }
+
+        state.next_id += 1;
+
         match state.diagnostics.get_mut(&file.uri) {
             None => {
                 state
                     .diagnostics
-                    .insert(file.uri.clone(), vec![(mode, lsp_diag)]);
+                    .insert(file.uri.clone(), vec![lsp_diagnostic]);
             }
-            Some(c) => c.push((mode, lsp_diag)),
+            Some(c) => c.push(lsp_diagnostic),
         }
     }
 }

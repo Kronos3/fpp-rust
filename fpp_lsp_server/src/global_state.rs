@@ -6,8 +6,8 @@ use fpp_analysis::Analysis;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_server::RequestId;
 use lsp_types::{SemanticTokens, Uri};
-use rustc_hash::FxHashMap;
-use std::sync::{Arc};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::sync::Arc;
 use std::time::Instant;
 
 pub(crate) type ReqHandler = fn(&mut GlobalState, lsp_server::Response);
@@ -19,6 +19,7 @@ pub struct TranslationUnitCache {
     pub ast: fpp_ast::TransUnit,
     pub include_context_map: FxHashMap<SourceFile, fpp_parser::IncludeParentKind>,
     pub gc: fpp_core::GarbageCollectionSet,
+    pub diagnostics: FxHashSet<usize>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -54,6 +55,7 @@ pub struct GlobalState {
     pub(crate) files: FxHashMap<String, Vec<SourceFile>>,
     /// Computed compiler analysis
     pub(crate) analysis: Arc<Analysis>,
+    pub(crate) analysis_diagnostics: FxHashSet<usize>,
 
     pub(crate) capabilities: Arc<lsp::capabilities::ClientCapabilities>,
 
@@ -82,6 +84,7 @@ impl GlobalState {
             cache: Default::default(),
             files: Default::default(),
             analysis: Arc::new(Analysis::new()),
+            analysis_diagnostics: Default::default(),
             capabilities: Arc::new(capabilities),
             semantic_tokens: Default::default(),
         }
