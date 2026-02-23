@@ -8,7 +8,7 @@
 
 use rowan::{GreenNodeBuilder, Language};
 
-use crate::{Parse, SyntaxError, SyntaxKind, TextSize};
+use crate::{Parse, SyntaxError, SyntaxKind, TextRange, TextSize};
 
 pub(crate) use rowan::GreenNode;
 
@@ -67,5 +67,13 @@ impl SyntaxTreeBuilder {
     pub fn error(&mut self, error: String, text_pos: TextSize) {
         self.errors
             .push(SyntaxError::new_at_offset(error, text_pos));
+    }
+
+    pub fn expected(&mut self, expected: SyntaxKind, range: TextRange) {
+        self.errors.push(SyntaxError::new_with_expected(
+            format!("expected {:?}", expected),
+            range,
+            expected,
+        ));
     }
 }

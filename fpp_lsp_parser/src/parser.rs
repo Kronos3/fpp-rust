@@ -125,7 +125,7 @@ impl<'t> Parser<'t> {
         if self.eat(kind) {
             return true;
         }
-        self.error(format!("expected {kind:?}"));
+        self.push_event(Event::ErrorExpected { kind });
         false
     }
 

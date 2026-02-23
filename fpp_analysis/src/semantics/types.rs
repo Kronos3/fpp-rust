@@ -5,7 +5,7 @@ use crate::semantics::{
 use fpp_ast::{FloatKind, IntegerKind};
 use fpp_core::Diagnostic;
 use rustc_hash::FxHashMap as HashMap;
-use std::fmt::{Debug, Display, Formatter, Write};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -588,23 +588,19 @@ impl Display for Type {
             Type::String(_) => f.write_str("string"),
             Type::Boolean => f.write_str("boolean"),
             Type::Integer => f.write_str("Integer"),
-            Type::AbsType(ty) => f.write_fmt(format_args!("{} (abstract type)", ty.node.name.data)),
-            Type::AliasType(ty) => {
-                f.write_fmt(format_args!("{} (", ty.node.name.data))?;
-                Display::fmt(&Type::underlying_type(&ty.alias_type), f)?;
-                f.write_char(')')
-            }
-            Type::Array(arr) => f.write_fmt(format_args!("{} (array type)", arr.node.name.data)),
+            Type::AbsType(ty) => f.write_str(&ty.node.name.data),
+            Type::AliasType(ty) => f.write_str(&ty.node.name.data),
+            Type::Array(arr) => f.write_str(&arr.node.name.data),
             Type::AnonArray(anon_arr) => {
                 match anon_arr.size {
                     None => f.write_str("[] ")?,
                     Some(size) => f.write_fmt(format_args!("[{}] ", size))?,
                 }
 
-                std::fmt::Display::fmt(&anon_arr.elt_type, f)
+                Display::fmt(&anon_arr.elt_type, f)
             }
-            Type::Enum(ty) => f.write_fmt(format_args!("{} (enum type)", ty.node.name.data)),
-            Type::Struct(ty) => f.write_fmt(format_args!("{} (struct type)", ty.node.name.data)),
+            Type::Enum(ty) => f.write_str(&ty.node.name.data),
+            Type::Struct(ty) => f.write_str(&ty.node.name.data),
             Type::AnonStruct(anon_struct) => {
                 let mut s = f.debug_struct("anonymous struct");
                 let mut members: Vec<(String, Arc<Type>)> =

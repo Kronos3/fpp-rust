@@ -1,24 +1,24 @@
-mod syntax;
-mod parser;
 mod event;
-mod token_set;
-mod output;
-mod input;
 mod grammar;
+mod input;
 mod lexed_str;
-mod shortcuts;
+mod output;
+mod parser;
 mod ptr;
+mod shortcuts;
+mod syntax;
 mod syntax_error;
 mod syntax_node;
+mod token_set;
 mod token_text;
 mod visitor;
 
-use std::sync::Arc;
 pub use input::*;
-pub use output::*;
-pub use syntax::*;
 pub use lexed_str::*;
+pub use output::*;
 pub use shortcuts::*;
+use std::sync::Arc;
+pub use syntax::*;
 pub use visitor::*;
 
 pub use crate::{
@@ -51,7 +51,7 @@ pub enum TopEntryPoint {
     Component,
     Topology,
     TlmPacket,
-    TlmPacketSet
+    TlmPacketSet,
 }
 
 impl TopEntryPoint {
@@ -93,9 +93,11 @@ pub(crate) fn build_tree(
         StrStep::Token { kind, text } => builder.token(kind, text),
         StrStep::Enter { kind } => builder.start_node(kind),
         StrStep::Exit => builder.finish_node(),
-        StrStep::Error { msg, pos } => {
-            builder.error(msg.to_owned(), pos.try_into().unwrap())
-        }
+        StrStep::Error { msg, pos } => builder.error(msg.to_owned(), pos.try_into().unwrap()),
+        StrStep::Expected { kind, start, end } => builder.expected(
+            kind,
+            TextRange::new(start.try_into().unwrap(), end.try_into().unwrap()),
+        ),
     });
 
     let (node, mut errors) = builder.finish_raw();
@@ -189,7 +191,6 @@ pub fn parse(text: &str, entry: TopEntryPoint) -> Parse {
     let (green, errors) = parse_text(text, entry);
     Parse::new(green, errors)
 }
-
 
 #[cfg(test)]
 mod tests;

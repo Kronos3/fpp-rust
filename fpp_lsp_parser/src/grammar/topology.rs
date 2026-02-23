@@ -214,7 +214,7 @@ fn spec_connection_graph_pattern(p: &mut Parser) {
             p,
             LEFT_CURLY,
             RIGHT_CURLY,
-            qual_ident,
+            |p| qual_ident(p),
             COMMA,
             PATTERN_TARGET_MEMBER_LIST,
             "expected instance identifier",
@@ -263,8 +263,11 @@ fn connection_endpoint(p: &mut Parser, is_from: bool) {
     port_instance_identifier(p);
     index_or_size_opt(p);
 
-    m.complete(p, match is_from {
-        true => CONNECTION_FROM,
-        false => CONNECTION_TO
-    });
+    m.complete(
+        p,
+        match is_from {
+            true => CONNECTION_FROM,
+            false => CONNECTION_TO,
+        },
+    );
 }

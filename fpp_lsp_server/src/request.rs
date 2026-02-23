@@ -26,7 +26,7 @@ impl GlobalState {
             .on_run_task::<lsp_ext::SetFilesWorkspace>(|p| Ok(Task::LoadFullWorkspace(p.uri)))
             .on_run_task::<lsp_ext::SetLocsWorkspace>(|p| Ok(Task::LoadLocsFile(p.uri)))
             // .on_sync::<lsp_request::SelectionRangeRequest>(handlers::handle_selection_range)
-            // .on::<lsp_request::Completion>(handlers::handle_completion)
+            .on::<lsp_request::Completion>(handlers::handle_completion)
             // .on::<lsp_request::ResolveCompletionItem>(handlers::handle_completion_resolve)
             .on_mut::<lsp_request::SemanticTokensFullRequest>(handlers::handle_semantic_tokens_full)
             .on_mut::<lsp_request::SemanticTokensFullDeltaRequest>(handlers::handle_semantic_tokens_full_delta)

@@ -1,3 +1,4 @@
+mod analysis;
 mod diagnostics;
 mod dispatcher;
 mod global_state;
@@ -5,7 +6,6 @@ mod handlers;
 mod lsp_ext;
 mod notification;
 mod request;
-mod analysis;
 mod util;
 
 mod lsp;
@@ -17,7 +17,7 @@ use crate::{global_state::GlobalState, util::from_json};
 use lsp_server::Connection;
 use std::error::Error;
 
-use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 fn setup_stderr_logging() -> anyhow::Result<()> {
     let stderr_log_level = tracing_subscriber::filter::LevelFilter::INFO;
@@ -28,6 +28,7 @@ fn setup_stderr_logging() -> anyhow::Result<()> {
             stderr_layer
                 .with_ansi(false)
                 .without_time()
+                .with_target(false)
                 .with_file(true)
                 .with_line_number(true)
                 .with_filter(stderr_log_level),

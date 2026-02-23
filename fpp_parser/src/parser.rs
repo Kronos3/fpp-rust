@@ -2194,8 +2194,21 @@ impl<'a> Parser<'a> {
         let first = self.ident()?;
         let mut out = vec![];
         while self.peek(0) == Dot {
-            self.next();
-            out.push(self.ident()?)
+            let dot_token = self.next().unwrap();
+            if self.peek(0) == Identifier {
+                out.push(self.ident()?)
+            } else {
+                fpp_core::Diagnostic::from(
+                    ParseError::ExpectedToken {
+                        expected: Identifier,
+                        got: self.peek(0),
+                        last: dot_token.span,
+                        msg: "expected identifier",
+                    }
+                    .into(),
+                )
+                .emit();
+            }
         }
 
         Ok(out

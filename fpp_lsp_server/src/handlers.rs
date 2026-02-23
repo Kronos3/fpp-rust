@@ -1,28 +1,31 @@
-use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::global_state::{GlobalState, Task};
 use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
+use crate::util::{
+    hover_for_node, hover_for_symbol, node_to_location, nodes_at_offset, position_to_offset,
+    symbol_at_position, symbol_to_completion_item,
+};
 use anyhow::Result;
-use fpp_analysis::semantics::{Symbol, SymbolInterface};
-use fpp_ast::{AstNode, MoveWalkable, Name, Node, Visitor};
-use fpp_core::{BytePos, CompilerContext, LineCol, LineIndex, SourceFile};
-use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
+use fpp_analysis::semantics::{NameGroup, SymbolInterface};
+use fpp_ast::{AstNode, Node};
+use fpp_core::{LineCol, LineIndex};
+use fpp_lsp_parser::{
+    SyntaxKind, SyntaxNode, SyntaxToken, TextRange, TokenAtOffset, VisitorResult,
+};
 use lsp_types::{
+    CompletionItem, CompletionItemKind, CompletionParams, CompletionResponse,
     DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentDiagnosticReportResult, DocumentLink, GotoDefinitionParams, GotoDefinitionResponse,
-    Hover, HoverContents, HoverParams, Location, MarkupContent, MarkupKind, Position, Range,
-    ReferenceParams, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
-    SemanticTokensResult, Uri,
+    Hover, HoverParams, Location, Position, Range, ReferenceParams, SemanticTokensFullDeltaResult,
+    SemanticTokensRangeResult, SemanticTokensResult, Uri,
 };
 use serde::{Deserialize, Serialize};
-use std::ops::ControlFlow;
 use std::str::FromStr;
 
 pub fn handle_did_open_text_document(
     state: &mut GlobalState,
     not: DidOpenTextDocumentParams,
 ) -> Result<()> {
-    tracing::info!(uri = %not.text_document.uri.as_str(), "DidOpenTextDocument");
     let uri = not.text_document.uri.clone();
     state.vfs.did_open(not);
     state.task(Task::Update(uri));
@@ -33,7 +36,6 @@ pub fn handle_did_change_text_document(
     state: &mut GlobalState,
     not: DidChangeTextDocumentParams,
 ) -> Result<()> {
-    tracing::info!(uri = %not.text_document.uri.as_str(), "DidChangeTextDocument");
     let uri = not.text_document.uri.clone();
     state
         .vfs
@@ -46,7 +48,6 @@ pub fn handle_did_close_text_document(
     state: &mut GlobalState,
     not: DidCloseTextDocumentParams,
 ) -> Result<()> {
-    tracing::info!(uri = %not.text_document.uri.as_str(), "DidCloseTextDocument");
     let uri = not.text_document.uri.clone();
 
     state.semantic_tokens.remove(&not.text_document.uri);
@@ -63,11 +64,9 @@ pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
 }
 
 fn parse_text_document(state: &GlobalState, uri: &Uri) -> Result<(String, fpp_lsp_parser::Parse)> {
-    let uri_c = &uri.clone();
-    let uri_s = uri_c.as_str();
-    let text: String = state.vfs.read_sync(uri_s)?;
+    let text: String = state.vfs.read_sync(uri.as_str())?;
 
-    let parse_kind = match state.files.get(uri_s) {
+    let parse_kind = match state.files.get(uri.as_str()) {
         None => fpp_parser::IncludeParentKind::Module,
         Some(source_files) => {
             // This file may have been included in multiple spots
@@ -91,8 +90,6 @@ fn parse_text_document(state: &GlobalState, uri: &Uri) -> Result<(String, fpp_ls
         fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
     };
 
-    tracing::info!(uri = %uri_s, entry = ?entry_kind, "parsing document for semantic tokens");
-
     let parse = fpp_lsp_parser::parse(&text, entry_kind);
     Ok((text, parse))
 }
@@ -101,8 +98,6 @@ pub fn handle_semantic_tokens_full(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
-    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
-
     // TODO(tumbar) We probably don't need to run a reparse here
     let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
     let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
@@ -119,8 +114,6 @@ pub fn handle_semantic_tokens_range(
     state: &GlobalState,
     request: lsp_types::SemanticTokensRangeParams,
 ) -> Result<Option<SemanticTokensRangeResult>> {
-    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
-
     // TODO(tumbar) We probably don't need to run a reparse here
     let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
@@ -133,8 +126,6 @@ pub fn handle_semantic_tokens_full_delta(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
-    tracing::info!(uri = %request.text_document.uri.as_str(), "SemanticTokens");
-
     // TODO(tumbar) We probably don't need to run a reparse here
     let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
@@ -170,8 +161,6 @@ pub fn handle_document_diagnostics(
     state: &mut GlobalState,
     request: lsp_types::DocumentDiagnosticParams,
 ) -> Result<DocumentDiagnosticReportResult> {
-    tracing::info!(uri = %request.text_document.uri.as_str(), "document diagnostics");
-
     Ok(DocumentDiagnosticReportResult::Report(
         lsp_types::DocumentDiagnosticReport::Full(lsp_types::RelatedFullDocumentDiagnosticReport {
             full_document_diagnostic_report: lsp_types::FullDocumentDiagnosticReport {
@@ -284,8 +273,6 @@ pub fn handle_document_link_request(
     state: &GlobalState,
     request: lsp_types::DocumentLinkParams,
 ) -> Result<Option<Vec<DocumentLink>>> {
-    tracing::info!(uri = %request.text_document.uri.as_str(), "document link request");
-
     // TODO(tumbar) We probably don't need to run a reparse here
     let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
@@ -326,158 +313,20 @@ pub fn handle_document_link_resolve(
     })
 }
 
-struct FindPositionVisitor<'a> {
-    source_file: SourceFile,
-    looking_for: BytePos,
-    context: &'a CompilerContext<LspDiagnosticsEmitter>,
-}
-
-impl<'ast> Visitor<'ast> for FindPositionVisitor<'ast> {
-    type Break = ();
-    type State = Vec<Node<'ast>>;
-
-    /// The default node visiting before.
-    /// By default, this will just continue without visiting the children of `node`
-    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
-        let span = self
-            .context
-            .span_get(&self.context.node_get_span(&node.id()));
-
-        let src_file: SourceFile = span.file.upgrade().unwrap().as_ref().into();
-
-        if src_file == self.source_file {
-            // Check if this node spans the range we are looking for
-            if span.start <= self.looking_for && span.start + span.length >= self.looking_for {
-                // Depth first
-                let out = node.walk(a, self);
-
-                a.push(node);
-                out
-            } else {
-                // This node does not span the range
-                // We don't need to walk it since it's children won't span it either
-                ControlFlow::Continue(())
-            }
-        } else {
-            // The files don't match
-            // We could be looking for something inside an include
-            // Keep recursing
-            match node {
-                Node::DefAction(_) => node.walk(a, self),
-                Node::DefComponent(_) => node.walk(a, self),
-                Node::DefModule(_) => node.walk(a, self),
-                Node::DefState(_) => node.walk(a, self),
-                Node::DefStateMachine(_) => node.walk(a, self),
-                Node::DefTopology(_) => node.walk(a, self),
-                Node::SpecInclude(_) => node.walk(a, self),
-                _ => ControlFlow::Continue(()),
-            }
-        }
-    }
-}
-
-fn nodes_at_position<'a>(
-    state: &'a GlobalState,
-    document: &Uri,
-    position: &Position,
-) -> Option<Vec<Node<'a>>> {
-    let files = match state.files.get(document.as_str()) {
-        None => return None,
-        Some(files) => files,
-    };
-
-    Some(
-        files
-            .into_iter()
-            .flat_map(|file| {
-                let cache = state.cache.get(&state.parent_file(*file)).unwrap();
-                let pos = state.context.file_get(&file).offset_of(LineCol {
-                    line: position.line,
-                    col: position.character,
-                });
-
-                let visitor = FindPositionVisitor {
-                    source_file: *file,
-                    looking_for: pos,
-                    context: &state.context,
-                };
-
-                let mut out = vec![];
-                let _ = visitor.visit_trans_unit(&mut out, &cache.ast);
-                out
-            })
-            .collect(),
-    )
-}
-
-fn symbol_at_position<'a>(
-    state: &'a GlobalState,
-    document: &Uri,
-    position: &Position,
-) -> Option<(Node<'a>, Symbol)> {
-    let nodes = match nodes_at_position(state, document, position) {
-        None => return None,
-        Some(nodes) => nodes,
-    };
-
-    nodes.iter().find_map(|node| {
-        if let Some(def) = state.analysis.use_def_map.get(&node.id()) {
-            return Some((*node, def.clone()));
-        } else {
-            None
-        }
-    })
-}
-
-fn node_to_range(state: &GlobalState, node: fpp_core::Node) -> Range {
-    let span = state.context.span_get(&state.context.node_get_span(&node));
-    let file = span.file.upgrade().unwrap();
-
-    let start = file.position(span.start);
-    let end = file.position(span.start + span.length);
-
-    Range {
-        start: Position {
-            line: start.line(),
-            character: start.column(),
-        },
-        end: Position {
-            line: end.line(),
-            character: end.column(),
-        },
-    }
-}
-
-fn node_to_location(state: &GlobalState, node: fpp_core::Node) -> Location {
-    let span = state.context.span_get(&state.context.node_get_span(&node));
-    let file = span.file.upgrade().unwrap();
-
-    let start = file.position(span.start);
-    let end = file.position(span.start + span.length);
-
-    Location {
-        uri: Uri::from_str(&file.uri).unwrap(),
-        range: Range {
-            start: Position {
-                line: start.line(),
-                character: start.column(),
-            },
-            end: Position {
-                line: end.line(),
-                character: end.column(),
-            },
-        },
-    }
-}
-
 pub fn handle_goto_definition(
     state: &GlobalState,
     request: GotoDefinitionParams,
 ) -> Result<Option<GotoDefinitionResponse>> {
-    if let Some((_, symbol)) = symbol_at_position(
+    let offset = position_to_offset(
         state,
         &request.text_document_position_params.text_document.uri,
         &request.text_document_position_params.position,
+    );
+
+    if let Some((_, symbol)) = symbol_at_position(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
     ) {
         Ok(Some(GotoDefinitionResponse::Scalar(node_to_location(
             state,
@@ -488,162 +337,17 @@ pub fn handle_goto_definition(
     }
 }
 
-fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) -> Hover {
-    let node_data = state.context.node_get(&symbol.node());
-
-    let symbol_kind = match symbol {
-        Symbol::AbsType(_) => "Abstract Type",
-        Symbol::AliasType(_) => "Type Alias",
-        Symbol::Array(_) => "Array",
-        Symbol::Component(_) => "Component",
-        Symbol::ComponentInstance(_) => "Component Instance",
-        Symbol::Constant(_) => "Constant",
-        Symbol::Enum(_) => "Enum",
-        Symbol::EnumConstant(_) => "Enum Constant",
-        Symbol::Interface(_) => "Interface",
-        Symbol::Module(_) => "Module",
-        Symbol::Port(_) => "Port",
-        Symbol::StateMachine(_) => "State Machine",
-        Symbol::Struct(_) => "Struct",
-        Symbol::Topology(_) => "Topology",
-    };
-
-    // Convert the name into a fully qualified name by following the parent symbols
-    let mut qualified_name = vec![symbol];
-    let mut current = symbol;
-    loop {
-        match state.analysis.parent_symbol_map.get(current) {
-            None => break,
-            Some(parent) => {
-                qualified_name.push(parent);
-                current = parent;
-            }
-        }
-    }
-
-    qualified_name.reverse();
-    let qualified_idents: Vec<&str> = qualified_name
-        .into_iter()
-        .map(|n| n.name().data.as_str())
-        .collect();
-    let qual_ident = qualified_idents.join(".");
-
-    let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
-
-    let markdown_lines: Vec<String> = node_data
-        .pre_annotation
-        .clone()
-        .into_iter()
-        .chain(vec![
-            "```typescript".to_string(),
-            symbol_kind_line,
-            "```".to_string(),
-        ])
-        .chain(node_data.post_annotation.clone().into_iter())
-        .collect();
-
-    Hover {
-        contents: HoverContents::Markup(MarkupContent {
-            kind: MarkupKind::Markdown,
-            value: markdown_lines.join("\n"),
-        }),
-        range: Some(node_to_range(state, hover_node.id())),
-    }
-}
-
-fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) -> Option<Hover> {
-    let symbol_kind = match def_node {
-        Node::DefAbsType(_) => "Abstract Type",
-        Node::DefAliasType(_) => "Type Alias",
-        Node::DefArray(_) => "Array",
-        Node::DefComponent(_) => "Component",
-        Node::DefComponentInstance(_) => "Component Instance",
-        Node::DefConstant(_) => "Constant",
-        Node::DefEnum(_) => "Enum",
-        Node::DefEnumConstant(_) => "Enum Constant",
-        Node::DefInterface(_) => "Interface",
-        Node::DefModule(_) => "Module",
-        Node::DefPort(_) => "Port",
-        Node::DefStateMachine(_) => "State Machine",
-        Node::DefStruct(_) => "Struct",
-        Node::DefTopology(_) => "Topology",
-        Node::DefChoice(_) => "Choice",
-        Node::DefGuard(_) => "Guard",
-        Node::DefSignal(_) => "Signal",
-        Node::DefState(_) => "State",
-        Node::SpecCommand(_) => "Command",
-        Node::SpecConnectionGraph(_) => "Connection Graph",
-        Node::SpecContainer(_) => "Container",
-        Node::SpecEvent(_) => "Event",
-        Node::SpecGeneralPortInstance(_) => "Port Instance",
-        Node::SpecParam(_) => "Parameter",
-        Node::SpecRecord(_) => "Record",
-        Node::SpecSpecialPortInstance(_) => "Special Port Instance",
-        Node::SpecStateMachineInstance(_) => "State Machine Instance",
-        Node::SpecTlmChannel(_) => "Telemetry Channel",
-        Node::SpecTlmPacket(_) => "Telemetry Packet",
-        Node::SpecTlmPacketSet(_) => "Telemetry Packet Set",
-        Node::SpecTopPort(_) => "Topology Port",
-        _ => return None,
-    };
-
-    let node_data = state.context.node_get(&def_node.id());
-
-    // Convert the name into a fully qualified name by following the parent symbols
-    let qual_ident = {
-        if let Some(symbol) = state.analysis.symbol_map.get(&def_node.id()) {
-            let mut qualified_name = vec![symbol];
-            let mut current = symbol;
-            loop {
-                match state.analysis.parent_symbol_map.get(current) {
-                    None => break,
-                    Some(parent) => {
-                        qualified_name.push(parent);
-                        current = parent;
-                    }
-                }
-            }
-
-            qualified_name.reverse();
-            let qualified_idents: Vec<&str> = qualified_name
-                .into_iter()
-                .map(|n| n.name().data.as_str())
-                .collect();
-
-            qualified_idents.join(".")
-        } else {
-            hover_node.data.clone()
-        }
-    };
-
-    let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
-
-    let markdown_lines: Vec<String> = node_data
-        .pre_annotation
-        .clone()
-        .into_iter()
-        .chain(vec![
-            "```typescript".to_string(),
-            symbol_kind_line,
-            "```".to_string(),
-        ])
-        .chain(node_data.post_annotation.clone().into_iter())
-        .collect();
-
-    Some(Hover {
-        contents: HoverContents::Markup(MarkupContent {
-            kind: MarkupKind::Markdown,
-            value: markdown_lines.join("\n"),
-        }),
-        range: Some(node_to_range(state, hover_node.id())),
-    })
-}
-
 pub fn handle_hover(state: &GlobalState, request: HoverParams) -> Result<Option<Hover>> {
-    let nodes = match nodes_at_position(
+    let offset = position_to_offset(
         state,
         &request.text_document_position_params.text_document.uri,
         &request.text_document_position_params.position,
+    );
+
+    let nodes = match nodes_at_offset(
+        state,
+        &request.text_document_position_params.text_document.uri,
+        offset,
     ) {
         None => return Ok(None),
         Some(nodes) => nodes,
@@ -677,10 +381,16 @@ pub fn handle_references(
     state: &GlobalState,
     request: ReferenceParams,
 ) -> Result<Option<Vec<Location>>> {
-    if let Some(nodes) = nodes_at_position(
+    let offset = position_to_offset(
         state,
         &request.text_document_position.text_document.uri,
         &request.text_document_position.position,
+    );
+
+    if let Some(nodes) = nodes_at_offset(
+        state,
+        &request.text_document_position.text_document.uri,
+        offset,
     ) {
         let symbol = {
             // Check if this is a use to a symbol
@@ -726,4 +436,214 @@ pub fn handle_references(
     } else {
         Ok(None)
     }
+}
+
+pub fn handle_completion(
+    state: &GlobalState,
+    request: CompletionParams,
+) -> Result<Option<CompletionResponse>> {
+    let uri = request.text_document_position.text_document.uri;
+
+    let text: String = state.vfs.read_sync(uri.as_str())?;
+    let lines = state.vfs.get_lines(uri.as_str())?;
+
+    let cursor_pos = match lines.offset(LineCol {
+        line: request.text_document_position.position.line,
+        col: request.text_document_position.position.character,
+    }) {
+        None => return Err(anyhow::anyhow!("position not in file bounds")),
+        Some(p) => p,
+    };
+
+    let parse_kind = match state.files.get(uri.as_str()) {
+        None => fpp_parser::IncludeParentKind::Module,
+        Some(source_files) => {
+            // This file may have been included in multiple spots
+            // We should choose the most 'permissive' syntax entry point
+            source_files
+                .iter()
+                .map(|f| match state.analysis.include_context_map.get(f) {
+                    Some(kind) => kind.clone(),
+                    None => fpp_parser::IncludeParentKind::Module,
+                })
+                .max()
+                .unwrap_or(fpp_parser::IncludeParentKind::Module)
+        }
+    };
+
+    let entry_kind = match parse_kind {
+        fpp_parser::IncludeParentKind::Component => fpp_lsp_parser::TopEntryPoint::Component,
+        fpp_parser::IncludeParentKind::Module => fpp_lsp_parser::TopEntryPoint::Module,
+        fpp_parser::IncludeParentKind::TlmPacket => fpp_lsp_parser::TopEntryPoint::TlmPacket,
+        fpp_parser::IncludeParentKind::TlmPacketSet => fpp_lsp_parser::TopEntryPoint::TlmPacketSet,
+        fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
+    };
+
+    let parse = fpp_lsp_parser::parse(&text, entry_kind);
+
+    let token = parse.syntax_node().token_at_offset(cursor_pos);
+    let expected_error_range = match token {
+        TokenAtOffset::None => return Ok(None),
+        TokenAtOffset::Single(tok) => tok.text_range(),
+        TokenAtOffset::Between(l, r) => l.text_range().cover(r.text_range()),
+    };
+
+    // Check for parsing errors to extract the next expected token
+    Ok(Some(CompletionResponse::Array(
+        parse
+            .errors()
+            .iter()
+            .filter_map(|e| {
+                if expected_error_range.intersect(e.range()).is_some() {
+                    e.expected().map(|k| (k, e.range()))
+                } else {
+                    None
+                }
+            })
+            .filter_map(|(kind, range)| {
+                match kind {
+                    keyword if keyword.is_keyword() => {
+                        // FIXME(tumbar) This seems brittle but works ok for now
+                        let keyword_dbg = format!("{:?}", kind);
+                        assert!(keyword_dbg.ends_with("_KW"));
+                        let keyword_s = keyword_dbg[..keyword_dbg.len() - 3].to_ascii_lowercase();
+
+                        Some(vec![CompletionItem {
+                            label: keyword_s,
+                            kind: Some(CompletionItemKind::KEYWORD),
+                            ..Default::default()
+                        }])
+                    }
+                    SyntaxKind::IDENT => {
+                        let element = parse.syntax_node().covering_element(range);
+                        let ancestors: Vec<SyntaxNode> = element.ancestors().collect();
+
+                        if let Some(qual_ident) = ancestors.first()
+                            && qual_ident.kind() == SyntaxKind::QUAL_IDENT
+                            && let Some(parent_rule) = ancestors.get(1)
+                        {
+                            let ng = match parent_rule.kind() {
+                                SyntaxKind::DEF_COMPONENT_INSTANCE => NameGroup::Component,
+                                SyntaxKind::IMPLEMENTS_CLAUSE => NameGroup::PortInterface,
+                                SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
+                                    NameGroup::PortInterfaceInstance
+                                }
+                                SyntaxKind::PATTERN_TARGET_MEMBER_LIST => {
+                                    NameGroup::PortInterfaceInstance
+                                }
+                                SyntaxKind::SPEC_INTERFACE_IMPORT => NameGroup::PortInterface,
+                                SyntaxKind::SPEC_INSTANCE => NameGroup::PortInterfaceInstance,
+                                SyntaxKind::SPEC_LOC => return None,
+                                SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => NameGroup::Port,
+                                SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => NameGroup::StateMachine,
+                                SyntaxKind::TRANSITION_EXPR => return None,
+                                SyntaxKind::TYPE_NAME => NameGroup::Type,
+
+                                _ => return None,
+                            };
+
+                            let tokens: Vec<SyntaxToken> = qual_ident
+                                .children_with_tokens()
+                                .filter_map(|s| s.as_token().map(|ss| ss.clone()))
+                                .filter(|t| {
+                                    t.kind() == SyntaxKind::IDENT
+                                        && t.text_range().end() <= cursor_pos
+                                })
+                                .collect();
+
+                            // If this is first token, we cannot rely on the AST since it's a completely
+                            // invalid qualified identifier. The parent rule will therefore not exist in the AST
+                            // The CST has this information of course so we can back out the current scope
+                            // from the CST.
+                            if tokens.is_empty() {
+                                let current_scope: Vec<String> = qual_ident
+                                    .ancestors()
+                                    .filter_map(|ancestor| match ancestor.kind() {
+                                        SyntaxKind::DEF_MODULE
+                                        | SyntaxKind::DEF_COMPONENT
+                                        | SyntaxKind::DEF_ENUM
+                                        | SyntaxKind::DEF_STATE_MACHINE => {
+                                            let name =
+                                                ancestor.first_child_or_token_by_kind(&|k| {
+                                                    k == SyntaxKind::NAME
+                                                });
+                                            name.map(|n| text[n.text_range()].to_string())
+                                        }
+                                        _ => None,
+                                    })
+                                    .collect();
+
+                                eprintln!("scope: {:?}", current_scope);
+
+                                // Merge all symbols going up from each scope
+                                let items: Vec<Vec<CompletionItem>> = current_scope
+                                    .iter()
+                                    .rev()
+                                    .fold(
+                                        (vec![], Some(&state.analysis.global_scope)),
+                                        |(mut out, scope), scope_name| {
+                                            if let Some(scope) = scope {
+                                                out.push(
+                                                    scope
+                                                        .get_group(ng)
+                                                        .iter()
+                                                        .map(|(_, s)| {
+                                                            symbol_to_completion_item(state, s)
+                                                        })
+                                                        .collect(),
+                                                );
+
+                                                (
+                                                    out,
+                                                    scope
+                                                        .get(ng, scope_name)
+                                                        .map(|symbol| {
+                                                            state
+                                                                .analysis
+                                                                .symbol_scope_map
+                                                                .get(&symbol)
+                                                        })
+                                                        .flatten(),
+                                                )
+                                            } else {
+                                                (out, None)
+                                            }
+                                        },
+                                    )
+                                    .0;
+
+                                // The closest symbols should appear first
+                                // Flip the completion items and flatten everything
+                                Some(items.into_iter().rev().flatten().collect())
+                            } else {
+                                // Get the final token before the cursor to look it up in the AST
+                                let last_token_pos =
+                                    tokens.last().unwrap().text_range().start().into();
+
+                                // Look up the symbol before the cursor
+                                symbol_at_position(state, &uri, last_token_pos)
+                                    .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
+                                    .flatten()
+                                    .map(|scope| {
+                                        // Get all symbols under this symbol's scope in the proper
+                                        // name group
+                                        scope
+                                            .get_group(ng)
+                                            .iter()
+                                            .map(|(_, child_symbol)| {
+                                                symbol_to_completion_item(state, child_symbol)
+                                            })
+                                            .collect()
+                                    })
+                            }
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            })
+            .flatten()
+            .collect(),
+    )))
 }

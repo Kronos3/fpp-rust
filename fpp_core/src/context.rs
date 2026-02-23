@@ -254,7 +254,6 @@ impl<E: DiagnosticEmitter> CompilerContext<E> {
     }
 
     pub(crate) fn garbage_collection_cleanup(&mut self, gc: &GarbageCollectionSet) {
-        eprintln!("dropping files from garbage collection {:?}", gc.files);
         self.files.extract_if(|k, _| gc.files.contains(k));
         self.spans.extract_if(|k, _| gc.spans.contains(k));
         self.nodes.extract_if(|k, _| gc.nodes.contains(k));

@@ -125,7 +125,7 @@ impl GlobalState {
     pub(crate) fn respond(&mut self, response: lsp_server::Response) {
         if let Some((method, start)) = self.req_queue.incoming.complete(&response.id) {
             let duration = start.elapsed();
-            tracing::info!(name: "message response", method, %response.id, duration = format_args!("{:0.2?}", duration));
+            tracing::debug!(name: "message response", method, %response.id, duration = format_args!("{:0.2?}", duration));
             self.send(response.into());
         } else {
             tracing::warn!(%response.id, "invalid response id")

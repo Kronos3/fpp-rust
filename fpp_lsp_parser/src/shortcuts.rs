@@ -26,10 +26,23 @@ enum TriviaRegion {
 
 #[derive(Debug)]
 pub enum StrStep<'a> {
-    Token { kind: SyntaxKind, text: &'a str },
-    Enter { kind: SyntaxKind },
+    Token {
+        kind: SyntaxKind,
+        text: &'a str,
+    },
+    Enter {
+        kind: SyntaxKind,
+    },
     Exit,
-    Error { msg: &'a str, pos: usize },
+    Error {
+        msg: &'a str,
+        pos: usize,
+    },
+    Expected {
+        kind: SyntaxKind,
+        start: usize,
+        end: usize,
+    },
 }
 
 impl LexedStr<'_> {
@@ -50,7 +63,7 @@ impl LexedStr<'_> {
     /// Some trivias may be reduced into a 'psuedo' token, return the psuedo token
     /// as the second option in the tuple.
     fn as_trivia(&self, i: usize) -> TriviaRegion {
-        assert!(i < self.len());
+        assert!(i < self.len(), "{} < {}", i, self.len());
 
         let mut skip = 0;
         while skip + i < self.len() {
@@ -144,6 +157,12 @@ impl LexedStr<'_> {
                 Step::Error { msg } => {
                     let text_pos = builder.lexed.text_start(builder.pos);
                     (builder.sink)(StrStep::Error { msg, pos: text_pos });
+                }
+                Step::Expected { kind } => {
+                    let start = builder.lexed.text_start(builder.pos);
+                    builder.eat_whitespace_outer();
+                    let end = builder.lexed.text_start(builder.pos);
+                    (builder.sink)(StrStep::Expected { kind, start, end });
                 }
             }
         }
@@ -256,6 +275,10 @@ impl Builder<'_, '_> {
     }
 
     fn eat_whitespace_outer(&mut self) {
+        if self.pos >= self.lexed.len() {
+            return;
+        }
+
         match self.lexed.as_trivia(self.pos) {
             TriviaRegion::Remove(n) => {
                 for _ in 0..n {
@@ -273,6 +296,10 @@ impl Builder<'_, '_> {
     }
 
     fn eat_whitespace_inner(&mut self) {
+        if self.pos >= self.lexed.len() {
+            return;
+        }
+
         match self.lexed.as_trivia(self.pos) {
             TriviaRegion::Remove(n) => {
                 for _ in 0..n {

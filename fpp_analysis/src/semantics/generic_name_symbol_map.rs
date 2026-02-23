@@ -35,4 +35,8 @@ impl<S: SymbolInterface> GenericNameSymbolMap<S> {
             }),
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &S)> {
+        self.0.iter()
+    }
 }

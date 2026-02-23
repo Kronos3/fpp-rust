@@ -55,7 +55,7 @@ pub(super) fn def_struct(p: &mut Parser) {
             struct_field,
             COMMA,
             STRUCT_MEMBER_LIST,
-            "expected struct member"
+            "expected struct member",
         );
     } else {
         p.error("expected `{`");
@@ -102,7 +102,7 @@ pub(super) fn def_enum(p: &mut Parser) {
             enum_member,
             COMMA,
             ENUM_MEMBER_LIST,
-            "expected enum member"
+            "expected enum member",
         );
     } else {
         p.error("expected `{`");

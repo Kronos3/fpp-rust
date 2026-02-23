@@ -30,4 +30,8 @@ impl<NG, S: SymbolInterface, M: EnumMap<NG, GenericNameSymbolMap<S>>> GenericSco
     pub fn put(&mut self, name_group: NG, symbol: S) -> SemanticResult {
         self.0.get_mut(name_group).put(symbol)
     }
+
+    pub fn get_group(&self, name_group: NG) -> &GenericNameSymbolMap<S> {
+        self.0.get(name_group)
+    }
 }

@@ -84,7 +84,7 @@ impl GlobalState {
         let _ =
             ResolveIncludes::new(&self.vfs).visit_trans_unit(&mut include_context_map, &mut ast);
 
-        tracing::info!(file = %file, file_dbg = ?file, "computed translation unit cache");
+        tracing::debug!(file = %file, file_dbg = ?file, "computed translation unit cache");
 
         Ok(TranslationUnitCache {
             file,
@@ -107,7 +107,7 @@ impl GlobalState {
     }
 
     pub(crate) fn on_task(&mut self, task: Task) {
-        let span = tracing::info_span!("task", task = %task);
+        let span = tracing::info_span!("", task = %task);
         let _enter = span.enter();
 
         match task {
@@ -352,8 +352,6 @@ impl GlobalState {
                 self.task(Task::Analysis);
             }
             Task::Analysis => {
-                tracing::info!("computing compiler analysis");
-
                 // Clear all analysis diagnostics
                 self.diagnostics.set_mode(DiagnosticType::Analysis);
                 self.diagnostics.clear_all_analysis();
@@ -391,7 +389,7 @@ impl GlobalState {
                     }
 
                     tracing::info!(
-                        "computing compiler analysis on {} Translation Units",
+                        "analyzing {} Translation Units",
                         self.cache.len()
                     );
                     let _ = fpp_analysis::check_semantics(

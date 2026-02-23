@@ -4,11 +4,11 @@
 //! and the parser algorithm independently.
 use std::mem;
 
-use crate::{
-    SyntaxKind::{self},
-    output::Output,
-};
 use crate::SyntaxKind::TOMBSTONE;
+use crate::{
+    output::Output,
+    SyntaxKind::{self},
+};
 
 /// `Parser` produces a flat list of `Event`s.
 /// They are converted to a tree-structure in
@@ -73,11 +73,17 @@ pub(crate) enum Event {
     Error {
         msg: String,
     },
+    ErrorExpected {
+        kind: SyntaxKind,
+    },
 }
 
 impl Event {
     pub(crate) fn tombstone() -> Self {
-        Event::Start { kind: TOMBSTONE, forward_parent: None }
+        Event::Start {
+            kind: TOMBSTONE,
+            forward_parent: None,
+        }
     }
 }
 
@@ -88,7 +94,10 @@ pub(super) fn process(mut events: Vec<Event>) -> Output {
 
     for i in 0..events.len() {
         match mem::replace(&mut events[i], Event::tombstone()) {
-            Event::Start { kind, forward_parent } => {
+            Event::Start {
+                kind,
+                forward_parent,
+            } => {
                 // For events[A, B, C], B is A's forward_parent, C is B's forward_parent,
                 // in the normal control flow, the parent-child relation: `A -> B -> C`,
                 // while with the magic forward_parent, it writes: `C <- B <- A`.
@@ -101,7 +110,10 @@ pub(super) fn process(mut events: Vec<Event>) -> Output {
                     idx += fwd as usize;
                     // append `A`'s forward_parent `B`
                     fp = match mem::replace(&mut events[idx], Event::tombstone()) {
-                        Event::Start { kind, forward_parent } => {
+                        Event::Start {
+                            kind,
+                            forward_parent,
+                        } => {
                             forward_parents.push(kind);
                             forward_parent
                         }
@@ -121,6 +133,7 @@ pub(super) fn process(mut events: Vec<Event>) -> Output {
                 res.token(kind, n_raw_tokens);
             }
             Event::Error { msg } => res.error(msg),
+            Event::ErrorExpected { kind } => res.expected(kind),
         }
     }
 

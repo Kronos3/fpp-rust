@@ -36,6 +36,9 @@ pub enum Step<'a> {
     Error {
         msg: &'a str,
     },
+    Expected {
+        kind: SyntaxKind,
+    },
 }
 
 impl Output {
@@ -52,6 +55,7 @@ impl Output {
     const TOKEN_EVENT: u8 = 0;
     const ENTER_EVENT: u8 = 1;
     const EXIT_EVENT: u8 = 2;
+    const EXPECTED_EVENT: u8 = 3;
 
     pub fn iter(&self) -> impl Iterator<Item = Step<'_>> {
         self.event.iter().map(|&event| {
@@ -78,6 +82,11 @@ impl Output {
                     Step::Enter { kind }
                 }
                 Self::EXIT_EVENT => Step::Exit,
+                Self::EXPECTED_EVENT => {
+                    let kind: SyntaxKind =
+                        (((event & Self::KIND_MASK) >> Self::KIND_SHIFT) as u16).into();
+                    Step::Expected { kind }
+                }
                 _ => unreachable!(),
             }
         })
@@ -100,6 +109,13 @@ impl Output {
     pub(crate) fn leave_node(&mut self) {
         let e = ((Self::EXIT_EVENT as u32) << Self::TAG_SHIFT) | Self::EVENT_MASK;
         self.event.push(e)
+    }
+
+    pub(crate) fn expected(&mut self, kind: SyntaxKind) {
+        let e = ((kind as u16 as u32) << Self::KIND_SHIFT)
+            | ((Self::EXPECTED_EVENT as u32) << Self::TAG_SHIFT)
+            | Self::EVENT_MASK;
+        self.event.push(e);
     }
 
     pub(crate) fn error(&mut self, error: String) {

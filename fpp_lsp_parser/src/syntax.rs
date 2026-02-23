@@ -8,6 +8,8 @@ pub enum SyntaxKind {
     EOF,
     #[doc(hidden)]
     UNKNOWN,
+    #[doc(hidden)]
+    CURSOR,
 
     IDENT,
     POST_ANNOTATION,

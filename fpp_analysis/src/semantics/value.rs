@@ -1,6 +1,8 @@
 use crate::semantics::{ArrayType, EnumType, StructType, Type};
 use fpp_ast::FloatKind;
 use rustc_hash::FxHashMap as HashMap;
+use std::fmt;
+use std::fmt::Formatter;
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -362,6 +364,29 @@ impl Value {
             |left, right| Ok(left - right),
             |left, right| Ok(left - right),
         )
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::PrimitiveInteger(PrimitiveIntegerValue { value, .. }) => {
+                f.write_fmt(format_args!("{value}"))
+            }
+            Value::AbsType(_) => f.write_str("[default value]"),
+            Value::Integer(IntegerValue(value)) => f.write_fmt(format_args!("{value}")),
+            Value::Float(FloatValue { value, .. }) => f.write_fmt(format_args!("{value}")),
+            Value::Boolean(BooleanValue(value)) => f.write_fmt(format_args!("{value}")),
+            Value::String(StringValue(value)) => f.write_fmt(format_args!("\"{value}\"")),
+            Value::EnumConstant(EnumConstantValue { value, .. }) => {
+                let vi = value.1 as i32;
+                f.write_fmt(format_args!("{vi}"))
+            }
+            Value::AnonArray(_) => f.write_str("[array value]"),
+            Value::Array(_) => f.write_str("[array value]"),
+            Value::AnonStruct(_) => f.write_str("{struct value}"),
+            Value::Struct(_) => f.write_str("{struct value}"),
+        }
     }
 }
 
