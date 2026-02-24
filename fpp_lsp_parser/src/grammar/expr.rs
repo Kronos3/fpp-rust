@@ -62,25 +62,44 @@ fn expr_mul_div_operand(p: &mut Parser) -> Option<CompletedMarker> {
 }
 
 fn expr_postfix(p: &mut Parser) -> Option<CompletedMarker> {
+    let m_postfix = p.start();
+    let mut found = false;
+
     let mut lhs = match expr_primary(p) {
-        None => return None,
+        None => {
+            m_postfix.abandon(p);
+            return None;
+        }
         Some(lhs) => lhs,
     };
 
     loop {
         match p.current() {
             DOT => {
+                found = true;
+
                 let m = lhs.precede(p);
                 p.bump(DOT);
                 p.expect(IDENT);
                 lhs = m.complete(p, EXPR_MEMBER);
             }
             LEFT_SQUARE => {
+                found = true;
+
                 let m = lhs.precede(p);
                 index_or_size(p);
                 lhs = m.complete(p, EXPR_SUBSCRIPT);
             }
-            _ => return Some(lhs),
+            _ => {
+                return {
+                    if found {
+                        Some(m_postfix.complete(p, EXPR_POSTFIX))
+                    } else {
+                        m_postfix.abandon(p);
+                        Some(lhs)
+                    }
+                };
+            }
         }
     }
 }
@@ -101,7 +120,7 @@ fn expr_primary(p: &mut Parser) -> Option<CompletedMarker> {
             Some(m.complete(p, EXPR_IDENT))
         }
         _ => {
-            p.error("expected expression");
+            p.expect(EXPR);
             None
         }
     }

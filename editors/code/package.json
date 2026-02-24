@@ -32,6 +32,10 @@
                 "title": "FPP: Restart Language Server"
             },
             {
+                "command": "fpp.dumpActiveTextEditorSyntaxTree",
+                "title": "FPP (debug command): View CST"
+            },
+            {
                 "command": "fpp.select",
                 "title": "FPP: Select Locs file inside workspace"
             },

@@ -62,7 +62,7 @@ impl RequestDispatcher<'_> {
         };
         let _guard =
             tracing::debug_span!("request", method = ?req.method, "request_id" = ?req.id).entered();
-        tracing::info!(?params);
+        tracing::debug!(?params);
 
         match t(params) {
             Ok(task) => self.global_state.task_reply_to(task, req.id.clone()),
@@ -162,7 +162,7 @@ pub(crate) struct NotificationDispatcher<'a> {
 }
 
 impl NotificationDispatcher<'_> {
-    pub(crate) fn on_sync_mut<N>(
+    pub(crate) fn on<N>(
         &mut self,
         f: fn(&mut GlobalState, N::Params) -> anyhow::Result<()>,
     ) -> &mut Self

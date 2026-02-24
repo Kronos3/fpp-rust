@@ -366,7 +366,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
             // keyword if keyword.is_keyword() => SemanticTokenKind::Keyword,
             SyntaxKind::COMMENT => SemanticTokenKind::Comment,
             SyntaxKind::LITERAL_FLOAT | SyntaxKind::LITERAL_INT => SemanticTokenKind::Number,
-            SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
+            // SyntaxKind::LITERAL_STRING => SemanticTokenKind::String,
             _ => return,
         };
 

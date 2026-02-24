@@ -147,7 +147,7 @@ pub(super) fn type_name(p: &mut Parser) {
         IDENT => qual_ident(p),
         _ => {
             m.abandon(p);
-            p.error("expected type name");
+            p.expect(TYPE_NAME);
             return;
         }
     }

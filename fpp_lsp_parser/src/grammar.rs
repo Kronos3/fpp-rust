@@ -13,24 +13,24 @@ pub(super) const MEMBER_RECOVERY_SET: TokenSet = TokenSet::new(&[
     EOL,
     SEMI,
     RIGHT_CURLY,
-    TYPE_KW,
-    ARRAY_KW,
-    ASYNC_KW,
-    GUARDED_KW,
-    SYNC_KW,
-    OUTPUT_KW,
-    COMPONENT_KW,
-    INSTANCE_KW,
-    CONSTANT_KW,
-    ENUM_KW,
-    INTERFACE_KW,
-    MODULE_KW,
-    PORT_KW,
-    STATE_KW,
-    STRUCT_KW,
-    TOPOLOGY_KW,
-    INCLUDE_KW,
-    LOCATE_KW,
+    // TYPE_KW,
+    // ARRAY_KW,
+    // ASYNC_KW,
+    // GUARDED_KW,
+    // SYNC_KW,
+    // OUTPUT_KW,
+    // COMPONENT_KW,
+    // INSTANCE_KW,
+    // CONSTANT_KW,
+    // ENUM_KW,
+    // INTERFACE_KW,
+    // MODULE_KW,
+    // PORT_KW,
+    // STATE_KW,
+    // STRUCT_KW,
+    // TOPOLOGY_KW,
+    // INCLUDE_KW,
+    // LOCATE_KW,
 ]);
 
 fn name_r(p: &mut Parser<'_>, recovery: TokenSet) {
@@ -74,6 +74,11 @@ fn error_block(p: &mut Parser<'_>, message: &str) {
 }
 
 pub(super) fn qual_ident(p: &mut Parser) {
+    if p.current() != IDENT {
+        p.expect(QUAL_IDENT);
+        return;
+    }
+
     let m = p.start();
     p.expect(IDENT);
     while p.at(DOT) {

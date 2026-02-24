@@ -54,7 +54,7 @@ export class EntireWorkspaceScanner implements WorkspaceFileScanner {
         });
 
         await client.sendRequest(ext.setFilesWorkspace, {
-            uri: vscode.workspace.workspaceFolders[0].toString()
+            uri: vscode.workspace.workspaceFolders[0].uri.toString()
         });
     }
 }

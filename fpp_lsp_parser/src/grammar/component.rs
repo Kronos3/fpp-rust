@@ -118,7 +118,7 @@ fn queue_full_opt(p: &mut Parser) {
 
 pub(super) fn spec_port_instance(p: &mut Parser) {
     match p.current() {
-        ASYNC_KW | GUARD_KW | SYNC_KW if p.nth_at(1, INPUT_KW) => spec_port_instance_general(p),
+        ASYNC_KW | GUARDED_KW | SYNC_KW if p.nth_at(1, INPUT_KW) => spec_port_instance_general(p),
         OUTPUT_KW => spec_port_instance_general(p),
         _ => spec_port_instance_special(p),
     }
@@ -128,7 +128,7 @@ fn spec_port_instance_general(p: &mut Parser) {
     let m = p.start();
 
     match p.current() {
-        ASYNC_KW | GUARD_KW | SYNC_KW => {
+        ASYNC_KW | GUARDED_KW | SYNC_KW => {
             p.bump_any();
             p.bump(INPUT_KW);
         }
@@ -141,9 +141,7 @@ fn spec_port_instance_general(p: &mut Parser) {
     p.expect(COLON);
     index_or_size_opt(p);
 
-    if p.at(SERIAL_KW) {
-        p.bump(SERIAL_KW);
-    } else {
+    if !p.eat(SERIAL_KW) {
         qual_ident(p);
     }
 
@@ -201,7 +199,7 @@ fn spec_port_instance_special(p: &mut Parser) {
     } else if p.eat(TEXT_KW) {
         p.expect(EVENT_KW);
     } else if p.eat(TIME_KW) {
-        p.eat(GET_KW);
+        p.expect(GET_KW);
     } else {
         match p.current() {
             EVENT_KW | TELEMETRY_KW => {

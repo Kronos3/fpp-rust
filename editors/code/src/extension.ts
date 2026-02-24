@@ -9,6 +9,7 @@ import {
 import * as Settings from "./settings";
 import { FppProject } from "./project";
 import { locs, LocsQuickPickFile, LocsQuickPickItem, LocsQuickPickType } from "./locs";
+import { dumpSyntaxTree } from "./lsp_ext";
 
 let extension: FppExtension;
 
@@ -180,6 +181,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 return vscode.commands.executeCommand('fpp.open');
             } else {
                 return extension.setProjectLocs(file);
+            }
+        }),
+        vscode.commands.registerCommand('fpp.dumpActiveTextEditorSyntaxTree', () => {
+            if (vscode.window.activeTextEditor) {
+                extension.client?.sendNotification(dumpSyntaxTree, { uri: vscode.window.activeTextEditor.document.uri.toString() })
             }
         }),
         vscode.commands.registerCommand('fpp.select', () => {

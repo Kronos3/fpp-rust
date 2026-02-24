@@ -1,9 +1,11 @@
 use crate::global_state::{GlobalState, Task};
 use crate::lsp;
 use crate::lsp::utils::semantic_token_delta;
+use crate::lsp_ext::UriRequest;
 use crate::util::{
-    hover_for_node, hover_for_symbol, node_to_location, nodes_at_offset, position_to_offset,
-    symbol_at_position, symbol_to_completion_item,
+    completion_items_for_qual_ident, completion_items_in_name_group, hover_for_node,
+    hover_for_symbol, node_to_location, nodes_at_offset, position_to_offset, symbol_at_position,
+    symbol_to_completion_item,
 };
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
@@ -60,6 +62,13 @@ pub fn handle_did_close_text_document(
 
 pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
     state.shutdown_requested = true;
+    Ok(())
+}
+
+pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Result<()> {
+    let (_, parse) = parse_text_document(state, &param.uri)?;
+    eprintln!("{}", parse.debug_dump());
+
     Ok(())
 }
 
@@ -481,169 +490,229 @@ pub fn handle_completion(
 
     let parse = fpp_lsp_parser::parse(&text, entry_kind);
 
-    let token = parse.syntax_node().token_at_offset(cursor_pos);
-    let expected_error_range = match token {
+    fn non_white_space_left(mut l: SyntaxToken) -> SyntaxToken {
+        loop {
+            match l.kind() {
+                SyntaxKind::EOL
+                | SyntaxKind::COMMENT
+                | SyntaxKind::WHITESPACE
+                | SyntaxKind::PRE_ANNOTATION
+                | SyntaxKind::POST_ANNOTATION => {
+                    l = match l.prev_token() {
+                        Some(ll) => ll,
+                        None => return l,
+                    };
+                }
+                _ => return l,
+            }
+        }
+    }
+
+    fn non_white_space_right(mut r: SyntaxToken) -> SyntaxToken {
+        loop {
+            match r.kind() {
+                SyntaxKind::EOL
+                | SyntaxKind::COMMENT
+                | SyntaxKind::WHITESPACE
+                | SyntaxKind::PRE_ANNOTATION
+                | SyntaxKind::POST_ANNOTATION => {
+                    r = match r.next_token() {
+                        Some(ll) => ll,
+                        None => return r,
+                    };
+                }
+                _ => return r,
+            }
+        }
+    }
+
+    let cursor_token = parse.syntax_node().token_at_offset(cursor_pos);
+    let expected_error_range = match &cursor_token {
         TokenAtOffset::None => return Ok(None),
-        TokenAtOffset::Single(tok) => tok.text_range(),
-        TokenAtOffset::Between(l, r) => l.text_range().cover(r.text_range()),
+        TokenAtOffset::Single(tok) => non_white_space_left(tok.clone())
+            .text_range()
+            .cover(non_white_space_right(tok.clone()).text_range()),
+        TokenAtOffset::Between(l, r) => non_white_space_left(l.clone())
+            .text_range()
+            .cover(non_white_space_right(r.clone()).text_range()),
     };
 
-    // Check for parsing errors to extract the next expected token
-    Ok(Some(CompletionResponse::Array(
-        parse
-            .errors()
-            .iter()
-            .filter_map(|e| {
-                if expected_error_range.intersect(e.range()).is_some() {
-                    e.expected().map(|k| (k, e.range()))
-                } else {
-                    None
-                }
+    let left_token = match &cursor_token {
+        TokenAtOffset::None => unreachable!(),
+        TokenAtOffset::Single(tok) => non_white_space_left(tok.clone()),
+        TokenAtOffset::Between(l, _) => non_white_space_left(l.clone()),
+    };
+
+    if left_token.kind() == SyntaxKind::DOT
+        && let Some(qual_ident) = left_token
+            .parent_ancestors()
+            .find(|s| s.kind() == SyntaxKind::QUAL_IDENT)
+    {
+        // Complete member selection on qualified identifiers
+
+        let parent_rule = match qual_ident.parent() {
+            None => return Ok(None),
+            Some(r) => r,
+        };
+
+        let ng = match parent_rule.kind() {
+            SyntaxKind::DEF_COMPONENT_INSTANCE => NameGroup::Component,
+            SyntaxKind::IMPLEMENTS_CLAUSE => NameGroup::PortInterface,
+            SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => NameGroup::PortInterfaceInstance,
+            SyntaxKind::PATTERN_TARGET_MEMBER_LIST => NameGroup::PortInterfaceInstance,
+            SyntaxKind::SPEC_INTERFACE_IMPORT => NameGroup::PortInterface,
+            SyntaxKind::SPEC_INSTANCE => NameGroup::PortInterfaceInstance,
+            SyntaxKind::SPEC_LOC => return Ok(None),
+            SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => NameGroup::Port,
+            SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => NameGroup::StateMachine,
+            SyntaxKind::TRANSITION_EXPR => return Ok(None),
+            SyntaxKind::TYPE_NAME => NameGroup::Type,
+            _ => return Ok(None),
+        };
+
+        let tokens: Vec<SyntaxToken> = qual_ident
+            .descendants_with_tokens()
+            .filter_map(|s| s.as_token().map(|ss| ss.clone()))
+            .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= cursor_pos)
+            .collect();
+
+        // Get the final token before the cursor to look it up in the AST
+        let last_token_pos = tokens.last().unwrap().text_range().start().into();
+
+        // Look up the symbol before the cursor
+        Ok(symbol_at_position(state, &uri, last_token_pos)
+            .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
+            .flatten()
+            .map(|scope| {
+                // Get all symbols under this symbol's scope in the proper
+                // name group
+                scope
+                    .get_group(ng)
+                    .iter()
+                    .map(|(_, child_symbol)| symbol_to_completion_item(state, child_symbol))
             })
-            .filter_map(|(kind, range)| {
-                match kind {
-                    keyword if keyword.is_keyword() => {
-                        // FIXME(tumbar) This seems brittle but works ok for now
-                        let keyword_dbg = format!("{:?}", kind);
-                        assert!(keyword_dbg.ends_with("_KW"));
-                        let keyword_s = keyword_dbg[..keyword_dbg.len() - 3].to_ascii_lowercase();
+            .map(|s| CompletionResponse::Array(s.collect())))
+    } else if left_token.kind() == SyntaxKind::DOT
+        && let Some(postfix_expr) = left_token
+            .parent_ancestors()
+            .find(|s| s.kind() == SyntaxKind::EXPR_POSTFIX)
+    {
+        // Member selection on expressions
+        eprintln!("postfix_expr member selection");
+        eprintln!("{:#?}", postfix_expr);
+        Ok(None)
+    } else {
+        // Check for parsing errors to extract the next expected token
+        Ok(Some(CompletionResponse::Array(
+            parse
+                .errors()
+                .iter()
+                .filter_map(|e| {
+                    if expected_error_range.intersect(e.range()).is_some()
+                        && let Some(expected_kind) = e.expected()
+                    {
+                        match expected_kind {
+                            keyword if keyword.is_keyword() => {
+                                // FIXME(tumbar) This seems brittle but works ok for now
+                                let keyword_dbg = format!("{:?}", keyword);
+                                assert!(keyword_dbg.ends_with("_KW"));
+                                let keyword_s =
+                                    keyword_dbg[..keyword_dbg.len() - 3].to_ascii_lowercase();
 
-                        Some(vec![CompletionItem {
-                            label: keyword_s,
-                            kind: Some(CompletionItemKind::KEYWORD),
-                            ..Default::default()
-                        }])
-                    }
-                    SyntaxKind::IDENT => {
-                        let element = parse.syntax_node().covering_element(range);
-                        let ancestors: Vec<SyntaxNode> = element.ancestors().collect();
+                                Some(vec![CompletionItem {
+                                    label: keyword_s,
+                                    kind: Some(CompletionItemKind::KEYWORD),
+                                    ..Default::default()
+                                }])
+                            }
+                            SyntaxKind::QUAL_IDENT => {
+                                let element = parse
+                                    .syntax_node()
+                                    .covering_element(TextRange::new(cursor_pos, cursor_pos));
 
-                        if let Some(qual_ident) = ancestors.first()
-                            && qual_ident.kind() == SyntaxKind::QUAL_IDENT
-                            && let Some(parent_rule) = ancestors.get(1)
-                        {
-                            let ng = match parent_rule.kind() {
-                                SyntaxKind::DEF_COMPONENT_INSTANCE => NameGroup::Component,
-                                SyntaxKind::IMPLEMENTS_CLAUSE => NameGroup::PortInterface,
-                                SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
-                                    NameGroup::PortInterfaceInstance
+                                if let Some(ng) = element.ancestors().find_map(|n| match n.kind() {
+                                    SyntaxKind::DEF_COMPONENT_INSTANCE => {
+                                        Some(NameGroup::Component)
+                                    }
+                                    SyntaxKind::IMPLEMENTS_CLAUSE => Some(NameGroup::PortInterface),
+                                    SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
+                                        Some(NameGroup::PortInterfaceInstance)
+                                    }
+                                    SyntaxKind::PATTERN_TARGET_MEMBER_LIST => {
+                                        Some(NameGroup::PortInterfaceInstance)
+                                    }
+                                    SyntaxKind::SPEC_INTERFACE_IMPORT => {
+                                        Some(NameGroup::PortInterface)
+                                    }
+                                    SyntaxKind::SPEC_INSTANCE => {
+                                        Some(NameGroup::PortInterfaceInstance)
+                                    }
+                                    SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => Some(NameGroup::Port),
+                                    SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => {
+                                        Some(NameGroup::StateMachine)
+                                    }
+                                    SyntaxKind::TYPE_NAME => Some(NameGroup::Type),
+                                    _ => None,
+                                }) {
+                                    completion_items_in_name_group(state, cursor_pos, ng, &uri)
+                                } else {
+                                    None
                                 }
-                                SyntaxKind::PATTERN_TARGET_MEMBER_LIST => {
-                                    NameGroup::PortInterfaceInstance
-                                }
-                                SyntaxKind::SPEC_INTERFACE_IMPORT => NameGroup::PortInterface,
-                                SyntaxKind::SPEC_INSTANCE => NameGroup::PortInterfaceInstance,
-                                SyntaxKind::SPEC_LOC => return None,
-                                SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => NameGroup::Port,
-                                SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => NameGroup::StateMachine,
-                                SyntaxKind::TRANSITION_EXPR => return None,
-                                SyntaxKind::TYPE_NAME => NameGroup::Type,
+                            }
+                            SyntaxKind::TYPE_NAME => {
+                                let element = parse
+                                    .syntax_node()
+                                    .covering_element(TextRange::new(cursor_pos, cursor_pos));
 
-                                _ => return None,
-                            };
+                                let symbol_completions = completion_items_for_qual_ident(
+                                    state,
+                                    element,
+                                    cursor_pos,
+                                    NameGroup::Type,
+                                    &uri,
+                                )
+                                .unwrap_or_default();
 
-                            let tokens: Vec<SyntaxToken> = qual_ident
-                                .children_with_tokens()
-                                .filter_map(|s| s.as_token().map(|ss| ss.clone()))
-                                .filter(|t| {
-                                    t.kind() == SyntaxKind::IDENT
-                                        && t.text_range().end() <= cursor_pos
+                                let keyword_completions: Vec<CompletionItem> = vec![
+                                    "U8", "I8", "U16", "I16", "U32", "I32", "U64", "I64", "string",
+                                    "bool",
+                                ]
+                                .into_iter()
+                                .map(|kw| CompletionItem {
+                                    label: kw.to_string(),
+                                    kind: Some(CompletionItemKind::CLASS),
+                                    ..Default::default()
                                 })
                                 .collect();
 
-                            // If this is first token, we cannot rely on the AST since it's a completely
-                            // invalid qualified identifier. The parent rule will therefore not exist in the AST
-                            // The CST has this information of course so we can back out the current scope
-                            // from the CST.
-                            if tokens.is_empty() {
-                                let current_scope: Vec<String> = qual_ident
-                                    .ancestors()
-                                    .filter_map(|ancestor| match ancestor.kind() {
-                                        SyntaxKind::DEF_MODULE
-                                        | SyntaxKind::DEF_COMPONENT
-                                        | SyntaxKind::DEF_ENUM
-                                        | SyntaxKind::DEF_STATE_MACHINE => {
-                                            let name =
-                                                ancestor.first_child_or_token_by_kind(&|k| {
-                                                    k == SyntaxKind::NAME
-                                                });
-                                            name.map(|n| text[n.text_range()].to_string())
-                                        }
-                                        _ => None,
-                                    })
-                                    .collect();
-
-                                eprintln!("scope: {:?}", current_scope);
-
-                                // Merge all symbols going up from each scope
-                                let items: Vec<Vec<CompletionItem>> = current_scope
-                                    .iter()
-                                    .rev()
-                                    .fold(
-                                        (vec![], Some(&state.analysis.global_scope)),
-                                        |(mut out, scope), scope_name| {
-                                            if let Some(scope) = scope {
-                                                out.push(
-                                                    scope
-                                                        .get_group(ng)
-                                                        .iter()
-                                                        .map(|(_, s)| {
-                                                            symbol_to_completion_item(state, s)
-                                                        })
-                                                        .collect(),
-                                                );
-
-                                                (
-                                                    out,
-                                                    scope
-                                                        .get(ng, scope_name)
-                                                        .map(|symbol| {
-                                                            state
-                                                                .analysis
-                                                                .symbol_scope_map
-                                                                .get(&symbol)
-                                                        })
-                                                        .flatten(),
-                                                )
-                                            } else {
-                                                (out, None)
-                                            }
-                                        },
-                                    )
-                                    .0;
-
-                                // The closest symbols should appear first
-                                // Flip the completion items and flatten everything
-                                Some(items.into_iter().rev().flatten().collect())
-                            } else {
-                                // Get the final token before the cursor to look it up in the AST
-                                let last_token_pos =
-                                    tokens.last().unwrap().text_range().start().into();
-
-                                // Look up the symbol before the cursor
-                                symbol_at_position(state, &uri, last_token_pos)
-                                    .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
-                                    .flatten()
-                                    .map(|scope| {
-                                        // Get all symbols under this symbol's scope in the proper
-                                        // name group
-                                        scope
-                                            .get_group(ng)
-                                            .iter()
-                                            .map(|(_, child_symbol)| {
-                                                symbol_to_completion_item(state, child_symbol)
-                                            })
-                                            .collect()
-                                    })
+                                Some(
+                                    keyword_completions
+                                        .into_iter()
+                                        .chain(symbol_completions)
+                                        .collect(),
+                                )
                             }
-                        } else {
-                            None
+                            SyntaxKind::EXPR => {
+                                let element = parse
+                                    .syntax_node()
+                                    .covering_element(TextRange::new(cursor_pos, cursor_pos));
+
+                                completion_items_for_qual_ident(
+                                    state,
+                                    element,
+                                    cursor_pos,
+                                    NameGroup::Value,
+                                    &uri,
+                                )
+                            }
+                            _ => None,
                         }
+                    } else {
+                        None
                     }
-                    _ => None,
-                }
-            })
-            .flatten()
-            .collect(),
-    )))
+                })
+                .flatten()
+                .collect(),
+        )))
+    }
 }

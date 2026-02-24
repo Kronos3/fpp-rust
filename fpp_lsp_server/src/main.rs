@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     tracing::info!("server is starting up");
     GlobalState::run(connection, client_capabilities);
     io_threads.join()?;
-    log::info!("shutting down server");
+    tracing::info!("shutting down server");
 
     Ok(())
 }

@@ -438,6 +438,16 @@ impl<'a> Parser<'a> {
 
     fn spec_loc(&mut self) -> ParseResult<SpecLoc> {
         let first = self.consume_keyword(Locate)?;
+
+        let is_dictionary_def = {
+            if self.peek(0) == Keyword(Dictionary) {
+                self.consume_keyword(Dictionary)?;
+                true
+            } else {
+                false
+            }
+        };
+
         let kind = match self.peek(0) {
             Keyword(Component) => {
                 self.next();
@@ -481,15 +491,6 @@ impl<'a> Parser<'a> {
                         Keyword(Interface),
                     ],
                 ));
-            }
-        };
-
-        let is_dictionary_def = {
-            if self.peek(0) == Keyword(Dictionary) {
-                self.consume_keyword(Dictionary)?;
-                true
-            } else {
-                false
             }
         };
 
@@ -1779,7 +1780,10 @@ impl<'a> Parser<'a> {
         };
 
         let port = match self.peek(0) {
-            Keyword(Serial) => None,
+            Keyword(Serial) => {
+                self.consume_keyword(Serial)?;
+                None
+            }
             _ => Some(self.qual_ident()?),
         };
 
@@ -2439,7 +2443,7 @@ impl<'a> Parser<'a> {
         let first_span = left.span();
         loop {
             match self.peek(0) {
-                Dot => {
+                Dot if self.peek(1) == Identifier => {
                     self.next();
                     let id = self.ident()?;
                     left = Expr {

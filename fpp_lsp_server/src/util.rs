@@ -1,8 +1,9 @@
 use crate::diagnostics::LspDiagnosticsEmitter;
 use crate::global_state::GlobalState;
-use fpp_analysis::semantics::{Symbol, SymbolInterface, Type};
+use fpp_analysis::semantics::{NameGroup, Symbol, SymbolInterface, Type};
 use fpp_ast::{AstNode, FormalParam, FormalParamKind, MoveWalkable, Name, Node, Visitor};
 use fpp_core::{BytePos, CompilerContext, LineCol, SourceFile};
+use fpp_lsp_parser::{SyntaxElement, SyntaxKind, SyntaxToken, TextSize};
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionItemLabelDetails, Documentation, Hover,
     HoverContents, Location, MarkupContent, MarkupKind, Position, Range, Uri,
@@ -423,5 +424,196 @@ pub fn symbol_to_completion_item(state: &GlobalState, symbol: &Symbol) -> Comple
             })
         }),
         ..Default::default()
+    }
+}
+
+pub(crate) struct GetScopeVisitor<'a> {
+    source_file: SourceFile,
+    looking_for: BytePos,
+    context: &'a CompilerContext<LspDiagnosticsEmitter>,
+}
+
+impl<'ast> Visitor<'ast> for GetScopeVisitor<'ast> {
+    type Break = Vec<Node<'ast>>;
+    type State = ();
+
+    /// The default node visiting before.
+    /// By default, this will just continue without visiting the children of `node`
+    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        match node {
+            // Build up scopes for nodes that can have scopes
+            Node::DefStateMachine(_)
+            | Node::DefModule(_)
+            | Node::DefComponent(_)
+            | Node::DefEnum(_) => match node.walk(a, self) {
+                ControlFlow::Continue(_) => ControlFlow::Continue(()),
+                ControlFlow::Break(mut sub) => {
+                    sub.push(node);
+                    ControlFlow::Break(sub)
+                }
+            },
+            _ => {
+                let span = self
+                    .context
+                    .span_get(&self.context.node_get_span(&node.id()));
+
+                let src_file: SourceFile = span.file.upgrade().unwrap().as_ref().into();
+
+                if src_file == self.source_file {
+                    // Check if this node spans the range we are looking for
+                    if span.start <= self.looking_for
+                        && span.start + span.length >= self.looking_for
+                    {
+                        // We have reached a part of the AST that surrounds the position
+                        // We are the deepest we can be in the scope list
+                        ControlFlow::Break(vec![])
+                    } else {
+                        // This node does not span the range
+                        // We don't need to walk it since it's children won't span it either
+                        ControlFlow::Continue(())
+                    }
+                } else {
+                    // The files don't match
+                    // We could be looking for something inside an include
+                    // Keep recursing
+                    node.walk(a, self)
+                }
+            }
+        }
+    }
+}
+
+pub fn scope_at_offset<'a>(
+    state: &'a GlobalState,
+    document: &Uri,
+    offset: BytePos,
+) -> Option<Vec<Node<'a>>> {
+    let files = match state.files.get(document.as_str()) {
+        None => return None,
+        Some(files) => files,
+    };
+
+    files
+        .first()
+        .map(|file| {
+            let cache = state.cache.get(&state.parent_file(*file)).unwrap();
+
+            let visitor = GetScopeVisitor {
+                source_file: *file,
+                looking_for: offset,
+                context: &state.context,
+            };
+
+            visitor.visit_trans_unit(&mut (), &cache.ast).break_value()
+        })
+        .flatten()
+}
+
+pub fn completion_items_in_name_group(
+    state: &GlobalState,
+    cursor_pos: TextSize,
+    ng: NameGroup,
+    uri: &Uri,
+) -> Option<Vec<CompletionItem>> {
+    // If this is first token which means we need to list the first level of all valid
+    // symbols. Query the analysis to extract the current scope of the cursor.
+
+    let current_scope: Vec<String> = scope_at_offset(state, uri, cursor_pos.into())
+        .unwrap_or(vec![])
+        .into_iter()
+        .rev()
+        .map(|n| match n {
+            Node::DefComponent(n) => n.name.data.clone(),
+            Node::DefEnum(n) => n.name.data.clone(),
+            Node::DefModule(n) => n.name.data.clone(),
+            Node::DefStateMachine(n) => n.name.data.clone(),
+            _ => unreachable!(),
+        })
+        .collect();
+
+    // Merge all symbols going up from each scope
+    let items: Vec<Vec<CompletionItem>> = current_scope
+        .iter()
+        .fold(
+            (
+                vec![
+                    state
+                        .analysis
+                        .global_scope
+                        .get_group(ng)
+                        .iter()
+                        .map(|(_, s)| symbol_to_completion_item(state, s))
+                        .collect(),
+                ],
+                Some(&state.analysis.global_scope),
+            ),
+            |(mut out, scope), scope_name| {
+                if let Some(scope) = scope {
+                    let new_scope = scope
+                        .get(ng, scope_name)
+                        .map(|symbol| state.analysis.symbol_scope_map.get(&symbol))
+                        .flatten();
+
+                    match new_scope {
+                        None => {}
+                        Some(s) => {
+                            out.push(
+                                s.get_group(ng)
+                                    .iter()
+                                    .map(|(_, s)| symbol_to_completion_item(state, s))
+                                    .collect(),
+                            );
+                        }
+                    }
+
+                    (out, new_scope)
+                } else {
+                    (out, None)
+                }
+            },
+        )
+        .0;
+
+    // The closest symbols should appear first
+    // Flip the completion items and flatten everything
+    Some(items.into_iter().rev().flatten().collect())
+}
+
+pub fn completion_items_for_qual_ident(
+    state: &GlobalState,
+    qual_ident: SyntaxElement,
+    cursor_pos: TextSize,
+    ng: NameGroup,
+    uri: &Uri,
+) -> Option<Vec<CompletionItem>> {
+    let tokens: Vec<SyntaxToken> = qual_ident
+        .as_node()
+        .map(|node| {
+            node.descendants_with_tokens()
+                .filter_map(|s| s.as_token().map(|ss| ss.clone()))
+                .filter(|t| t.kind() == SyntaxKind::IDENT && t.text_range().end() <= cursor_pos)
+                .collect()
+        })
+        .unwrap_or(vec![]);
+
+    if tokens.is_empty() {
+        completion_items_in_name_group(state, cursor_pos, ng, uri)
+    } else {
+        // Get the final token before the cursor to look it up in the AST
+        let last_token_pos = tokens.last().unwrap().text_range().start().into();
+
+        // Look up the symbol before the cursor
+        symbol_at_position(state, &uri, last_token_pos)
+            .map(|(_, symbol)| state.analysis.symbol_scope_map.get(&symbol))
+            .flatten()
+            .map(|scope| {
+                // Get all symbols under this symbol's scope in the proper
+                // name group
+                scope
+                    .get_group(ng)
+                    .iter()
+                    .map(|(_, child_symbol)| symbol_to_completion_item(state, child_symbol))
+                    .collect()
+            })
     }
 }
