@@ -6,7 +6,7 @@ use crate::global_state::GlobalState;
 use fpp_analysis::analyzers::{Analyzer, BasicUseAnalyzer, NestedScopeState};
 use fpp_analysis::semantics::{QualifiedName, Symbol};
 use fpp_analysis::Analysis;
-use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, QualIdent, Visitor, Walkable};
+use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, PortInstanceIdentifier, QualIdent, TlmChannelIdentifier, Visitor, Walkable};
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
@@ -352,19 +352,36 @@ struct SemanticUses<'ast> {
 }
 
 impl<'ast> SemanticUses<'ast> {
-    fn mark_ident(
+    #[inline]
+    fn mark_node(
         &self,
         a: &mut SemanticTokensState,
         node: fpp_core::Node,
-        use_node: fpp_core::Node,
+        semantic_kind: SemanticTokenKind,
     ) {
         let span = self.context.context.node_get_span(&node);
         let span_data = self.context.context.span_get(&span);
         let src_file_handle = span_data.file.upgrade().unwrap().handle;
 
-        if src_file_handle == self.source_file.handle
-            && let Some(symbol) = a.analysis.use_def_map.get(&use_node)
-        {
+        if src_file_handle == self.source_file.handle {
+            a.add_text_range(
+                TextRange::new(
+                    span_data.start.into(),
+                    (span_data.start + span_data.length).into(),
+                ),
+                semantic_kind,
+            );
+        }
+    }
+
+    #[inline]
+    fn mark_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: fpp_core::Node,
+        use_node: fpp_core::Node,
+    ) {
+        if let Some(symbol) = a.analysis.use_def_map.get(&use_node) {
             let semantic_kind = match symbol {
                 Symbol::AbsType(_) => SemanticTokenKind::Type,
                 Symbol::AliasType(_) => SemanticTokenKind::Type,
@@ -382,13 +399,7 @@ impl<'ast> SemanticUses<'ast> {
                 Symbol::Topology(_) => SemanticTokenKind::Topology,
             };
 
-            a.add_text_range(
-                TextRange::new(
-                    span_data.start.into(),
-                    (span_data.start + span_data.length).into(),
-                ),
-                semantic_kind,
-            );
+            self.mark_node(a, node, semantic_kind);
         }
     }
 }
@@ -405,11 +416,11 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
     fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
         match &node.kind {
             ExprKind::Ident(_) => {
-                self.mark_ident(a, node.node_id, node.node_id);
+                self.mark_use(a, node.node_id, node.node_id);
                 ControlFlow::Continue(())
             }
             ExprKind::Dot { e, id } => {
-                self.mark_ident(a, id.node_id, node.node_id);
+                self.mark_use(a, id.node_id, node.node_id);
                 e.walk(a, self)
             }
             _ => node.walk(a, self),
@@ -417,8 +428,26 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
     }
 
     fn visit_ident(&self, a: &mut Self::State, node: &'ast Ident) -> ControlFlow<Self::Break> {
-        self.mark_ident(a, node.node_id, node.node_id);
+        self.mark_use(a, node.node_id, node.node_id);
         ControlFlow::Continue(())
+    }
+
+    // TODO(tumbar) We should add these to the analysis and mark these are true uses
+
+    fn visit_tlm_channel_identifier(
+        &self,
+        a: &mut Self::State,
+        node: &'ast TlmChannelIdentifier,
+    ) -> ControlFlow<Self::Break> {
+        // Channel name is not a use, we need to mark it manually
+        self.mark_node(a, node.channel_name.node_id, SemanticTokenKind::Telemetry);
+        node.component_instance.walk(a, self)
+    }
+
+    fn visit_port_instance_identifier(&self, a: &mut Self::State, node: &'ast PortInstanceIdentifier) -> ControlFlow<Self::Break> {
+        // Port instance is not a use, we need to mark it manually
+        self.mark_node(a, node.port_name.node_id, SemanticTokenKind::PortInstance);
+        node.interface_instance.walk(a, self)
     }
 }
 
