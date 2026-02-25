@@ -34,7 +34,7 @@ pub(super) fn def_topology(p: &mut Parser) {
     m.complete(p, DEF_TOPOLOGY);
 }
 
-fn topology_member(p: &mut Parser) {
+pub(super) fn topology_member(p: &mut Parser) {
     match p.current() {
         IMPORT_KW | INSTANCE_KW => spec_instance(p),
         INCLUDE_KW => spec_include(p),

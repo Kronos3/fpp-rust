@@ -8,7 +8,7 @@ use fpp_core::Spanned;
 use std::ops::ControlFlow;
 
 pub struct EvalImpliedEnumConsts<'ast> {
-    super_: NestedAnalyzer<'ast, Self>,
+    super_: NestedAnalyzer<'ast, Analysis, Self>,
 }
 
 impl<'ast> EvalImpliedEnumConsts<'ast> {

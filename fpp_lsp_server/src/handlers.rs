@@ -10,7 +10,7 @@ use crate::util::{
 use anyhow::Result;
 use fpp_analysis::semantics::{NameGroup, SymbolInterface};
 use fpp_ast::{AstNode, Node};
-use fpp_core::{LineCol, LineIndex};
+use fpp_core::{LineCol, LineIndex, SourceFile};
 use fpp_lsp_parser::{
     SyntaxKind, SyntaxNode, SyntaxToken, TextRange, TokenAtOffset, VisitorResult,
 };
@@ -66,30 +66,43 @@ pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
 }
 
 pub fn handle_dump_syntax_tree(state: &mut GlobalState, param: UriRequest) -> Result<()> {
-    let (_, parse) = parse_text_document(state, &param.uri)?;
+    let (_, source_file, parse) = parse_text_document(state, &param.uri)?;
+
+    let parse_kind = source_file
+        .map(|f| state.analysis.include_context_map.get(&f).cloned())
+        .flatten()
+        .unwrap_or(fpp_parser::IncludeParentKind::Module);
+
+    let entry_kind = match parse_kind {
+        fpp_parser::IncludeParentKind::Component => fpp_lsp_parser::TopEntryPoint::Component,
+        fpp_parser::IncludeParentKind::Module => fpp_lsp_parser::TopEntryPoint::Module,
+        fpp_parser::IncludeParentKind::TlmPacket => fpp_lsp_parser::TopEntryPoint::TlmPacket,
+        fpp_parser::IncludeParentKind::TlmPacketSet => fpp_lsp_parser::TopEntryPoint::TlmPacketSet,
+        fpp_parser::IncludeParentKind::Topology => fpp_lsp_parser::TopEntryPoint::Topology,
+    };
+
+    eprintln!("CST {}: entry {entry_kind:?}", param.uri.as_str());
     eprintln!("{}", parse.debug_dump());
 
     Ok(())
 }
 
-fn parse_text_document(state: &GlobalState, uri: &Uri) -> Result<(String, fpp_lsp_parser::Parse)> {
+fn parse_text_document(
+    state: &GlobalState,
+    uri: &Uri,
+) -> Result<(String, Option<SourceFile>, fpp_lsp_parser::Parse)> {
     let text: String = state.vfs.read_sync(uri.as_str())?;
 
-    let parse_kind = match state.files.get(uri.as_str()) {
-        None => fpp_parser::IncludeParentKind::Module,
-        Some(source_files) => {
-            // This file may have been included in multiple spots
-            // We should choose the most 'permissive' syntax entry point
-            source_files
-                .iter()
-                .map(|f| match state.analysis.include_context_map.get(f) {
-                    Some(kind) => kind.clone(),
-                    None => fpp_parser::IncludeParentKind::Module,
-                })
-                .max()
-                .unwrap_or(fpp_parser::IncludeParentKind::Module)
-        }
-    };
+    let source_file = state
+        .files
+        .get(uri.as_str())
+        .map(|files| files.first().cloned())
+        .flatten();
+
+    let parse_kind = source_file
+        .map(|f| state.analysis.include_context_map.get(&f).cloned())
+        .flatten()
+        .unwrap_or(fpp_parser::IncludeParentKind::Module);
 
     let entry_kind = match parse_kind {
         fpp_parser::IncludeParentKind::Component => fpp_lsp_parser::TopEntryPoint::Component,
@@ -100,7 +113,7 @@ fn parse_text_document(state: &GlobalState, uri: &Uri) -> Result<(String, fpp_ls
     };
 
     let parse = fpp_lsp_parser::parse(&text, entry_kind);
-    Ok((text, parse))
+    Ok((text, source_file, parse))
 }
 
 pub fn handle_semantic_tokens_full(
@@ -108,8 +121,8 @@ pub fn handle_semantic_tokens_full(
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
     // TODO(tumbar) We probably don't need to run a reparse here
-    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
-    let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
+    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
 
     // Unconditionally cache the tokens
     state
@@ -124,10 +137,10 @@ pub fn handle_semantic_tokens_range(
     request: lsp_types::SemanticTokensRangeParams,
 ) -> Result<Option<SemanticTokensRangeResult>> {
     // TODO(tumbar) We probably don't need to run a reparse here
-    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     Ok(Some(SemanticTokensRangeResult::Tokens(
-        lsp::semantic_tokens::compute(&text, &parse).finish(Some(request.range)),
+        lsp::semantic_tokens::compute(state, src, &text, &parse).finish(Some(request.range)),
     )))
 }
 
@@ -136,9 +149,9 @@ pub fn handle_semantic_tokens_full_delta(
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
     // TODO(tumbar) We probably don't need to run a reparse here
-    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
-    let semantic_tokens = lsp::semantic_tokens::compute(&text, &parse).finish(None);
+    let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
 
     let cached_tokens = state.semantic_tokens.remove(&request.text_document.uri);
 
@@ -283,7 +296,7 @@ pub fn handle_document_link_request(
     request: lsp_types::DocumentLinkParams,
 ) -> Result<Option<Vec<DocumentLink>>> {
     // TODO(tumbar) We probably don't need to run a reparse here
-    let (text, parse) = parse_text_document(&state, &request.text_document.uri)?;
+    let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
 
     let mut links = vec![];

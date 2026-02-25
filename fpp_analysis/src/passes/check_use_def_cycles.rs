@@ -161,7 +161,7 @@ impl<'ast> Visitor<'ast> for CheckUseDefCycles<'ast> {
     }
 }
 
-impl<'ast> UseAnalysisPass<'ast> for CheckUseDefCycles<'ast> {
+impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckUseDefCycles<'ast> {
     fn interface_instance_use(
         &self,
         a: &mut Analysis,

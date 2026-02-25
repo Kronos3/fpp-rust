@@ -1,18 +1,19 @@
 use crate::analyzers::analyzer::Analyzer;
 use crate::analyzers::nested_analyzer::{NestedAnalyzer, NestedAnalyzerMode};
+use crate::analyzers::NestedScopeState;
 use crate::semantics::{ImpliedUse, QualifiedName};
-use crate::Analysis;
 use fpp_ast::*;
 use std::collections::VecDeque;
+use std::marker::PhantomData;
 use std::ops::{ControlFlow, Deref};
 
 /// An extension of the standard [Visitor] trait that allows analyzing uses of symbols
 /// [BasicUseAnalyzer] or [UseAnalyzer] should be used in your pass for this to work properly
-pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
+pub trait UseAnalysisPass<'ast, S: NestedScopeState>: Visitor<'ast, State = S> {
     /** A use of a component definition */
     fn component_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -25,7 +26,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of an interface instance (topology def or component instance def) */
     fn interface_instance_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -38,7 +39,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of a constant definition or enumerated constant definition */
     fn constant_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &'ast Expr,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -51,7 +52,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of a port definition */
     fn port_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -64,7 +65,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of an interface definition */
     fn interface_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -77,7 +78,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of a type definition */
     fn type_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -90,7 +91,7 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     /** A use of a state machine definition*/
     fn state_machine_use(
         &self,
-        a: &mut Analysis,
+        a: &mut Self::State,
         node: &QualIdent,
         name: QualifiedName,
     ) -> ControlFlow<Self::Break> {
@@ -101,14 +102,16 @@ pub trait UseAnalysisPass<'ast>: Visitor<'ast, State = Analysis> {
     }
 }
 
-pub struct BasicUseAnalyzer<'ast, V: UseAnalysisPass<'ast>> {
-    super_: NestedAnalyzer<'ast, V>,
+pub struct BasicUseAnalyzer<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> {
+    super_: NestedAnalyzer<'ast, S, V>,
+    phantom_data: PhantomData<S>,
 }
 
-impl<'ast, V: UseAnalysisPass<'ast>> BasicUseAnalyzer<'ast, V> {
-    pub fn new() -> BasicUseAnalyzer<'ast, V> {
+impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> BasicUseAnalyzer<'ast, S, V> {
+    pub fn new() -> BasicUseAnalyzer<'ast, S, V> {
         BasicUseAnalyzer {
             super_: NestedAnalyzer::new(NestedAnalyzerMode::DEEP),
+            phantom_data: Default::default(),
         }
     }
 
@@ -131,7 +134,9 @@ impl<'ast, V: UseAnalysisPass<'ast>> BasicUseAnalyzer<'ast, V> {
     }
 }
 
-impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for BasicUseAnalyzer<'ast, V> {
+impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
+    for BasicUseAnalyzer<'ast, S, V>
+{
     fn visit(&self, visitor: &V, a: &mut V::State, node: Node<'ast>) -> ControlFlow<V::Break> {
         match node {
             Node::DefComponentInstance(ci) => {

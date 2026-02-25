@@ -3,12 +3,13 @@ use crate::analyzers::basic_use_analyzer::{BasicUseAnalyzer, UseAnalysisPass};
 use crate::semantics::Symbol;
 use fpp_ast::{AstNode, ExprKind, Node, Visitable};
 use std::ops::ControlFlow;
+use crate::Analysis;
 
-pub struct UseAnalyzer<'ast, V: UseAnalysisPass<'ast>> {
-    super_: BasicUseAnalyzer<'ast, V>,
+pub struct UseAnalyzer<'ast, V: UseAnalysisPass<'ast, Analysis>> {
+    super_: BasicUseAnalyzer<'ast, Analysis, V>,
 }
 
-impl<'ast, V: UseAnalysisPass<'ast>> UseAnalyzer<'ast, V> {
+impl<'ast, V: UseAnalysisPass<'ast, Analysis>> UseAnalyzer<'ast, V> {
     pub fn new() -> UseAnalyzer<'ast, V> {
         UseAnalyzer {
             super_: BasicUseAnalyzer::new(),
@@ -16,7 +17,7 @@ impl<'ast, V: UseAnalysisPass<'ast>> UseAnalyzer<'ast, V> {
     }
 }
 
-impl<'ast, V: UseAnalysisPass<'ast>> Analyzer<'ast, V> for UseAnalyzer<'ast, V> {
+impl<'ast, V: UseAnalysisPass<'ast, Analysis>> Analyzer<'ast, V> for UseAnalyzer<'ast, V> {
     fn visit(&self, visitor: &V, a: &mut V::State, node: Node<'ast>) -> ControlFlow<V::Break> {
         match node {
             Node::Expr(expr) => {

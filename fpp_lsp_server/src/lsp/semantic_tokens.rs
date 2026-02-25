@@ -1,7 +1,14 @@
+use std::ops::ControlFlow;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
-use fpp_core::{LineCol, LineIndex};
-use fpp_lsp_parser::{NodeOrToken, SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
+use crate::global_state::GlobalState;
+use fpp_analysis::analyzers::{Analyzer, BasicUseAnalyzer, NestedScopeState};
+use fpp_analysis::semantics::{QualifiedName, Symbol};
+use fpp_analysis::Analysis;
+use fpp_ast::{AstNode, Expr, Ident, Node, QualIdent, Visitor, Walkable};
+use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
+use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
 #[allow(dead_code)]
@@ -28,6 +35,8 @@ pub enum SemanticTokenKind {
 
     StateMachine,
     StateMachineInstance,
+    TelemetryPacketSet,
+    TelemetryPacket,
 
     Action,
     Guard,
@@ -124,6 +133,8 @@ impl SemanticTokenKind {
             SemanticTokenKind::Telemetry => SemanticTokenKindRaw::Function,
             SemanticTokenKind::Parameter => SemanticTokenKindRaw::Function,
             SemanticTokenKind::DataProduct => SemanticTokenKindRaw::Function,
+            SemanticTokenKind::TelemetryPacketSet => SemanticTokenKindRaw::Class,
+            SemanticTokenKind::TelemetryPacket => SemanticTokenKindRaw::Class,
         }
     }
 
@@ -142,6 +153,7 @@ impl SemanticTokenKind {
 }
 
 pub(crate) struct SemanticTokensState {
+    analysis: Arc<Analysis>,
     lines: LineIndex,
     raw: Vec<(TextRange, SemanticTokenKind)>,
 }
@@ -149,8 +161,9 @@ pub(crate) struct SemanticTokensState {
 static TOKEN_RESULT_COUNTER: AtomicU32 = AtomicU32::new(1);
 
 impl SemanticTokensState {
-    fn new(text: &str) -> SemanticTokensState {
+    fn new(analysis: Arc<Analysis>, text: &str) -> SemanticTokensState {
         SemanticTokensState {
+            analysis,
             lines: LineIndex::new(text),
             raw: Default::default(),
         }
@@ -252,60 +265,6 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
 
     fn visit_node(&self, state: &mut Self::State, node: &SyntaxNode) -> VisitorResult {
         match node.kind() {
-            SyntaxKind::EXPR => {
-                // TODO(tumbar) Use analysis information
-                for token in node.descendants_with_tokens() {
-                    if let NodeOrToken::Token(token) = token {
-                        if token.kind() == SyntaxKind::IDENT {
-                            state.add_token(&token, SemanticTokenKind::Constant);
-                        }
-                    }
-                }
-
-                VisitorResult::Next
-            }
-
-            SyntaxKind::PORT_INSTANCE_IDENTIFIER => {
-                // TODO(tumbar) Use analysis information
-                let ident_list = node.descendants_with_tokens().filter_map(|f| match f {
-                    NodeOrToken::Token(token) if token.kind() == SyntaxKind::IDENT => Some(token),
-                    _ => None,
-                });
-
-                for ident in ident_list {
-                    state.add_token(&ident, SemanticTokenKind::ComponentInstance);
-                }
-
-                VisitorResult::Next
-            }
-            SyntaxKind::QUAL_IDENT => {
-                // TODO(tumbar) Use analysis information
-                let ident_list = node.descendants_with_tokens().filter_map(|f| match f {
-                    NodeOrToken::Token(token) if token.kind() == SyntaxKind::IDENT => Some(token),
-                    _ => None,
-                });
-
-                if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
-                    let name_kind = match parent_node_kind {
-                        SyntaxKind::TYPE_NAME => SemanticTokenKind::Type,
-                        SyntaxKind::SPEC_PORT_INSTANCE_GENERAL => SemanticTokenKind::Port,
-                        SyntaxKind::DEF_COMPONENT_INSTANCE => SemanticTokenKind::Component,
-                        SyntaxKind::SPEC_INSTANCE => SemanticTokenKind::ComponentInstance,
-                        SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => SemanticTokenKind::StateMachine,
-                        SyntaxKind::SPEC_CONNECTION_GRAPH_PATTERN => {
-                            SemanticTokenKind::ComponentInstance
-                        }
-                        SyntaxKind::SPEC_INTERFACE_IMPORT => SemanticTokenKind::Interface,
-                        _ => return VisitorResult::Next,
-                    };
-
-                    for ident in ident_list {
-                        state.add_token(&ident, name_kind);
-                    }
-                }
-
-                VisitorResult::Next
-            }
             // These are typed by definitions above them
             SyntaxKind::NAME => {
                 if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
@@ -338,6 +297,8 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::DEF_SIGNAL => SemanticTokenKind::Signal,
                         SyntaxKind::DEF_STATE => SemanticTokenKind::State,
                         SyntaxKind::DEF_STATE_MACHINE => SemanticTokenKind::StateMachine,
+                        SyntaxKind::TLM_PACKET_SET => SemanticTokenKind::TelemetryPacketSet,
+                        SyntaxKind::SPEC_TLM_PACKET => SemanticTokenKind::TelemetryPacket,
                         SyntaxKind::SPEC_STATE_MACHINE_INSTANCE => {
                             SemanticTokenKind::StateMachineInstance
                         }
@@ -374,8 +335,155 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     }
 }
 
-pub(crate) fn compute(text: &str, parse: &fpp_lsp_parser::Parse) -> SemanticTokensState {
-    let mut state = SemanticTokensState::new(text);
+impl NestedScopeState for SemanticTokensState {
+    fn get_symbol<N: AstNode>(&self, node: &N) -> Symbol {
+        self.analysis.get_symbol(node)
+    }
+
+    // We don't really care about scopes for this visitor
+    fn push_scope(&mut self, _: Symbol) {}
+    fn pop_scope(&mut self) {}
+}
+
+struct SemanticUses<'ast> {
+    super_: BasicUseAnalyzer<'ast, SemanticTokensState, Self>,
+    source_file: &'ast SourceFileData,
+    context: &'ast GlobalState,
+}
+impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
+    type Break = ();
+    type State = SemanticTokensState;
+
+    // Walk all nodes deeply and collect up scope where relevant
+    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        self.super_.visit(self, a, node)
+    }
+
+    fn visit_ident(&self, a: &mut Self::State, node: &'ast Ident) -> ControlFlow<Self::Break> {
+        let span = self.context.context.node_get_span(&node.node_id);
+        let span_data = self.context.context.span_get(&span);
+        let src_file_handle = span_data.file.upgrade().unwrap().handle;
+
+        if src_file_handle == self.source_file.handle
+            && let Some(kind) = a.analysis.use_def_map.get(&node.node_id)
+        {
+            let semantic_kind = match kind {
+                Symbol::AbsType(_) => SemanticTokenKind::Type,
+                Symbol::AliasType(_) => SemanticTokenKind::Type,
+                Symbol::Array(_) => SemanticTokenKind::Type,
+                Symbol::Component(_) => SemanticTokenKind::Component,
+                Symbol::ComponentInstance(_) => SemanticTokenKind::ComponentInstance,
+                Symbol::Constant(_) => SemanticTokenKind::Constant,
+                Symbol::Enum(_) => SemanticTokenKind::Type,
+                Symbol::EnumConstant(_) => SemanticTokenKind::EnumConstant,
+                Symbol::Interface(_) => SemanticTokenKind::Interface,
+                Symbol::Module(_) => SemanticTokenKind::Module,
+                Symbol::Port(_) => SemanticTokenKind::Port,
+                Symbol::StateMachine(_) => SemanticTokenKind::StateMachine,
+                Symbol::Struct(_) => SemanticTokenKind::Type,
+                Symbol::Topology(_) => SemanticTokenKind::Topology,
+            };
+
+            a.add_text_range(
+                TextRange::new(
+                    span_data.start.into(),
+                    (span_data.start + span_data.length).into(),
+                ),
+                semantic_kind,
+            );
+        }
+
+        ControlFlow::Continue(())
+    }
+}
+
+impl<'ast> fpp_analysis::analyzers::UseAnalysisPass<'ast, SemanticTokensState>
+    for SemanticUses<'ast>
+{
+    fn component_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn interface_instance_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn constant_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &'ast Expr,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn port_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn interface_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn type_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+
+    fn state_machine_use(
+        &self,
+        a: &mut SemanticTokensState,
+        node: &QualIdent,
+        _: QualifiedName,
+    ) -> ControlFlow<Self::Break> {
+        node.walk(a, self)
+    }
+}
+
+pub(crate) fn compute(
+    global_state: &GlobalState,
+    source_file: Option<SourceFile>,
+    text: &str,
+    parse: &fpp_lsp_parser::Parse,
+) -> SemanticTokensState {
+    let mut state = SemanticTokensState::new(global_state.analysis.clone(), text);
     parse.visit(&mut state, &SemanticTokenVisitor {});
+
+    if let Some(source_file) = source_file {
+        let parent_file = global_state.parent_file(source_file);
+        let cache = global_state.cache.get(&parent_file).unwrap();
+
+        let _ = SemanticUses {
+            super_: BasicUseAnalyzer::new(),
+            source_file: global_state.context.file_get(&source_file),
+            context: global_state,
+        }
+        .visit_trans_unit(&mut state, &cache.ast);
+    }
+
     state
 }

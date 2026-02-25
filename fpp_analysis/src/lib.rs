@@ -11,10 +11,17 @@ use fpp_core::FileReader;
 use std::ops::ControlFlow;
 
 pub mod analyzers {
-    pub(crate) mod analyzer;
-    pub(crate) mod basic_use_analyzer;
-    pub(crate) mod nested_analyzer;
-    pub(crate) mod use_analyzer;
+    pub mod analyzer;
+    pub use analyzer::*;
+
+    pub mod basic_use_analyzer;
+    pub use basic_use_analyzer::*;
+
+    pub mod nested_analyzer;
+    pub use nested_analyzer::*;
+
+    pub mod use_analyzer;
+    pub use use_analyzer::*;
 }
 
 pub mod passes {

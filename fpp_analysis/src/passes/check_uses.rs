@@ -8,7 +8,7 @@ use fpp_core::Spanned;
 use std::ops::{ControlFlow, Deref};
 
 pub struct CheckUses<'ast> {
-    super_: BasicUseAnalyzer<'ast, Self>,
+    super_: BasicUseAnalyzer<'ast, Analysis, Self>,
 }
 
 impl<'ast> CheckUses<'ast> {
@@ -100,7 +100,7 @@ impl<'ast> Visitor<'ast> for CheckUses<'ast> {
     }
 }
 
-impl<'ast> UseAnalysisPass<'ast> for CheckUses<'ast> {
+impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckUses<'ast> {
     fn component_use(
         &self,
         a: &mut Analysis,

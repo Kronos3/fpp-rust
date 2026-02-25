@@ -15,7 +15,7 @@ use std::ops::{ControlFlow, Deref};
 use std::sync::Arc;
 
 pub struct FinalizeTypeDefs<'ast> {
-    super_: NestedAnalyzer<'ast, Self>,
+    super_: NestedAnalyzer<'ast, Analysis, Self>,
 }
 
 impl<'ast> FinalizeTypeDefs<'ast> {

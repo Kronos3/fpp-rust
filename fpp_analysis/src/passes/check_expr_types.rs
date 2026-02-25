@@ -606,7 +606,7 @@ impl<'ast> Visitor<'ast> for CheckExprTypes<'ast> {
     }
 }
 
-impl<'ast> UseAnalysisPass<'ast> for CheckExprTypes<'ast> {
+impl<'ast> UseAnalysisPass<'ast, Analysis> for CheckExprTypes<'ast> {
     fn constant_use(
         &self,
         a: &mut Analysis,
