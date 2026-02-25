@@ -334,11 +334,12 @@ ROOT@0..7126
                   INDEX_OR_SIZE@2375..2403
                     LEFT_SQUARE@2375..2376 "["
                     EXPR@2376..2403
-                      EXPR_MEMBER@2376..2403
-                        EXPR_IDENT@2376..2392
-                          IDENT@2376..2392 "Ports_RateGroups"
-                        DOT@2392..2393 "."
-                        IDENT@2393..2403 "rateGroup1"
+                      EXPR_POSTFIX@2376..2403
+                        EXPR_MEMBER@2376..2403
+                          EXPR_IDENT@2376..2392
+                            IDENT@2376..2392 "Ports_RateGroups"
+                          DOT@2392..2393 "."
+                          IDENT@2393..2403 "rateGroup1"
                   RIGHT_SQUARE@2403..2404 "]"
                 WHITESPACE@2404..2405 " "
                 RIGHT_ARROW@2405..2407 "->"
@@ -536,11 +537,12 @@ ROOT@0..7126
                   INDEX_OR_SIZE@3019..3047
                     LEFT_SQUARE@3019..3020 "["
                     EXPR@3020..3047
-                      EXPR_MEMBER@3020..3047
-                        EXPR_IDENT@3020..3036
-                          IDENT@3020..3036 "Ports_RateGroups"
-                        DOT@3036..3037 "."
-                        IDENT@3037..3047 "rateGroup2"
+                      EXPR_POSTFIX@3020..3047
+                        EXPR_MEMBER@3020..3047
+                          EXPR_IDENT@3020..3036
+                            IDENT@3020..3036 "Ports_RateGroups"
+                          DOT@3036..3037 "."
+                          IDENT@3037..3047 "rateGroup2"
                   RIGHT_SQUARE@3047..3048 "]"
                 WHITESPACE@3048..3049 " "
                 RIGHT_ARROW@3049..3051 "->"
@@ -667,11 +669,12 @@ ROOT@0..7126
                   INDEX_OR_SIZE@3584..3612
                     LEFT_SQUARE@3584..3585 "["
                     EXPR@3585..3612
-                      EXPR_MEMBER@3585..3612
-                        EXPR_IDENT@3585..3601
-                          IDENT@3585..3601 "Ports_RateGroups"
-                        DOT@3601..3602 "."
-                        IDENT@3602..3612 "rateGroup3"
+                      EXPR_POSTFIX@3585..3612
+                        EXPR_MEMBER@3585..3612
+                          EXPR_IDENT@3585..3601
+                            IDENT@3585..3601 "Ports_RateGroups"
+                          DOT@3601..3602 "."
+                          IDENT@3602..3612 "rateGroup3"
                   RIGHT_SQUARE@3612..3613 "]"
                 WHITESPACE@3613..3614 " "
                 RIGHT_ARROW@3614..3616 "->"
@@ -1169,14 +1172,15 @@ ROOT@0..7126
                   INDEX_OR_SIZE@5859..5896
                     LEFT_SQUARE@5859..5860 "["
                     EXPR@5860..5896
-                      EXPR_MEMBER@5860..5896
-                        EXPR_MEMBER@5860..5889
-                          EXPR_IDENT@5860..5868
-                            IDENT@5860..5868 "ComCcsds"
-                          DOT@5868..5869 "."
-                          IDENT@5869..5889 "Ports_ComPacketQueue"
-                        DOT@5889..5890 "."
-                        IDENT@5890..5896 "EVENTS"
+                      EXPR_POSTFIX@5860..5896
+                        EXPR_MEMBER@5860..5896
+                          EXPR_MEMBER@5860..5889
+                            EXPR_IDENT@5860..5868
+                              IDENT@5860..5868 "ComCcsds"
+                            DOT@5868..5869 "."
+                            IDENT@5869..5889 "Ports_ComPacketQueue"
+                          DOT@5889..5890 "."
+                          IDENT@5890..5896 "EVENTS"
                   RIGHT_SQUARE@5896..5897 "]"
               EOL@5897..5904 "\n      "
               CONNECTION@5904..6017
@@ -1200,14 +1204,15 @@ ROOT@0..7126
                   INDEX_OR_SIZE@5976..6016
                     LEFT_SQUARE@5976..5977 "["
                     EXPR@5977..6016
-                      EXPR_MEMBER@5977..6016
-                        EXPR_MEMBER@5977..6006
-                          EXPR_IDENT@5977..5985
-                            IDENT@5977..5985 "ComCcsds"
-                          DOT@5985..5986 "."
-                          IDENT@5986..6006 "Ports_ComPacketQueue"
-                        DOT@6006..6007 "."
-                        IDENT@6007..6016 "TELEMETRY"
+                      EXPR_POSTFIX@5977..6016
+                        EXPR_MEMBER@5977..6016
+                          EXPR_MEMBER@5977..6006
+                            EXPR_IDENT@5977..5985
+                              IDENT@5977..5985 "ComCcsds"
+                            DOT@5985..5986 "."
+                            IDENT@5986..6006 "Ports_ComPacketQueue"
+                          DOT@6006..6007 "."
+                          IDENT@6007..6016 "TELEMETRY"
                   RIGHT_SQUARE@6016..6017 "]"
               EOL@6017..6058 "\n\n      # Router <->  ..."
               CONNECTION@6058..6121
@@ -1335,14 +1340,15 @@ ROOT@0..7126
                   INDEX_OR_SIZE@6521..6556
                     LEFT_SQUARE@6521..6522 "["
                     EXPR@6522..6556
-                      EXPR_MEMBER@6522..6556
-                        EXPR_MEMBER@6522..6551
-                          EXPR_IDENT@6522..6530
-                            IDENT@6522..6530 "ComCcsds"
-                          DOT@6530..6531 "."
-                          IDENT@6531..6551 "Ports_ComBufferQueue"
-                        DOT@6551..6552 "."
-                        IDENT@6552..6556 "FILE"
+                      EXPR_POSTFIX@6522..6556
+                        EXPR_MEMBER@6522..6556
+                          EXPR_MEMBER@6522..6551
+                            EXPR_IDENT@6522..6530
+                              IDENT@6522..6530 "ComCcsds"
+                            DOT@6530..6531 "."
+                            IDENT@6531..6551 "Ports_ComBufferQueue"
+                          DOT@6551..6552 "."
+                          IDENT@6552..6556 "FILE"
                   RIGHT_SQUARE@6556..6557 "]"
               EOL@6557..6564 "\n      "
               CONNECTION@6564..6675
@@ -1356,14 +1362,15 @@ ROOT@0..7126
                   INDEX_OR_SIZE@6597..6632
                     LEFT_SQUARE@6597..6598 "["
                     EXPR@6598..6632
-                      EXPR_MEMBER@6598..6632
-                        EXPR_MEMBER@6598..6627
-                          EXPR_IDENT@6598..6606
-                            IDENT@6598..6606 "ComCcsds"
-                          DOT@6606..6607 "."
-                          IDENT@6607..6627 "Ports_ComBufferQueue"
-                        DOT@6627..6628 "."
-                        IDENT@6628..6632 "FILE"
+                      EXPR_POSTFIX@6598..6632
+                        EXPR_MEMBER@6598..6632
+                          EXPR_MEMBER@6598..6627
+                            EXPR_IDENT@6598..6606
+                              IDENT@6598..6606 "ComCcsds"
+                            DOT@6606..6607 "."
+                            IDENT@6607..6627 "Ports_ComBufferQueue"
+                          DOT@6627..6628 "."
+                          IDENT@6628..6632 "FILE"
                   RIGHT_SQUARE@6632..6633 "]"
                 WHITESPACE@6633..6634 " "
                 RIGHT_ARROW@6634..6636 "->"

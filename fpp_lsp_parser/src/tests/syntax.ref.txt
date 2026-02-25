@@ -1517,32 +1517,33 @@ ROOT@0..6806
         EQUALS@5767..5768 "="
         WHITESPACE@5768..5769 " "
         EXPR@5769..5783
-          EXPR_SUBSCRIPT@5769..5783
-            EXPR_ARRAY@5769..5780
-              LEFT_SQUARE@5769..5770 "["
-              WHITESPACE@5770..5771 " "
-              EXPR_ARRAY_MEMBER_LIST@5771..5778
-                EXPR@5771..5772
-                  EXPR_LITERAL@5771..5772
-                    LITERAL_INT@5771..5772 "1"
-                COMMA@5772..5773 ","
-                WHITESPACE@5773..5774 " "
-                EXPR@5774..5775
-                  EXPR_LITERAL@5774..5775
-                    LITERAL_INT@5774..5775 "2"
-                COMMA@5775..5776 ","
-                WHITESPACE@5776..5777 " "
-                EXPR@5777..5778
-                  EXPR_LITERAL@5777..5778
-                    LITERAL_INT@5777..5778 "3"
-              WHITESPACE@5778..5779 " "
-              RIGHT_SQUARE@5779..5780 "]"
-            INDEX_OR_SIZE@5780..5782
-              LEFT_SQUARE@5780..5781 "["
-              EXPR@5781..5782
-                EXPR_LITERAL@5781..5782
-                  LITERAL_INT@5781..5782 "1"
-            RIGHT_SQUARE@5782..5783 "]"
+          EXPR_POSTFIX@5769..5783
+            EXPR_SUBSCRIPT@5769..5783
+              EXPR_ARRAY@5769..5780
+                LEFT_SQUARE@5769..5770 "["
+                WHITESPACE@5770..5771 " "
+                EXPR_ARRAY_MEMBER_LIST@5771..5778
+                  EXPR@5771..5772
+                    EXPR_LITERAL@5771..5772
+                      LITERAL_INT@5771..5772 "1"
+                  COMMA@5772..5773 ","
+                  WHITESPACE@5773..5774 " "
+                  EXPR@5774..5775
+                    EXPR_LITERAL@5774..5775
+                      LITERAL_INT@5774..5775 "2"
+                  COMMA@5775..5776 ","
+                  WHITESPACE@5776..5777 " "
+                  EXPR@5777..5778
+                    EXPR_LITERAL@5777..5778
+                      LITERAL_INT@5777..5778 "3"
+                WHITESPACE@5778..5779 " "
+                RIGHT_SQUARE@5779..5780 "]"
+              INDEX_OR_SIZE@5780..5782
+                LEFT_SQUARE@5780..5781 "["
+                EXPR@5781..5782
+                  EXPR_LITERAL@5781..5782
+                    LITERAL_INT@5781..5782 "1"
+              RIGHT_SQUARE@5782..5783 "]"
       EOL@5783..5828 "\n  @< Array Subscript ..."
       DEF_CONSTANT@5828..5860
         CONSTANT_KW@5828..5836 "constant"
@@ -1553,21 +1554,22 @@ ROOT@0..6806
         EQUALS@5850..5851 "="
         WHITESPACE@5851..5852 " "
         EXPR@5852..5860
-          EXPR_SUBSCRIPT@5852..5860
-            EXPR_MEMBER@5852..5857
-              EXPR_MEMBER@5852..5855
-                EXPR_IDENT@5852..5853
-                  IDENT@5852..5853 "a"
-                DOT@5853..5854 "."
-                IDENT@5854..5855 "b"
-              DOT@5855..5856 "."
-              IDENT@5856..5857 "c"
-            INDEX_OR_SIZE@5857..5859
-              LEFT_SQUARE@5857..5858 "["
-              EXPR@5858..5859
-                EXPR_LITERAL@5858..5859
-                  LITERAL_INT@5858..5859 "1"
-            RIGHT_SQUARE@5859..5860 "]"
+          EXPR_POSTFIX@5852..5860
+            EXPR_SUBSCRIPT@5852..5860
+              EXPR_MEMBER@5852..5857
+                EXPR_MEMBER@5852..5855
+                  EXPR_IDENT@5852..5853
+                    IDENT@5852..5853 "a"
+                  DOT@5853..5854 "."
+                  IDENT@5854..5855 "b"
+                DOT@5855..5856 "."
+                IDENT@5856..5857 "c"
+              INDEX_OR_SIZE@5857..5859
+                LEFT_SQUARE@5857..5858 "["
+                EXPR@5858..5859
+                  EXPR_LITERAL@5858..5859
+                    LITERAL_INT@5858..5859 "1"
+              RIGHT_SQUARE@5859..5860 "]"
       EOL@5860..5927 "\n  @< Array Subscript ..."
       DEF_CONSTANT@5927..5968
         CONSTANT_KW@5927..5935 "constant"
@@ -1578,38 +1580,39 @@ ROOT@0..6806
         EQUALS@5949..5950 "="
         WHITESPACE@5950..5951 " "
         EXPR@5951..5968
-          EXPR_SUBSCRIPT@5951..5968
-            EXPR_MEMBER@5951..5964
-              EXPR_SUBSCRIPT@5951..5962
-                EXPR_SUBSCRIPT@5951..5959
-                  EXPR_MEMBER@5951..5956
-                    EXPR_MEMBER@5951..5954
-                      EXPR_IDENT@5951..5952
-                        IDENT@5951..5952 "a"
-                      DOT@5952..5953 "."
-                      IDENT@5953..5954 "b"
-                    DOT@5954..5955 "."
-                    IDENT@5955..5956 "c"
-                  INDEX_OR_SIZE@5956..5958
-                    LEFT_SQUARE@5956..5957 "["
-                    EXPR@5957..5958
-                      EXPR_LITERAL@5957..5958
-                        LITERAL_INT@5957..5958 "1"
-                  RIGHT_SQUARE@5958..5959 "]"
-                INDEX_OR_SIZE@5959..5961
-                  LEFT_SQUARE@5959..5960 "["
-                  EXPR@5960..5961
-                    EXPR_LITERAL@5960..5961
-                      LITERAL_INT@5960..5961 "2"
-                RIGHT_SQUARE@5961..5962 "]"
-              DOT@5962..5963 "."
-              IDENT@5963..5964 "s"
-            INDEX_OR_SIZE@5964..5967
-              LEFT_SQUARE@5964..5965 "["
-              EXPR@5965..5967
-                EXPR_LITERAL@5965..5967
-                  LITERAL_INT@5965..5967 "12"
-            RIGHT_SQUARE@5967..5968 "]"
+          EXPR_POSTFIX@5951..5968
+            EXPR_SUBSCRIPT@5951..5968
+              EXPR_MEMBER@5951..5964
+                EXPR_SUBSCRIPT@5951..5962
+                  EXPR_SUBSCRIPT@5951..5959
+                    EXPR_MEMBER@5951..5956
+                      EXPR_MEMBER@5951..5954
+                        EXPR_IDENT@5951..5952
+                          IDENT@5951..5952 "a"
+                        DOT@5952..5953 "."
+                        IDENT@5953..5954 "b"
+                      DOT@5954..5955 "."
+                      IDENT@5955..5956 "c"
+                    INDEX_OR_SIZE@5956..5958
+                      LEFT_SQUARE@5956..5957 "["
+                      EXPR@5957..5958
+                        EXPR_LITERAL@5957..5958
+                          LITERAL_INT@5957..5958 "1"
+                    RIGHT_SQUARE@5958..5959 "]"
+                  INDEX_OR_SIZE@5959..5961
+                    LEFT_SQUARE@5959..5960 "["
+                    EXPR@5960..5961
+                      EXPR_LITERAL@5960..5961
+                        LITERAL_INT@5960..5961 "2"
+                  RIGHT_SQUARE@5961..5962 "]"
+                DOT@5962..5963 "."
+                IDENT@5963..5964 "s"
+              INDEX_OR_SIZE@5964..5967
+                LEFT_SQUARE@5964..5965 "["
+                EXPR@5965..5967
+                  EXPR_LITERAL@5965..5967
+                    LITERAL_INT@5965..5967 "12"
+              RIGHT_SQUARE@5967..5968 "]"
       EOL@5968..6014 "\n  @< Array Subscript ..."
       DEF_CONSTANT@6014..6047
         CONSTANT_KW@6014..6022 "constant"
@@ -1632,14 +1635,15 @@ ROOT@0..6806
         EQUALS@6096..6097 "="
         WHITESPACE@6097..6098 " "
         EXPR@6098..6103
-          EXPR_MEMBER@6098..6103
-            EXPR_MEMBER@6098..6101
-              EXPR_IDENT@6098..6099
-                IDENT@6098..6099 "a"
-              DOT@6099..6100 "."
-              IDENT@6100..6101 "b"
-            DOT@6101..6102 "."
-            IDENT@6102..6103 "c"
+          EXPR_POSTFIX@6098..6103
+            EXPR_MEMBER@6098..6103
+              EXPR_MEMBER@6098..6101
+                EXPR_IDENT@6098..6099
+                  IDENT@6098..6099 "a"
+                DOT@6099..6100 "."
+                IDENT@6100..6101 "b"
+              DOT@6101..6102 "."
+              IDENT@6102..6103 "c"
       EOL@6103..6131 "\n  @< Dot\n\n  @ FP lit ..."
       DEF_CONSTANT@6131..6161
         CONSTANT_KW@6131..6139 "constant"
