@@ -3,10 +3,12 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 
 use crate::global_state::GlobalState;
-use fpp_analysis::analyzers::{Analyzer, BasicUseAnalyzer, NestedScopeState};
-use fpp_analysis::semantics::{QualifiedName, Symbol};
+use fpp_analysis::semantics::Symbol;
 use fpp_analysis::Analysis;
-use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, PortInstanceIdentifier, QualIdent, TlmChannelIdentifier, Visitor, Walkable};
+use fpp_ast::{
+    Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier,
+    TlmChannelIdentifier, Visitor, Walkable,
+};
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
@@ -223,6 +225,17 @@ impl SemanticTokensState {
             let delta_line = start.line - last.line;
             let delta_start = if delta_line == 0 {
                 // Same line, offset the start position
+
+                assert!(
+                    start.col > last.col,
+                    "semantic tokens overlap: {}:{} | {}:{} ({:?})",
+                    last.line,
+                    last.col,
+                    start.line,
+                    start.col,
+                    kind
+                );
+
                 start.col - last.col
             } else {
                 // Token is on a different line, don't alter the column
@@ -335,18 +348,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
     }
 }
 
-impl NestedScopeState for SemanticTokensState {
-    fn get_symbol<N: AstNode>(&self, node: &N) -> Symbol {
-        self.analysis.get_symbol(node)
-    }
-
-    // We don't really care about scopes for this visitor
-    fn push_scope(&mut self, _: Symbol) {}
-    fn pop_scope(&mut self) {}
-}
-
 struct SemanticUses<'ast> {
-    super_: BasicUseAnalyzer<'ast, SemanticTokensState, Self>,
     source_file: &'ast SourceFileData,
     context: &'ast GlobalState,
 }
@@ -410,7 +412,7 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
 
     // Walk all nodes deeply and collect up scope where relevant
     fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
-        self.super_.visit(self, a, node)
+        node.walk(a, self)
     }
 
     fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
@@ -444,77 +446,14 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
         node.component_instance.walk(a, self)
     }
 
-    fn visit_port_instance_identifier(&self, a: &mut Self::State, node: &'ast PortInstanceIdentifier) -> ControlFlow<Self::Break> {
+    fn visit_port_instance_identifier(
+        &self,
+        a: &mut Self::State,
+        node: &'ast PortInstanceIdentifier,
+    ) -> ControlFlow<Self::Break> {
         // Port instance is not a use, we need to mark it manually
         self.mark_node(a, node.port_name.node_id, SemanticTokenKind::PortInstance);
         node.interface_instance.walk(a, self)
-    }
-}
-
-impl<'ast> fpp_analysis::analyzers::UseAnalysisPass<'ast, SemanticTokensState>
-    for SemanticUses<'ast>
-{
-    fn component_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn interface_instance_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn constant_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &'ast Expr,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn port_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn interface_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn type_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
-    }
-
-    fn state_machine_use(
-        &self,
-        a: &mut SemanticTokensState,
-        node: &QualIdent,
-        _: QualifiedName,
-    ) -> ControlFlow<Self::Break> {
-        node.walk(a, self)
     }
 }
 
@@ -532,7 +471,6 @@ pub(crate) fn compute(
         let cache = global_state.cache.get(&parent_file).unwrap();
 
         let _ = SemanticUses {
-            super_: BasicUseAnalyzer::new(),
             source_file: global_state.context.file_get(&source_file),
             context: global_state,
         }
