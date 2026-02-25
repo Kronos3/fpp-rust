@@ -6,7 +6,7 @@ use crate::global_state::GlobalState;
 use fpp_analysis::analyzers::{Analyzer, BasicUseAnalyzer, NestedScopeState};
 use fpp_analysis::semantics::{QualifiedName, Symbol};
 use fpp_analysis::Analysis;
-use fpp_ast::{AstNode, Expr, Ident, Node, QualIdent, Visitor, Walkable};
+use fpp_ast::{AstNode, Expr, ExprKind, Ident, Node, QualIdent, Visitor, Walkable};
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
@@ -350,24 +350,22 @@ struct SemanticUses<'ast> {
     source_file: &'ast SourceFileData,
     context: &'ast GlobalState,
 }
-impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
-    type Break = ();
-    type State = SemanticTokensState;
 
-    // Walk all nodes deeply and collect up scope where relevant
-    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
-        self.super_.visit(self, a, node)
-    }
-
-    fn visit_ident(&self, a: &mut Self::State, node: &'ast Ident) -> ControlFlow<Self::Break> {
-        let span = self.context.context.node_get_span(&node.node_id);
+impl<'ast> SemanticUses<'ast> {
+    fn mark_ident(
+        &self,
+        a: &mut SemanticTokensState,
+        node: fpp_core::Node,
+        use_node: fpp_core::Node,
+    ) {
+        let span = self.context.context.node_get_span(&node);
         let span_data = self.context.context.span_get(&span);
         let src_file_handle = span_data.file.upgrade().unwrap().handle;
 
         if src_file_handle == self.source_file.handle
-            && let Some(kind) = a.analysis.use_def_map.get(&node.node_id)
+            && let Some(symbol) = a.analysis.use_def_map.get(&use_node)
         {
-            let semantic_kind = match kind {
+            let semantic_kind = match symbol {
                 Symbol::AbsType(_) => SemanticTokenKind::Type,
                 Symbol::AliasType(_) => SemanticTokenKind::Type,
                 Symbol::Array(_) => SemanticTokenKind::Type,
@@ -392,7 +390,34 @@ impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
                 semantic_kind,
             );
         }
+    }
+}
 
+impl<'ast> Visitor<'ast> for SemanticUses<'ast> {
+    type Break = ();
+    type State = SemanticTokensState;
+
+    // Walk all nodes deeply and collect up scope where relevant
+    fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        self.super_.visit(self, a, node)
+    }
+
+    fn visit_expr(&self, a: &mut Self::State, node: &'ast Expr) -> ControlFlow<Self::Break> {
+        match &node.kind {
+            ExprKind::Ident(_) => {
+                self.mark_ident(a, node.node_id, node.node_id);
+                ControlFlow::Continue(())
+            }
+            ExprKind::Dot { e, id } => {
+                self.mark_ident(a, id.node_id, node.node_id);
+                e.walk(a, self)
+            }
+            _ => node.walk(a, self),
+        }
+    }
+
+    fn visit_ident(&self, a: &mut Self::State, node: &'ast Ident) -> ControlFlow<Self::Break> {
+        self.mark_ident(a, node.node_id, node.node_id);
         ControlFlow::Continue(())
     }
 }

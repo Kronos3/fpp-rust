@@ -217,7 +217,10 @@ pub fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) 
         .collect();
     let qual_ident = qualified_idents.join(".");
 
-    let symbol_kind_line = format!("({symbol_kind}) {qual_ident}");
+    let symbol_kind_line = state.analysis.value_map.get(&symbol.node()).map_or_else(
+        || format!("({symbol_kind}) {qual_ident}"),
+        |v| format!("({symbol_kind}) {qual_ident} = {v}"),
+    );
 
     let markdown_lines: Vec<String> = node_data
         .pre_annotation
