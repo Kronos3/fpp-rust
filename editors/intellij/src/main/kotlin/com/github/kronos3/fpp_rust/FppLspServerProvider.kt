@@ -107,7 +107,7 @@ private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDes
                         SemanticTokenTypes.Parameter -> FppColors.PARAMETER
                         SemanticTokenTypes.DataProduct -> FppColors.DATA_PRODUCT
 
-                        SemanticTokenTypes.StateMachine -> FppColors.STATEMACHINE
+                        SemanticTokenTypes.StateMachine -> FppColors.STATE_MACHINE
                         SemanticTokenTypes.StateMachineInstance -> FppColors.STATE_MACHINE_INSTANCE
                         SemanticTokenTypes.TelemetryPacketSet -> FppColors.TELEMETRY_PACKET_SET
                         SemanticTokenTypes.TelemetryPacket -> FppColors.TELEMETRY_PACKET

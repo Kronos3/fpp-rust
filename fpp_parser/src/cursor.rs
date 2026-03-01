@@ -351,10 +351,7 @@ impl<'a> Cursor<'a> {
     }
 
     /// Generate a generic syntax error
-    pub fn err(
-        &self,
-        msg: &'static str,
-    ) -> ParseError {
+    pub fn err(&self, msg: &'static str) -> ParseError {
         ParseError::Syntax {
             last: self.last_consumed_span,
             msg,
@@ -409,15 +406,11 @@ impl<'a> Cursor<'a> {
 
     #[inline]
     pub fn consume(&mut self, kind: TokenKind) -> ParseResult<Token> {
-        match self.next() {
-            None => Err(self.err_expected_token("unexpected end of file", kind, TokenKind::EOF)),
-            Some(tok) => {
-                if tok.kind() != kind {
-                    Err(self.err_expected_token("unexpected token", kind, tok.kind()))
-                } else {
-                    Ok(tok)
-                }
-            }
+        let current = self.peek(0);
+        if current == kind {
+            Ok(self.next().unwrap())
+        } else {
+            Err(self.err_expected_token("unexpected token", kind, current))
         }
     }
 }

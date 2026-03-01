@@ -37,7 +37,7 @@ enum class FppColors(humanName: Supplier<@AttributeDescriptor String>, default: 
     PARAMETER(FppBundle.messagePointer("settings.fpp.color.parameter"), Default.FUNCTION_DECLARATION),
     DATA_PRODUCT(FppBundle.messagePointer("settings.fpp.color.data.product"), Default.FUNCTION_DECLARATION),
 
-    STATEMACHINE(FppBundle.messagePointer("settings.fpp.color.state.machine"), Default.CLASS_NAME),
+    STATE_MACHINE(FppBundle.messagePointer("settings.fpp.color.state.machine"), Default.CLASS_NAME),
     STATE_MACHINE_INSTANCE(FppBundle.messagePointer("settings.fpp.color.state.machine.instance"), Default.LOCAL_VARIABLE),
     TELEMETRY_PACKET_SET(FppBundle.messagePointer("settings.fpp.color.telemetry.packet.set"), Default.CLASS_NAME),
     TELEMETRY_PACKET(FppBundle.messagePointer("settings.fpp.color.telemetry.packet"), Default.CLASS_NAME),

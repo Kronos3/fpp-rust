@@ -226,11 +226,7 @@ pub fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) 
         .pre_annotation
         .clone()
         .into_iter()
-        .chain(vec![
-            "".to_string(),
-            symbol_kind_line,
-            "".to_string(),
-        ])
+        .chain(vec!["".to_string(), symbol_kind_line, "".to_string()])
         .chain(node_data.post_annotation.clone().into_iter())
         .collect();
 
@@ -316,11 +312,7 @@ pub fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) ->
         .pre_annotation
         .clone()
         .into_iter()
-        .chain(vec![
-            "".to_string(),
-            symbol_kind_line,
-            "".to_string(),
-        ])
+        .chain(vec!["".to_string(), symbol_kind_line, "".to_string()])
         .chain(node_data.post_annotation.clone().into_iter())
         .collect();
 
@@ -444,25 +436,34 @@ impl<'ast> Visitor<'ast> for GetScopeVisitor<'ast> {
     /// The default node visiting before.
     /// By default, this will just continue without visiting the children of `node`
     fn super_visit(&self, a: &mut Self::State, node: Node<'ast>) -> ControlFlow<Self::Break> {
+        let span = self
+            .context
+            .span_get(&self.context.node_get_span(&node.id()));
+
+        let src_file: SourceFile = span.file.upgrade().unwrap().as_ref().into();
+
         match node {
             // Build up scopes for nodes that can have scopes
             Node::DefStateMachine(_)
             | Node::DefModule(_)
             | Node::DefComponent(_)
             | Node::DefEnum(_) => match node.walk(a, self) {
-                ControlFlow::Continue(_) => ControlFlow::Continue(()),
+                ControlFlow::Continue(_) => {
+                    if src_file == self.source_file
+                        && span.start <= self.looking_for
+                        && span.start + span.length >= self.looking_for
+                    {
+                        ControlFlow::Break(vec![node])
+                    } else {
+                        ControlFlow::Continue(())
+                    }
+                }
                 ControlFlow::Break(mut sub) => {
                     sub.push(node);
                     ControlFlow::Break(sub)
                 }
             },
             _ => {
-                let span = self
-                    .context
-                    .span_get(&self.context.node_get_span(&node.id()));
-
-                let src_file: SourceFile = span.file.upgrade().unwrap().as_ref().into();
-
                 if src_file == self.source_file {
                     // Check if this node spans the range we are looking for
                     if span.start <= self.looking_for
@@ -534,6 +535,9 @@ pub fn completion_items_in_name_group(
             _ => unreachable!(),
         })
         .collect();
+
+    eprintln!("completion for {:?} at scope", ng);
+    eprintln!("{:?}", current_scope);
 
     // Merge all symbols going up from each scope
     let items: Vec<Vec<CompletionItem>> = current_scope
