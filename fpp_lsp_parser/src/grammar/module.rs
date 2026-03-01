@@ -24,10 +24,15 @@ pub(super) fn def_module(p: &mut Parser) {
 
 pub(super) fn module_member(p: &mut Parser) {
     match p.current() {
+        DICTIONARY_KW if p.nth_at(1, TYPE_KW) => types::type_alias_or_abstract(p),
         TYPE_KW => types::type_alias_or_abstract(p),
+        DICTIONARY_KW if p.nth_at(1, ARRAY_KW) => types::def_array(p),
         ARRAY_KW => types::def_array(p),
+        DICTIONARY_KW if p.nth_at(1, CONSTANT_KW) => module::def_constant(p),
         CONSTANT_KW => def_constant(p),
+        DICTIONARY_KW if p.nth_at(1, ENUM_KW) => types::def_enum(p),
         ENUM_KW => types::def_enum(p),
+        DICTIONARY_KW if p.nth_at(1, STRUCT_KW) => types::def_struct(p),
         STRUCT_KW => types::def_struct(p),
 
         INSTANCE_KW => def_component_instance(p),

@@ -13,7 +13,8 @@ pub struct DefTopology {
 #[derive(AstAnnotated, Clone, DirectWalkable)]
 pub enum TopologyMember {
     SpecInstance(SpecInstance),
-    SpecConnectionGraph(SpecConnectionGraph),
+    SpecDirectConnectionGraph(SpecDirectConnectionGraph),
+    SpecPatternConnectionGraph(SpecPatternConnectionGraph),
     SpecInclude(SpecInclude),
     SpecTopPort(SpecTopPort),
     SpecTlmPacketSet(SpecTlmPacketSet),
@@ -54,24 +55,20 @@ pub enum ConnectionPatternKind {
     Time,
 }
 
-#[derive(Debug, Clone, DirectWalkable)]
-pub enum SpecConnectionGraphKind {
-    Direct {
-        name: Name,
-        connections: Vec<Connection>,
-    },
-    Pattern {
-        #[visitable(ignore)]
-        kind: ConnectionPatternKind,
-        source: QualIdent,
-        targets: Vec<QualIdent>,
-    },
+#[ast]
+#[derive(AstAnnotated, Clone, VisitorWalkable)]
+pub struct SpecDirectConnectionGraph {
+    pub name: Name,
+    pub connections: Vec<Connection>,
 }
 
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
-pub struct SpecConnectionGraph {
-    pub kind: SpecConnectionGraphKind,
+pub struct SpecPatternConnectionGraph {
+    #[visitable(ignore)]
+    pub kind: ConnectionPatternKind,
+    pub source: QualIdent,
+    pub targets: Vec<QualIdent>,
 }
 
 #[ast]

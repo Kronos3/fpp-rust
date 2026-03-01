@@ -23,6 +23,13 @@
                 fieldName="INSTANCE"
                 extensions="fppi"/>
 
+        <!-- Color Settings -->
+
+<!--        <colorSettingsPage implementation="com.github.kronos3.fpp_rust.FppColorSettingsPage"/>-->
+
+        <additionalTextAttributes scheme="Default" file="colors/FppDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colors/FppDarcula.xml"/>
+
         <textmate.bundleProvider implementation="com.github.kronos3.fpp_rust.FppTextMateBundleProvider" />
         <!-- The following two ("editorHighlighterProvider" and "lang.syntaxHighlighterFactory") are required
             because defining a custom file type breaks the association of a TextMate grammar with a file extension.

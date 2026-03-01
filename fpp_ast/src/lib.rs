@@ -435,6 +435,5 @@ pub struct SpecInclude {
 #[ast]
 #[derive(AstAnnotated, Clone, VisitorWalkable)]
 pub struct SpecInterfaceImport {
-    #[visitable(ignore)]
     pub interface: QualIdent,
 }

@@ -159,7 +159,8 @@ pub trait Visitor<'ast>: Sized {
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),
-        (SpecConnectionGraph, visit_spec_connection_graph),
+        (SpecDirectConnectionGraph, visit_spec_direct_connection_graph),
+        (SpecPatternConnectionGraph, visit_spec_pattern_connection_graph),
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),
@@ -256,7 +257,8 @@ pub trait MutVisitor: Sized {
         (DefTopology, visit_def_topology),
         /* Specifiers */
         (SpecCommand, visit_spec_command),
-        (SpecConnectionGraph, visit_spec_connection_graph),
+        (SpecDirectConnectionGraph, visit_spec_direct_connection_graph),
+        (SpecPatternConnectionGraph, visit_spec_pattern_connection_graph),
         (SpecContainer, visit_spec_container),
         (SpecEvent, visit_spec_event),
         (SpecGeneralPortInstance, visit_spec_general_port_instance),

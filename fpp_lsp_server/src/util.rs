@@ -227,9 +227,9 @@ pub fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) 
         .clone()
         .into_iter()
         .chain(vec![
-            "```typescript".to_string(),
+            "".to_string(),
             symbol_kind_line,
-            "```".to_string(),
+            "".to_string(),
         ])
         .chain(node_data.post_annotation.clone().into_iter())
         .collect();
@@ -237,7 +237,7 @@ pub fn hover_for_symbol(state: &GlobalState, hover_node: Node, symbol: &Symbol) 
     Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: markdown_lines.join("\n"),
+            value: markdown_lines.join("\n").trim().to_string(),
         }),
         range: Some(node_to_range(state, hover_node.id())),
     }
@@ -264,7 +264,8 @@ pub fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) ->
         Node::DefSignal(_) => "Signal",
         Node::DefState(_) => "State",
         Node::SpecCommand(_) => "Command",
-        Node::SpecConnectionGraph(_) => "Connection Graph",
+        Node::SpecDirectConnectionGraph(_) => "Direct Connection Graph",
+        Node::SpecPatternConnectionGraph(_) => "Pattern Connection Graph",
         Node::SpecContainer(_) => "Container",
         Node::SpecEvent(_) => "Event",
         Node::SpecGeneralPortInstance(_) => "Port Instance",
@@ -316,9 +317,9 @@ pub fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) ->
         .clone()
         .into_iter()
         .chain(vec![
-            "```typescript".to_string(),
+            "".to_string(),
             symbol_kind_line,
-            "```".to_string(),
+            "".to_string(),
         ])
         .chain(node_data.post_annotation.clone().into_iter())
         .collect();
@@ -326,7 +327,7 @@ pub fn hover_for_node(state: &GlobalState, hover_node: &Name, def_node: Node) ->
     Some(Hover {
         contents: HoverContents::Markup(MarkupContent {
             kind: MarkupKind::Markdown,
-            value: markdown_lines.join("\n"),
+            value: markdown_lines.join("\n").trim().to_string(),
         }),
         range: Some(node_to_range(state, hover_node.id())),
     })

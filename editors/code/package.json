@@ -97,14 +97,6 @@
                 "path": "./syntax/fpp.tmLanguage.json"
             }
         ],
-        "views": {
-            "explorer": [
-                {
-                    "id": "fpp.components",
-                    "name": "FPP Components"
-                }
-            ]
-        },
         "menus": {
             "commandPalette": [
                 {
@@ -177,7 +169,268 @@
                     "default": true
                 }
             }
-        }
+        },
+        "semanticTokenTypes": [
+            {
+                "id": "module",
+                "superType": "namespace"
+            },
+            {
+                "id": "topology",
+                "superType": "variable"
+            },
+            {
+                "id": "component",
+                "superType": "class"
+            },
+            {
+                "id": "interface",
+                "superType": "interface"
+            },
+            {
+                "id": "componentInstance",
+                "superType": "variable"
+            },
+            {
+                "id": "constant",
+                "superType": "variable"
+            },
+            {
+                "id": "enumConstant",
+                "superType": "enumMember"
+            },
+            {
+                "id": "structMember",
+                "superType": "variable"
+            },
+            {
+                "id": "graphGroup",
+                "superType": "namespace"
+            },
+            {
+                "id": "portInstance",
+                "superType": "function"
+            },
+            {
+                "id": "port",
+                "superType": "class"
+            },
+            {
+                "id": "abstractType",
+                "superType": "type"
+            },
+            {
+                "id": "aliasType",
+                "superType": "type"
+            },
+            {
+                "id": "arrayType",
+                "superType": "type"
+            },
+            {
+                "id": "enumType",
+                "superType": "type"
+            },
+            {
+                "id": "structType",
+                "superType": "type"
+            },
+            {
+                "id": "primitiveType",
+                "superType": "keyword"
+            },
+            {
+                "id": "formalParameter",
+                "superType": "parameter"
+            },
+            {
+                "id": "command",
+                "superType": "function"
+            },
+            {
+                "id": "event",
+                "superType": "function"
+            },
+            {
+                "id": "telemetry",
+                "superType": "function"
+            },
+            {
+                "id": "parameter",
+                "superType": "function"
+            },
+            {
+                "id": "dataProduct",
+                "superType": "function"
+            },
+            {
+                "id": "stateMachine",
+                "superType": "class"
+            },
+            {
+                "id": "stateMachineInstance",
+                "superType": "variable"
+            },
+            {
+                "id": "telemetryPacketSet",
+                "superType": "class"
+            },
+            {
+                "id": "telemetryPacket",
+                "superType": "class"
+            },
+            {
+                "id": "action",
+                "superType": "function"
+            },
+            {
+                "id": "guard",
+                "superType": "variable"
+            },
+            {
+                "id": "signal",
+                "superType": "event"
+            },
+            {
+                "id": "state",
+                "superType": "varialbe"
+            },
+            {
+                "id": "annotation",
+                "superType": "comment"
+            },
+            {
+                "id": "comment",
+                "superType": "comment"
+            },
+            {
+                "id": "number",
+                "superType": "number"
+            },
+            {
+                "id": "string",
+                "superType": "string"
+            },
+            {
+                "id": "keyword",
+                "superType": "keyword"
+            }
+        ],
+        "semanticTokenScopes": [
+            {
+                "language": "fpp",
+                "scopes": {
+                    "module": [
+                        "entity.name.namespace"
+                    ],
+                    "topology": [
+                        "entity.name.variable"
+                    ],
+                    "component": [
+                        "entity.name.type.class"
+                    ],
+                    "interface": [
+                        "entity.name.type.class"
+                    ],
+                    "componentInstance": [
+                        "entity.name.variable"
+                    ],
+                    "constant": [
+                        "entity.name.variable"
+                    ],
+                    "enumConstant": [
+                        "variable.other.enummember"
+                    ],
+                    "structMember": [
+                        "entity.name.variable"
+                    ],
+                    "graphGroup": [
+                        "entity.name.type.class"
+                    ],
+                    "portInstance": [
+                        "entity.name.function"
+                    ],
+                    "port": [
+                        "entity.name.type.class"
+                    ],
+                    "abstractType": [
+                        "entity.name.type.class"
+                    ],
+                    "aliasType": [
+                        "entity.name.type"
+                    ],
+                    "arrayType": [
+                        "entity.name.type.class"
+                    ],
+                    "enumType": [
+                        "entity.name.type.class"
+                    ],
+                    "structType": [
+                        "entity.name.type.class"
+                    ],
+                    "primitiveType": [
+                        "entity.name.type"
+                    ],
+                    "formalParameter": [
+                        "entity.name.variable"
+                    ],
+                    "command": [
+                        "entity.name.function"
+                    ],
+                    "event": [
+                        "entity.name.function"
+                    ],
+                    "telemetry": [
+                        "entity.name.function"
+                    ],
+                    "parameter": [
+                        "entity.name.function"
+                    ],
+                    "dataProduct": [
+                        "entity.name.function"
+                    ],
+                    "stateMachine": [
+                        "entity.name.type.class"
+                    ],
+                    "stateMachineInstance": [
+                        "entity.name.variable"
+                    ],
+                    "telemetryPacketSet": [
+                        "entity.name.type.class"
+                    ],
+                    "telemetryPacket": [
+                        "entity.name.type.class"
+                    ],
+                    "action": [
+                        "entity.name.function"
+                    ],
+                    "guard": [
+                        "entity.name.variable"
+                    ],
+                    "signal": [
+                        "variable.other.event"
+                    ],
+                    "state": [
+                        "entity.name.variable"
+                    ],
+                    "annotation": [
+                        "comment.block.documentation"
+                    ],
+                    "comment": [
+                        "comment.line"
+                    ],
+                    "number": [
+                        "constant.numeric"
+                    ],
+                    "string": [
+                        "string.quoted.double"
+                    ],
+                    "keyword": [
+                        "keyword.other"
+                    ]
+                }
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "rm -rf dist && yarn package",

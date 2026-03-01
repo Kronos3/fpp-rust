@@ -544,15 +544,15 @@ impl<'a> Parser<'a> {
                 Keyword(Packets) => Ok(TopologyMember::SpecTlmPacketSet(
                     self.spec_tlm_packet_set()?,
                 )),
-                _ => Ok(TopologyMember::SpecConnectionGraph(
+                _ => Ok(TopologyMember::SpecPatternConnectionGraph(
                     self.spec_connection_graph_pattern()?,
                 )),
             },
             Keyword(Command) | Keyword(Event) | Keyword(Health) | Keyword(Param)
-            | Keyword(Text) | Keyword(Time) => Ok(TopologyMember::SpecConnectionGraph(
+            | Keyword(Text) | Keyword(Time) => Ok(TopologyMember::SpecPatternConnectionGraph(
                 self.spec_connection_graph_pattern()?,
             )),
-            Keyword(Connections) => Ok(TopologyMember::SpecConnectionGraph(
+            Keyword(Connections) => Ok(TopologyMember::SpecDirectConnectionGraph(
                 self.spec_connection_graph_direct()?,
             )),
             _ => Err(self.cursor.err_expected_one_of(
@@ -573,7 +573,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn spec_connection_graph_pattern(&mut self) -> ParseResult<SpecConnectionGraph> {
+    fn spec_connection_graph_pattern(&mut self) -> ParseResult<SpecPatternConnectionGraph> {
         let first_span = self.current_span()?;
 
         let kind = match self.peek(0) {
@@ -636,26 +636,25 @@ impl<'a> Parser<'a> {
             _ => vec![],
         };
 
-        Ok(SpecConnectionGraph {
+        Ok(SpecPatternConnectionGraph {
             node_id: self.node(first_span),
-            kind: SpecConnectionGraphKind::Pattern {
-                kind,
-                source,
-                targets,
-            },
+            kind,
+            source,
+            targets,
         })
     }
 
-    fn spec_connection_graph_direct(&mut self) -> ParseResult<SpecConnectionGraph> {
+    fn spec_connection_graph_direct(&mut self) -> ParseResult<SpecDirectConnectionGraph> {
         let first = self.consume_keyword(Connections)?;
         let name = self.name()?;
         self.consume(LeftCurly)?;
         let connections = self.element_sequence(&Parser::connection, Comma, RightCurly);
         self.consume(RightCurly)?;
 
-        Ok(SpecConnectionGraph {
+        Ok(SpecDirectConnectionGraph {
             node_id: self.node(first.span()),
-            kind: SpecConnectionGraphKind::Direct { name, connections },
+            name,
+            connections,
         })
     }
 

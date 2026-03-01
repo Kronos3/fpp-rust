@@ -32,7 +32,8 @@ pub enum Node<'a> {
     DefTopology(&'a DefTopology),
     /* Specifiers */
     SpecCommand(&'a SpecCommand),
-    SpecConnectionGraph(&'a SpecConnectionGraph),
+    SpecDirectConnectionGraph(&'a SpecDirectConnectionGraph),
+    SpecPatternConnectionGraph(&'a SpecPatternConnectionGraph),
     SpecContainer(&'a SpecContainer),
     SpecEvent(&'a SpecEvent),
     SpecGeneralPortInstance(&'a SpecGeneralPortInstance),

@@ -170,15 +170,12 @@ impl<'ast, S: NestedScopeState, V: UseAnalysisPass<'ast, S>> Analyzer<'ast, V>
                 visitor.state_machine_use(a, &si.state_machine, (&si.state_machine).into())?;
                 si.walk(a, visitor)
             }
-            Node::SpecConnectionGraph(cg) => {
-                match &cg.kind {
-                    SpecConnectionGraphKind::Pattern { targets, .. } => {
-                        for target in targets {
-                            visitor.interface_instance_use(a, &target, target.into())?;
-                        }
-                    }
-                    _ => (),
+            Node::SpecPatternConnectionGraph(cg) => {
+                for target in &cg.targets {
+                    visitor.interface_instance_use(a, &target, target.into())?;
                 }
+
+                visitor.interface_instance_use(a, &cg.source, (&cg.source).into())?;
 
                 self.super_.visit(visitor, a, node)
             }

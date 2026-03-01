@@ -17,7 +17,6 @@ use url::Url;
 #[derive(Debug)]
 pub enum Task {
     Response(lsp_server::Response),
-    // Notification(lsp_server::Notification),
     // Retry(lsp_server::Request),
     ReloadWorkspace,
     LoadLocsFile(Uri),
@@ -43,9 +42,6 @@ impl Display for Task {
                     r.id, err
                 )),
             },
-            // Task::Notification(n) => {
-            //     f.write_fmt(format_args!("Notification {{ method = {} }}", n.method))
-            // }
             Task::ReloadWorkspace => f.write_str("ReloadWorkspace"),
             Task::LoadLocsFile(uri) => {
                 f.write_fmt(format_args!("LoadLocsFile {{ uri = {} }}", uri.as_str()))
@@ -204,10 +200,10 @@ impl GlobalState {
                 });
 
                 let _ = mem::replace(&mut self.context, ctx);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
 
                 tracing::info!("finished reparsing workspace");
                 self.task(Task::Analysis);
+                self.send_request::<lsp_types::request::SemanticTokensRefresh>((),  |_, _| {});
             }
             Task::LoadFullWorkspace(workspace_uri) => {
                 tracing::info!("scanning workspace for FPP files");
@@ -279,16 +275,13 @@ impl GlobalState {
                 });
 
                 let _ = mem::replace(&mut self.context, ctx);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
 
                 tracing::info!("finished reparsing workspace");
                 self.cache = cache;
                 self.task(Task::Analysis);
+                self.send_request::<lsp_types::request::SemanticTokensRefresh>((),  |_, _| {});
             }
             Task::Response(response) => self.respond(response),
-            // Task::Notification(notification) => {
-            //     self.send(lsp_server::Message::Notification(notification))
-            // }
             Task::Update(uri) => {
                 tracing::info!("updating file");
 
@@ -400,7 +393,7 @@ impl GlobalState {
 
                 self.analysis_diagnostics = self.diagnostics.finish_garbage_collection();
                 self.files = files;
-                self.analysis = Arc::new(analysis)
+                self.analysis = Arc::new(analysis);
             }
         }
     }

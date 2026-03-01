@@ -211,7 +211,10 @@ impl Builder<'_, '_> {
             TriviaRegion::Replace(n, t_kind) => {
                 assert_eq!(kind, t_kind);
                 assert_eq!(n_tokens, 1);
-                self.do_token(kind, n);
+                for _ in 0..n {
+                    let kind = self.lexed.kind(self.pos);
+                    self.do_token(kind, 1);
+                }
             }
             TriviaRegion::RemoveAfter(n, t_kind) => {
                 assert_eq!(kind, t_kind);

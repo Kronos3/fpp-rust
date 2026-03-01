@@ -117,13 +117,14 @@ impl GlobalState {
         self.send(request.into());
     }
 
-    // pub(crate) fn send_notification<N: lsp_types::notification::Notification>(
-    //     &self,
-    //     params: N::Params,
-    // ) {
-    //     let not = lsp_server::Notification::new(N::METHOD.to_owned(), params);
-    //     self.send(not.into());
-    // }
+    #[allow(dead_code)]
+    pub(crate) fn send_notification<N: lsp_types::notification::Notification>(
+        &self,
+        params: N::Params,
+    ) {
+        let not = lsp_server::Notification::new(N::METHOD.to_owned(), params);
+        self.send(not.into());
+    }
 
     pub(crate) fn respond(&mut self, response: lsp_server::Response) {
         if let Some((method, start)) = self.req_queue.incoming.complete(&response.id) {

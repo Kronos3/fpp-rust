@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,6 +14,8 @@ import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.customization.LspCustomization
+import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.GlobalScope
@@ -58,13 +61,6 @@ internal class FppLspServerSupportProvider : LspServerSupportProvider {
 
     override fun createLspServerWidgetItem(lspServer: LspServer, currentFile: VirtualFile?): LspServerWidgetItem =
         FppLspProjectWidgetItem(lspServer, currentFile)
-
-    fun loadProject(project: Project) {
-        val fppProject = FppSettings.getInstance(project).state.project
-        if (fppProject != null) {
-
-        }
-    }
 }
 
 private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDescriptor(project, "fpp") {
@@ -81,6 +77,57 @@ private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDes
     }
 
     override val lsp4jServerClass = FppLsp4jServer::class.java
+
+    override val lspCustomization: LspCustomization
+        get() = object : LspCustomization() {
+            override val semanticTokensCustomizer = object : LspSemanticTokensSupport() {
+                override fun getTextAttributesKey(tokenType: String, modifiers: List<String>): TextAttributesKey? {
+                    return when (tokenType) {
+                        SemanticTokenTypes.Module -> FppColors.MODULE
+                        SemanticTokenTypes.Topology -> FppColors.TOPOLOGY
+                        SemanticTokenTypes.Component -> FppColors.COMPONENT
+                        SemanticTokenTypes.Interface -> FppColors.INTERFACE
+                        SemanticTokenTypes.ComponentInstance -> FppColors.COMPONENT_INSTANCE
+                        SemanticTokenTypes.Constant -> FppColors.CONSTANT
+                        SemanticTokenTypes.EnumConstant -> FppColors.ENUM_CONSTANT
+                        SemanticTokenTypes.StructMember -> FppColors.STRUCT_MEMBER
+                        SemanticTokenTypes.GraphGroup -> FppColors.GRAPH_GROUP
+                        SemanticTokenTypes.PortInstance -> FppColors.PORT_INSTANCE
+                        SemanticTokenTypes.Port -> FppColors.PORT
+                        SemanticTokenTypes.AbstractType -> FppColors.ABSTRACT_TYPE
+                        SemanticTokenTypes.AliasType -> FppColors.ALIAS_TYPE
+                        SemanticTokenTypes.ArrayType -> FppColors.ARRAY_TYPE
+                        SemanticTokenTypes.EnumType -> FppColors.ENUM_TYPE
+                        SemanticTokenTypes.StructType -> FppColors.STRUCT_TYPE
+                        SemanticTokenTypes.PrimitiveType -> FppColors.PRIMITIVE_TYPE
+                        SemanticTokenTypes.FormalParameter -> FppColors.FORMAL_PARAMETER
+                        SemanticTokenTypes.Command -> FppColors.COMMAND
+                        SemanticTokenTypes.Event -> FppColors.EVENT
+                        SemanticTokenTypes.Telemetry -> FppColors.TELEMETRY
+                        SemanticTokenTypes.Parameter -> FppColors.PARAMETER
+                        SemanticTokenTypes.DataProduct -> FppColors.DATA_PRODUCT
+
+                        SemanticTokenTypes.StateMachine -> FppColors.STATEMACHINE
+                        SemanticTokenTypes.StateMachineInstance -> FppColors.STATE_MACHINE_INSTANCE
+                        SemanticTokenTypes.TelemetryPacketSet -> FppColors.TELEMETRY_PACKET_SET
+                        SemanticTokenTypes.TelemetryPacket -> FppColors.TELEMETRY_PACKET
+
+                        SemanticTokenTypes.Action -> FppColors.ACTION
+                        SemanticTokenTypes.Guard -> FppColors.GUARD
+                        SemanticTokenTypes.Signal -> FppColors.SIGNAL
+                        SemanticTokenTypes.State -> FppColors.STATE
+
+                        // Other
+                        SemanticTokenTypes.Annotation -> FppColors.ANNOTATION
+                        SemanticTokenTypes.Comment -> FppColors.COMMENT
+                        SemanticTokenTypes.Number -> FppColors.NUMBER
+                        SemanticTokenTypes.String -> FppColors.STRING
+                        SemanticTokenTypes.Keyword -> FppColors.KEYWORD
+                        else -> null
+                    }?.textAttributesKey
+                }
+            }
+        }
 }
 
 data class UriRequest(val uri: String)
@@ -98,12 +145,6 @@ interface FppLsp4jServer : LanguageServer {
 
 fun loadAllFiles(project: Project, lspServer: LspServer) {
     ApplicationManager.getApplication().invokeLater({
-        println("loading all FPP files")
-        println(project)
-        println(project.projectFilePath)
-        println(project.workspaceFile)
-        println(project.basePath)
-
         GlobalScope.launch {
             lspServer.sendRequest { (it as FppLsp4jServer).setFilesWorkspace(UriRequest("file://${project.basePath}")) }
         }
@@ -112,7 +153,7 @@ fun loadAllFiles(project: Project, lspServer: LspServer) {
 
 fun reloadProject(project: Project) {
     ApplicationManager.getApplication().invokeLater({
-        LspServerManager.getInstance(project).getServersForProvider(FppLspServerSupportProvider::class.java).map {
+        LspServerManager.getInstance(project).getServersForProvider(FppLspServerSupportProvider::class.java).forEach {
             val fppProject = FppSettings.getInstance(project).state.project
             if (fppProject != null) {
                 when (fppProject) {

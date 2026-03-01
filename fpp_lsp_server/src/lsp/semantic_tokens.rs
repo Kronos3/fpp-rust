@@ -6,15 +6,15 @@ use crate::global_state::GlobalState;
 use fpp_analysis::semantics::Symbol;
 use fpp_analysis::Analysis;
 use fpp_ast::{
-    Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier,
-    TlmChannelIdentifier, Visitor, Walkable,
+    Expr, ExprKind, Ident, MoveWalkable, Node, PortInstanceIdentifier, TlmChannelIdentifier,
+    Visitor, Walkable,
 };
 use fpp_core::{LineCol, LineIndex, SourceFile, SourceFileData};
 use fpp_lsp_parser::{SyntaxKind, SyntaxNode, SyntaxToken, TextRange, VisitorResult};
 use lsp_types::{SemanticToken, SemanticTokenModifier, SemanticTokenType, SemanticTokens};
 
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(u32)]
 pub enum SemanticTokenKind {
     Module,
     Topology,
@@ -27,7 +27,12 @@ pub enum SemanticTokenKind {
     GraphGroup,
     PortInstance,
     Port,
-    Type,
+    AbstractType,
+    AliasType,
+    ArrayType,
+    EnumType,
+    StructType,
+    PrimitiveType,
     FormalParameter,
     Command,
     Event,
@@ -45,112 +50,59 @@ pub enum SemanticTokenKind {
     Signal,
     State,
 
-    // Other
     Annotation,
     Comment,
     Number,
+    #[allow(dead_code)]
     String,
+    #[allow(dead_code)]
     Keyword,
-}
-
-#[allow(dead_code)]
-#[repr(u32)]
-enum SemanticTokenKindRaw {
-    Namespace,
-    Type,
-    Class,
-    Interface,
-    Struct,
-    Parameter,
-    Variable,
-    EnumMember,
-    Event,
-    Function,
-    Modifier,
-    Keyword,
-    Comment,
-    String,
-    Number,
-}
-
-#[repr(u32)]
-enum SemanticTokenModifierRaw {
-    None = 0x0,
-    Readonly = 1 << 1,
-    Documentation = 1 << 2,
 }
 
 impl SemanticTokenKind {
-    pub const TOKEN_TYPES: [SemanticTokenType; 15] = [
-        SemanticTokenType::NAMESPACE,
-        SemanticTokenType::TYPE,
-        SemanticTokenType::CLASS,
-        SemanticTokenType::INTERFACE,
-        SemanticTokenType::STRUCT,
-        SemanticTokenType::PARAMETER,
-        SemanticTokenType::VARIABLE,
-        SemanticTokenType::ENUM_MEMBER,
-        SemanticTokenType::EVENT,
-        SemanticTokenType::FUNCTION,
-        SemanticTokenType::MODIFIER,
-        SemanticTokenType::KEYWORD,
-        SemanticTokenType::COMMENT,
-        SemanticTokenType::STRING,
-        SemanticTokenType::NUMBER,
+    pub const TOKEN_TYPES: [SemanticTokenType; 36] = [
+        SemanticTokenType::new("module"),
+        SemanticTokenType::new("topology"),
+        SemanticTokenType::new("component"),
+        SemanticTokenType::new("interface"),
+        SemanticTokenType::new("componentInstance"),
+        SemanticTokenType::new("constant"),
+        SemanticTokenType::new("enumConstant"),
+        SemanticTokenType::new("structMember"),
+        SemanticTokenType::new("graphGroup"),
+        SemanticTokenType::new("portInstance"),
+        SemanticTokenType::new("port"),
+        SemanticTokenType::new("abstractType"),
+        SemanticTokenType::new("aliasType"),
+        SemanticTokenType::new("arrayType"),
+        SemanticTokenType::new("enumType"),
+        SemanticTokenType::new("structType"),
+        SemanticTokenType::new("primitiveType"),
+        SemanticTokenType::new("formalParameter"),
+        SemanticTokenType::new("command"),
+        SemanticTokenType::new("event"),
+        SemanticTokenType::new("telemetry"),
+        SemanticTokenType::new("parameter"),
+        SemanticTokenType::new("dataProduct"),
+        SemanticTokenType::new("stateMachine"),
+        SemanticTokenType::new("stateMachineInstance"),
+        SemanticTokenType::new("telemetryPacketSet"),
+        SemanticTokenType::new("telemetryPacket"),
+        SemanticTokenType::new("action"),
+        SemanticTokenType::new("guard"),
+        SemanticTokenType::new("signal"),
+        SemanticTokenType::new("state"),
+        SemanticTokenType::new("annotation"),
+        SemanticTokenType::new("comment"),
+        SemanticTokenType::new("number"),
+        SemanticTokenType::new("string"),
+        SemanticTokenType::new("keyword"),
     ];
 
-    pub const TOKEN_MODIFIERS: [SemanticTokenModifier; 2] = [
-        SemanticTokenModifier::READONLY,
-        SemanticTokenModifier::DOCUMENTATION,
-    ];
-
-    fn token_type(self) -> SemanticTokenKindRaw {
-        match self {
-            SemanticTokenKind::Module => SemanticTokenKindRaw::Namespace,
-            SemanticTokenKind::Topology => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::Component => SemanticTokenKindRaw::Class,
-            SemanticTokenKind::Interface => SemanticTokenKindRaw::Interface,
-            SemanticTokenKind::ComponentInstance => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::Constant => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::EnumConstant => SemanticTokenKindRaw::EnumMember,
-            SemanticTokenKind::StructMember => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::GraphGroup => SemanticTokenKindRaw::Namespace,
-            SemanticTokenKind::Port => SemanticTokenKindRaw::Class,
-            SemanticTokenKind::PortInstance => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::Type => SemanticTokenKindRaw::Type,
-            SemanticTokenKind::FormalParameter => SemanticTokenKindRaw::Parameter,
-            SemanticTokenKind::StateMachine => SemanticTokenKindRaw::Type,
-            SemanticTokenKind::StateMachineInstance => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::Action => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::Guard => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::Signal => SemanticTokenKindRaw::Event,
-            SemanticTokenKind::State => SemanticTokenKindRaw::Variable,
-            SemanticTokenKind::Annotation => SemanticTokenKindRaw::Comment,
-            SemanticTokenKind::Comment => SemanticTokenKindRaw::Comment,
-            SemanticTokenKind::Number => SemanticTokenKindRaw::Number,
-            SemanticTokenKind::String => SemanticTokenKindRaw::String,
-            SemanticTokenKind::Keyword => SemanticTokenKindRaw::Keyword,
-            SemanticTokenKind::Command => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::Event => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::Telemetry => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::Parameter => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::DataProduct => SemanticTokenKindRaw::Function,
-            SemanticTokenKind::TelemetryPacketSet => SemanticTokenKindRaw::Class,
-            SemanticTokenKind::TelemetryPacket => SemanticTokenKindRaw::Class,
-        }
-    }
-
-    fn token_modifiers(self) -> u32 {
-        match self {
-            SemanticTokenKind::Constant => SemanticTokenModifierRaw::Readonly as u32,
-            SemanticTokenKind::EnumConstant => SemanticTokenModifierRaw::Readonly as u32,
-            SemanticTokenKind::Annotation => SemanticTokenModifierRaw::Documentation as u32,
-            _ => SemanticTokenModifierRaw::None as u32,
-        }
-    }
+    pub const TOKEN_MODIFIERS: [SemanticTokenModifier; 0] = [];
 
     pub fn type_and_modifier(self) -> (u32, u32) {
-        (self.token_type() as u32, self.token_modifiers())
+        (self as u32, 0)
     }
 }
 
@@ -227,12 +179,14 @@ impl SemanticTokensState {
                 // Same line, offset the start position
 
                 assert!(
-                    start.col > last.col,
-                    "semantic tokens overlap: {}:{} | {}:{} ({:?})",
+                    start.col > last.col || tokens.data.is_empty(),
+                    "semantic tokens overlap: {}:{} (last) | {}:{}..{}:{} ({:?})",
                     last.line,
                     last.col,
                     start.line,
                     start.col,
+                    end.line,
+                    end.col,
                     kind
                 );
 
@@ -282,11 +236,11 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
             SyntaxKind::NAME => {
                 if let Some(parent_node_kind) = node.parent().map(|f| f.kind()) {
                     let name_kind = match parent_node_kind {
-                        SyntaxKind::DEF_ABSTRACT_TYPE
-                        | SyntaxKind::DEF_ALIAS_TYPE
-                        | SyntaxKind::DEF_ARRAY
-                        | SyntaxKind::DEF_ENUM
-                        | SyntaxKind::DEF_STRUCT => SemanticTokenKind::Type,
+                        SyntaxKind::DEF_ABSTRACT_TYPE => SemanticTokenKind::AbstractType,
+                        SyntaxKind::DEF_ALIAS_TYPE => SemanticTokenKind::AliasType,
+                        SyntaxKind::DEF_ARRAY => SemanticTokenKind::ArrayType,
+                        SyntaxKind::DEF_ENUM => SemanticTokenKind::EnumType,
+                        SyntaxKind::DEF_STRUCT => SemanticTokenKind::StructType,
                         SyntaxKind::FORMAL_PARAM => SemanticTokenKind::FormalParameter,
                         SyntaxKind::DEF_COMPONENT => SemanticTokenKind::Component,
                         SyntaxKind::DEF_COMPONENT_INSTANCE => SemanticTokenKind::ComponentInstance,
@@ -302,6 +256,8 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
                         SyntaxKind::SPEC_COMMAND => SemanticTokenKind::Command,
                         SyntaxKind::SPEC_EVENT => SemanticTokenKind::Event,
                         SyntaxKind::SPEC_PARAM => SemanticTokenKind::Parameter,
+                        SyntaxKind::SPEC_RECORD => SemanticTokenKind::DataProduct,
+                        SyntaxKind::SPEC_CONTAINER => SemanticTokenKind::DataProduct,
                         SyntaxKind::SPEC_TELEMETRY => SemanticTokenKind::Telemetry,
                         SyntaxKind::DEF_MODULE => SemanticTokenKind::Module,
                         SyntaxKind::DEF_PORT => SemanticTokenKind::Port,
@@ -332,7 +288,7 @@ impl fpp_lsp_parser::Visitor for SemanticTokenVisitor {
 
     fn visit_token(&self, state: &mut Self::State, token: &SyntaxToken) {
         let kind = match token.kind() {
-            pk if pk.is_type_primitive_keyword() => SemanticTokenKind::Type,
+            pk if pk.is_type_primitive_keyword() => SemanticTokenKind::PrimitiveType,
             SyntaxKind::POST_ANNOTATION | SyntaxKind::PRE_ANNOTATION => {
                 SemanticTokenKind::Annotation
             }
@@ -385,19 +341,19 @@ impl<'ast> SemanticUses<'ast> {
     ) {
         if let Some(symbol) = a.analysis.use_def_map.get(&use_node) {
             let semantic_kind = match symbol {
-                Symbol::AbsType(_) => SemanticTokenKind::Type,
-                Symbol::AliasType(_) => SemanticTokenKind::Type,
-                Symbol::Array(_) => SemanticTokenKind::Type,
+                Symbol::AbsType(_) => SemanticTokenKind::AbstractType,
+                Symbol::AliasType(_) => SemanticTokenKind::AliasType,
+                Symbol::Array(_) => SemanticTokenKind::ArrayType,
                 Symbol::Component(_) => SemanticTokenKind::Component,
                 Symbol::ComponentInstance(_) => SemanticTokenKind::ComponentInstance,
                 Symbol::Constant(_) => SemanticTokenKind::Constant,
-                Symbol::Enum(_) => SemanticTokenKind::Type,
+                Symbol::Enum(_) => SemanticTokenKind::EnumType,
                 Symbol::EnumConstant(_) => SemanticTokenKind::EnumConstant,
                 Symbol::Interface(_) => SemanticTokenKind::Interface,
                 Symbol::Module(_) => SemanticTokenKind::Module,
                 Symbol::Port(_) => SemanticTokenKind::Port,
                 Symbol::StateMachine(_) => SemanticTokenKind::StateMachine,
-                Symbol::Struct(_) => SemanticTokenKind::Type,
+                Symbol::Struct(_) => SemanticTokenKind::StructType,
                 Symbol::Topology(_) => SemanticTokenKind::Topology,
             };
 
