@@ -28,7 +28,7 @@ class FppDefaultSettingsState : PersistentStateComponent<FppSettings.State> {
     }
 
     fun save(state: FppSettings.State) {
-        internalState = state.copy()
+        internalState = state
         val propertiesComponent = PropertiesComponent.getInstance()
         propertiesComponent.setValue(DEFAULT_SETTINGS_SET_KEY, true)
     }

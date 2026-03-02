@@ -4,7 +4,7 @@ import com.github.kronos3.fpp_rust.settings.FppProject
 import com.github.kronos3.fpp_rust.settings.FppSettings
 import com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable
 import com.github.kronos3.fpp_rust.util.LspCli
-import com.intellij.execution.ExecutionException
+import com.intellij.notification.NotificationType
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
 import com.intellij.platform.lsp.api.customization.LspCustomization
@@ -166,11 +167,5 @@ fun reloadProject(project: Project) {
 
             }
         }
-    }, project.disposed)
-}
-
-fun restartFppServerAsync(project: Project) {
-    ApplicationManager.getApplication().invokeLater({
-        LspServerManager.getInstance(project).stopAndRestartIfNeeded(FppLspServerSupportProvider::class.java)
     }, project.disposed)
 }

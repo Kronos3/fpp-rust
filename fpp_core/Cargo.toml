@@ -1,7 +1,9 @@
 [package]
 name = "fpp_core"
-version = "0.1.0"
-edition = "2024"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [dependencies]
 scoped-tls = "1.0"

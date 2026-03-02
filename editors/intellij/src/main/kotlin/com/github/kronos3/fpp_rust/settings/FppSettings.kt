@@ -1,7 +1,5 @@
 package com.github.kronos3.fpp_rust.settings
 
-import com.github.kronos3.fpp_rust.reloadProject
-import com.github.kronos3.fpp_rust.restartFppServerAsync
 import com.github.kronos3.fpp_rust.util.Version
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -20,13 +18,13 @@ sealed class FppProject {
 }
 
 @Service(Service.Level.PROJECT)
-@State(name = "FppServiceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "FppSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.State> {
-    data class State(
-        val lspVersion: String? = null,
-        val lspConfigurationType: LspConfigurationType = LspConfigurationType.Auto,
-        val lspPath: String = "",
-        val project: FppProject? = null
+    class State(
+        var lspVersion: String? = null,
+        var lspConfigurationType: LspConfigurationType = LspConfigurationType.Auto,
+        var lspPath: String = "",
+        var project: FppProject? = null
     )
 
     private var internalState: State = State()
@@ -34,35 +32,24 @@ class FppSettings(val project: Project) : PersistentStateComponent<FppSettings.S
     var lspPath: String
         get() = internalState.lspPath
         set(value) {
-            internalState = internalState.copy(
-                lspPath = value
-            )
+            internalState.lspPath = value
         }
 
     var lspVersion: Version?
         get() = internalState.lspVersion?.let { Version.parse(it) }
         set(value) {
-            internalState = internalState.copy(
-                lspVersion = value?.let { value.toString() }
-            )
+            internalState.lspVersion = value?.toString()
         }
 
     var lspConfigurationType: LspConfigurationType
         get() = internalState.lspConfigurationType
         set(value) {
-            internalState = internalState.copy(
-                lspConfigurationType = value
-            )
+            internalState.lspConfigurationType = value
         }
 
     override fun getState() = internalState
     override fun loadState(state: State) {
-        val lspBinaryPathModified = state.lspPath != internalState.lspPath
-        val projectModified = state.project != internalState.project
         internalState = state
-
-        if (lspBinaryPathModified) restartFppServerAsync(project)
-        if (projectModified) reloadProject(project)
     }
 
     companion object {

@@ -17,6 +17,7 @@ use crate::{global_state::GlobalState, util::from_json};
 use lsp_server::Connection;
 use std::error::Error;
 
+use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 fn setup_stderr_logging() -> anyhow::Result<()> {
@@ -38,7 +39,13 @@ fn setup_stderr_logging() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Parser, Debug)]
+#[command(version)]
+struct Args {}
+
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
+    let _ = Args::parse();
+
     setup_stderr_logging()?;
 
     // transport

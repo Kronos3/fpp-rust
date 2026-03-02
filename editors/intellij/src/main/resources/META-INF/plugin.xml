@@ -59,4 +59,12 @@
                 id="settings.fpp"
                 displayName="FPP"/>
     </extensions>
+    <projectListeners>
+        <listener
+                class="com.github.kronos3.fpp_rust.FppLspManagerLspRestartListener"
+                topic="com.github.kronos3.fpp_rust.FppLspManager$LspManagerChangeListener"/>
+        <listener
+                class="com.github.kronos3.fpp_rust.FppSettingsLspRestartListener"
+                topic="com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable$SettingsChangeListener"/>
+    </projectListeners>
 </idea-plugin>

@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.messages.Topic
+import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import javax.swing.JComponent
 import kotlin.reflect.KProperty1
 
@@ -13,7 +14,7 @@ import kotlin.reflect.KProperty1
 /**
  * Provides controller functionality for application settings.
  */
-internal class FppSettingsConfigurable(private val project: Project) : Configurable {
+class FppSettingsConfigurable(private val project: Project) : Configurable {
     private var component: ProjectSettingsComponent? = null
     private val settings = FppSettings.getInstance(project)
 
@@ -45,7 +46,7 @@ internal class FppSettingsConfigurable(private val project: Project) : Configura
     }
 
     override fun apply() {
-        val oldState = settings.state.copy()
+        val oldState = settings.state.deepClonePolymorphic()
         component?.panel?.apply()
         val event = SettingsChangedEvent(
             oldState,
