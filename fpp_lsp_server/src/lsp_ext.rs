@@ -24,12 +24,12 @@ impl Request for SetLocsWorkspace {
     const METHOD: &'static str = "fpp/setLocsWorkspace";
 }
 
-pub enum SetFilesWorkspace {}
+pub enum SetFullWorkspace {}
 
-impl Request for SetFilesWorkspace {
-    type Params = UriRequest;
+impl Request for SetFullWorkspace {
+    type Params = ();
     type Result = ();
-    const METHOD: &'static str = "fpp/setFilesWorkspace";
+    const METHOD: &'static str = "fpp/setFullWorkspace";
 }
 
 pub enum DumpSyntaxTree {}

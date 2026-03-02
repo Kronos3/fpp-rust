@@ -41,15 +41,37 @@ fn setup_stderr_logging() -> anyhow::Result<()> {
 
 #[derive(Parser, Debug)]
 #[command(version, author)]
-struct Args {}
+struct Args {
+    /// Uses stdio as the communication channel
+    #[arg(long)]
+    stdio: bool,
+    /// Use pipes (Windows) or socket files (Linux, Mac) as the communication channel.
+    /// The pipe / socket file name is passed as the next arg or with --pipe=
+    #[arg(long)]
+    pipe: Option<String>,
+    /// Uses a socket as the communication channel
+    /// The port is passed as next arg or with --port=
+    #[arg(long)]
+    socket: Option<u16>,
+}
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
-    let _ = Args::parse();
+    let arg = Args::parse();
 
     setup_stderr_logging()?;
 
     // transport
-    let (connection, io_threads) = Connection::stdio();
+    let (connection, io_threads) = {
+        if arg.stdio {
+            Ok(Connection::stdio())
+        } else if let Some(socket) = arg.socket {
+            Connection::connect(("localhost", socket))
+        } else if let Some(pipe) = arg.pipe {
+            Connection::connect(pipe)
+        } else {
+            Ok(Connection::stdio())
+        }
+    }?;
 
     let (initialize_id, initialize_params) = match connection.initialize_start() {
         Ok(it) => it,
@@ -64,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     tracing::info!("InitializeParams: {}", initialize_params);
     let lsp_types::InitializeParams {
         capabilities,
-        // workspace_folders,
+        workspace_folders,
         // initialization_options,
         // client_info,
         ..
@@ -91,7 +113,7 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     }
 
     tracing::info!("server is starting up");
-    GlobalState::run(connection, client_capabilities);
+    GlobalState::run(workspace_folders, connection, client_capabilities);
     io_threads.join()?;
     tracing::info!("shutting down server");
 

@@ -5,7 +5,7 @@ use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_server::RequestId;
-use lsp_types::{SemanticTokens, Uri};
+use lsp_types::{SemanticTokens, Uri, WorkspaceFolder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
 use std::time::Instant;
@@ -27,7 +27,7 @@ pub enum Workspace {
     #[default]
     None,
     LocsFile(Uri),
-    FullWorkspace(Uri),
+    FullWorkspace,
 }
 
 pub struct TaskWithReply {
@@ -46,6 +46,7 @@ pub struct GlobalState {
 
     pub(crate) shutdown_requested: bool,
 
+    pub(crate) workspace_folders: Option<Vec<WorkspaceFolder>>,
     pub(crate) workspace: Workspace,
 
     pub(crate) diagnostics: LspDiagnosticsEmitter,
@@ -65,6 +66,7 @@ pub struct GlobalState {
 
 impl GlobalState {
     pub fn new(
+        workspace_folders: Option<Vec<WorkspaceFolder>>,
         sender: Sender<lsp_server::Message>,
         capabilities: lsp::capabilities::ClientCapabilities,
     ) -> GlobalState {
@@ -78,6 +80,7 @@ impl GlobalState {
             task_tx,
             vfs: vfs::Vfs::new(),
             shutdown_requested: false,
+            workspace_folders,
             workspace: Workspace::None,
             diagnostics: diagnostics.clone(),
             context: CompilerContext::new(diagnostics),
@@ -209,10 +212,11 @@ impl GlobalState {
     }
 
     pub fn run(
+        workspace_folders: Option<Vec<WorkspaceFolder>>,
         connection: lsp_server::Connection,
         capabilities: lsp::capabilities::ClientCapabilities,
     ) {
-        let mut state = GlobalState::new(connection.sender, capabilities);
+        let mut state = GlobalState::new(workspace_folders, connection.sender, capabilities);
         state.main_loop(connection.receiver);
     }
 }

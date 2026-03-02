@@ -20,7 +20,7 @@ pub enum Task {
     // Retry(lsp_server::Request),
     ReloadWorkspace,
     LoadLocsFile(Uri),
-    LoadFullWorkspace(Uri),
+    LoadFullWorkspace,
     /// The VFS indicated a file changed, we need to reprocess it in the analysis
     /// This may trigger 0+ 'Reprocess' tasks
     Update(Uri),
@@ -46,10 +46,7 @@ impl Display for Task {
             Task::LoadLocsFile(uri) => {
                 f.write_fmt(format_args!("LoadLocsFile {{ uri = {} }}", uri.as_str()))
             }
-            Task::LoadFullWorkspace(uri) => f.write_fmt(format_args!(
-                "LoadFullWorkspace {{ uri = {} }}",
-                uri.as_str()
-            )),
+            Task::LoadFullWorkspace => f.write_str("LoadFullWorkspace"),
             Task::Update(uri) => f.write_fmt(format_args!("Update {{ uri = {} }}", uri.as_str())),
             Task::Reprocess(_) => f.write_str("Reprocess"),
             Task::Analysis => f.write_str("Analysis"),
@@ -110,7 +107,7 @@ impl GlobalState {
                 match self.workspace.clone() {
                     Workspace::None => {}
                     Workspace::LocsFile(uri) => self.task(Task::LoadLocsFile(uri)),
-                    Workspace::FullWorkspace(uri) => self.task(Task::LoadFullWorkspace(uri)),
+                    Workspace::FullWorkspace => self.task(Task::LoadFullWorkspace),
                 }
             }
             Task::LoadLocsFile(locs_uri) => {
@@ -203,43 +200,53 @@ impl GlobalState {
 
                 tracing::info!("finished reparsing workspace");
                 self.task(Task::Analysis);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((),  |_, _| {});
+                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
             }
-            Task::LoadFullWorkspace(workspace_uri) => {
+            Task::LoadFullWorkspace => {
+                let workspace_folders = match &self.workspace_folders {
+                    None => {
+                        tracing::warn!("ignoring load workspace index without a workspace loaded");
+                        return;
+                    }
+                    Some(f) => f,
+                };
+
                 tracing::info!("scanning workspace for FPP files");
 
                 // WalkBuilder automatically respects .gitignore rules by default
                 // Scan for all the .fpp files in the workspace
                 let mut files = vec![];
-                for result in WalkBuilder::new(workspace_uri.path().as_str()).build() {
-                    match result {
-                        Ok(entry) => {
-                            let path = entry.path();
+                for workspace_file in workspace_folders {
+                    for result in WalkBuilder::new(workspace_file.uri.path().as_str()).build() {
+                        match result {
+                            Ok(entry) => {
+                                let path = entry.path();
 
-                            // Check if the entry is a file and matches the extension filter
-                            if path.is_file() {
-                                if path
-                                    .extension()
-                                    .map_or(false, |ext| OsStr::new("fpp") == ext)
-                                {
-                                    match Url::from_file_path(path) {
-                                        Ok(url) => match Uri::from_str(url.as_str()) {
-                                            Ok(uri) => {
-                                                files.push(uri);
-                                            }
+                                // Check if the entry is a file and matches the extension filter
+                                if path.is_file() {
+                                    if path
+                                        .extension()
+                                        .map_or(false, |ext| OsStr::new("fpp") == ext)
+                                    {
+                                        match Url::from_file_path(path) {
+                                            Ok(url) => match Uri::from_str(url.as_str()) {
+                                                Ok(uri) => {
+                                                    files.push(uri);
+                                                }
+                                                Err(err) => {
+                                                    tracing::warn!(context = "load full workspace", err = ?err, "failed to convert Url to Uri");
+                                                }
+                                            },
                                             Err(err) => {
-                                                tracing::warn!(context = "load full workspace", err = ?err, "failed to convert Url to Uri");
+                                                tracing::warn!(context = "load full workspace", err = ?err, "convert file path into url");
                                             }
-                                        },
-                                        Err(err) => {
-                                            tracing::warn!(context = "load full workspace", err = ?err, "convert file path into url");
                                         }
                                     }
                                 }
                             }
-                        }
-                        Err(err) => {
-                            tracing::warn!(context = "load full workspace", err = ?err, "failed to walk directory");
+                            Err(err) => {
+                                tracing::warn!(context = "load full workspace", err = ?err, "failed to walk directory");
+                            }
                         }
                     }
                 }
@@ -252,7 +259,7 @@ impl GlobalState {
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
-                self.workspace = Workspace::FullWorkspace(workspace_uri.clone());
+                self.workspace = Workspace::FullWorkspace;
 
                 let mut ctx = mem::replace(
                     &mut self.context,
@@ -279,7 +286,7 @@ impl GlobalState {
                 tracing::info!("finished reparsing workspace");
                 self.cache = cache;
                 self.task(Task::Analysis);
-                self.send_request::<lsp_types::request::SemanticTokensRefresh>((),  |_, _| {});
+                self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
             }
             Task::Response(response) => self.respond(response),
             Task::Update(uri) => {

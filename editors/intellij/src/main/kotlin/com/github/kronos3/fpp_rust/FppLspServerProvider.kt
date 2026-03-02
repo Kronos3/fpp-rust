@@ -140,13 +140,13 @@ interface FppLsp4jServer : LanguageServer {
     @JsonRequest("fpp/setLocsWorkspace")
     fun setLocsWorkspace(params: UriRequest): CompletableFuture<Void>
 
-    @JsonRequest("fpp/setFilesWorkspace")
-    fun setFilesWorkspace(params: UriRequest): CompletableFuture<Void>
+    @JsonRequest("fpp/setFullWorkspace")
+    fun setFullWorkspace(): CompletableFuture<Void>
 }
 
 fun loadAllFiles(project: Project, lspServer: LspServer) {
     currentThreadCoroutineScope().launch {
-        lspServer.sendRequest { (it as FppLsp4jServer).setFilesWorkspace(UriRequest("file://${project.basePath}")) }
+        lspServer.sendRequest { (it as FppLsp4jServer).setFullWorkspace() }
     }
 }
 
@@ -157,7 +157,7 @@ fun reloadProject(project: Project) {
             if (fppProject != null) {
                 when (fppProject) {
                     is FppProject.EntireWorkspace -> {
-                        (it as FppLsp4jServer).setFilesWorkspace(UriRequest(fppProject.uri))
+                        (it as FppLsp4jServer).setFullWorkspace()
                     }
 
                     is FppProject.LocsFile -> {
