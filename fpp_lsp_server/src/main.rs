@@ -12,6 +12,7 @@ mod lsp;
 mod vfs;
 mod progress;
 
+use tracing::level_filters::LevelFilter;
 pub use vfs::*;
 
 use crate::{global_state::GlobalState, util::from_json};
@@ -42,7 +43,7 @@ fn setup_stderr_logging(level: tracing_subscriber::filter::LevelFilter) -> anyho
 #[derive(Parser, Debug)]
 #[command(version, author)]
 struct Args {
-    /// Uses stdio as the communication channel
+    /// Uses stdio as the communication channel (default)
     #[arg(long)]
     stdio: bool,
     /// Use pipes (Windows) or socket files (Linux, Mac) as the communication channel.
@@ -55,13 +56,13 @@ struct Args {
     socket: Option<u16>,
     /// Server logging level
     #[arg(long)]
-    log_level: tracing_subscriber::filter::LevelFilter
+    log_level: Option<tracing_subscriber::filter::LevelFilter>
 }
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let arg = Args::parse();
 
-    setup_stderr_logging(arg.log_level)?;
+    setup_stderr_logging(arg.log_level.unwrap_or(LevelFilter::OFF))?;
 
     // transport
     let (connection, io_threads) = {

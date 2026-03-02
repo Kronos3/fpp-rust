@@ -50,7 +50,7 @@ impl LspDiagnosticsEmitter {
         self.0.lock().unwrap().get(uri)
     }
 
-    /// Start tracking all diagnostics 
+    /// Start tracking all diagnostics
     pub fn start_garbage_collection(&self) {
         let mut state = self.0.lock().unwrap();
         assert!(state.garbage_collection_set.is_none());
@@ -107,7 +107,10 @@ impl DiagnosticEmitter for LspDiagnosticsEmitter {
                 .map(|sub| {
                     let location = match sub.span {
                         None => Location::new(uri_c.clone(), range.clone()),
-                        Some(span) => Location::new(uri_c.clone(), span_data_to_range(&span)),
+                        Some(span) => Location::new(
+                            Uri::from_str(&span.file.upgrade().unwrap().uri).unwrap(),
+                            span_data_to_range(&span),
+                        ),
                     };
 
                     DiagnosticRelatedInformation {
