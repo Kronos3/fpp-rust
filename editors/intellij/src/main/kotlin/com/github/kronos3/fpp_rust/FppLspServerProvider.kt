@@ -1,5 +1,9 @@
 package com.github.kronos3.fpp_rust
 
+import com.github.kronos3.fpp_rust.settings.FppProject
+import com.github.kronos3.fpp_rust.settings.FppSettings
+import com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable
+import com.github.kronos3.fpp_rust.util.LspCli
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.icons.AllIcons
@@ -7,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +23,6 @@ import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 import com.intellij.util.containers.addIfNotNull
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest
 import org.eclipse.lsp4j.services.LanguageServer
@@ -31,15 +35,14 @@ private class ReloadWorkspaceAction(
     "Reload FPP workspace by scanning all .fpp files in IDE workspace",
     AllIcons.Actions.Refresh
 ), DumbAware {
-    override fun actionPerformed(e: AnActionEvent): Unit = run { e.project?.let { project -> loadAllFiles(project, lspServer) } }
+    override fun actionPerformed(e: AnActionEvent): Unit =
+        run { e.project?.let { project -> loadAllFiles(project, lspServer) } }
 }
 
 open class FppLspProjectWidgetItem(lspServer: LspServer, currentFile: VirtualFile?) : LspServerWidgetItem(
     lspServer, currentFile,
     settingsPageClass = FppSettingsConfigurable::class.java
 ) {
-
-
     override fun createWidgetInlineActions(): List<AnAction> {
         val actions = super.createWidgetInlineActions().toMutableList()
         actions.addIfNotNull(ReloadWorkspaceAction(lspServer))
@@ -65,15 +68,12 @@ internal class FppLspServerSupportProvider : LspServerSupportProvider {
 
 private class FppLspServerDescriptor(project: Project) : ProjectWideLspServerDescriptor(project, "fpp") {
     override fun isSupportedFile(file: VirtualFile) = file.extension == "fpp" || file.extension == "fppi"
-    override fun createCommandLine() = run {
-        val savedPath = FppSettings.getInstance(project).state.lspBinaryPath
-
-        if (savedPath.isEmpty()) {
-            throw ExecutionException("LSP binary path is not configured. Please check Settings.")
+    override fun createCommandLine(): GeneralCommandLine {
+        val lspConfiguration = project.getLspConfiguration()
+        if (lspConfiguration !is LspConfiguration.Enabled) {
+            throw IllegalStateException("Tried to created a Luau LSP with disabled configuration")
         }
-
-        GeneralCommandLine(savedPath).withParameters("--stdio")
-            .withEnvironment("RUST_BACKTRACE", "1")
+        return LspCli(project, lspConfiguration).createLspCli()
     }
 
     override val lsp4jServerClass = FppLsp4jServer::class.java
@@ -144,11 +144,9 @@ interface FppLsp4jServer : LanguageServer {
 }
 
 fun loadAllFiles(project: Project, lspServer: LspServer) {
-    ApplicationManager.getApplication().invokeLater({
-        GlobalScope.launch {
-            lspServer.sendRequest { (it as FppLsp4jServer).setFilesWorkspace(UriRequest("file://${project.basePath}")) }
-        }
-    }, project.disposed)
+    currentThreadCoroutineScope().launch {
+        lspServer.sendRequest { (it as FppLsp4jServer).setFilesWorkspace(UriRequest("file://${project.basePath}")) }
+    }
 }
 
 fun reloadProject(project: Project) {

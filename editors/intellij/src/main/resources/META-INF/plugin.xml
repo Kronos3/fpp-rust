@@ -23,12 +23,17 @@
                 fieldName="INSTANCE"
                 extensions="fppi"/>
 
+        <notificationGroup id="FPP notifications"
+                           displayType="BALLOON"
+                           key="fpp.notification.group.name"/>
+
         <!-- Color Settings -->
 
 <!--        <colorSettingsPage implementation="com.github.kronos3.fpp_rust.FppColorSettingsPage"/>-->
 
         <additionalTextAttributes scheme="Default" file="colors/FppDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="colors/FppDarcula.xml"/>
+        <additionalTextAttributes scheme="Dark" file="colorSchemes/FppDarcula.xml"/>
 
         <textmate.bundleProvider implementation="com.github.kronos3.fpp_rust.FppTextMateBundleProvider" />
         <!-- The following two ("editorHighlighterProvider" and "lang.syntaxHighlighterFactory") are required
@@ -47,10 +52,10 @@
         <platform.lsp.serverSupportProvider
                 implementation="com.github.kronos3.fpp_rust.FppLspServerSupportProvider"/>
         <applicationService
-                serviceImplementation="com.github.kronos3.fpp_rust.FppSettings"/>
+                serviceImplementation="com.github.kronos3.fpp_rust.settings.FppSettings"/>
         <projectConfigurable
                 parentId="language"
-                instance="com.github.kronos3.fpp_rust.FppSettingsConfigurable"
+                instance="com.github.kronos3.fpp_rust.settings.FppSettingsConfigurable"
                 id="settings.fpp"
                 displayName="FPP"/>
     </extensions>
