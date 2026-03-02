@@ -20,6 +20,7 @@ impl GlobalState {
             .on::<lsp_notification::DidChangeTextDocument>(handlers::handle_did_change_text_document)
             .on::<lsp_notification::DidCloseTextDocument>(handlers::handle_did_close_text_document)
             .on::<lsp_notification::Exit>(handlers::handle_exit)
+            .on::<lsp_notification::DidChangeWatchedFiles>(handlers::handle_did_change_watched_file)
             .on::<DumpSyntaxTree>(handlers::handle_dump_syntax_tree)
             .finish();
     }

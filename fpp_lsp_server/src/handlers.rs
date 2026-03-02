@@ -16,10 +16,11 @@ use fpp_lsp_parser::{
 };
 use lsp_types::{
     CompletionItem, CompletionItemKind, CompletionParams, CompletionResponse,
-    DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    DocumentDiagnosticReportResult, DocumentLink, GotoDefinitionParams, GotoDefinitionResponse,
-    Hover, HoverParams, Location, Position, Range, ReferenceParams, SemanticTokensFullDeltaResult,
-    SemanticTokensRangeResult, SemanticTokensResult, Uri,
+    DidChangeTextDocumentParams, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
+    DidOpenTextDocumentParams, DocumentDiagnosticReportResult, DocumentLink, FileChangeType,
+    GotoDefinitionParams, GotoDefinitionResponse, Hover, HoverParams, Location, Position, Range,
+    ReferenceParams, SemanticTokensFullDeltaResult, SemanticTokensRangeResult,
+    SemanticTokensResult, Uri,
 };
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -62,6 +63,33 @@ pub fn handle_did_close_text_document(
 
 pub fn handle_exit(state: &mut GlobalState, _: ()) -> Result<()> {
     state.shutdown_requested = true;
+    Ok(())
+}
+
+pub fn handle_did_change_watched_file(
+    state: &mut GlobalState,
+    params: DidChangeWatchedFilesParams,
+) -> Result<()> {
+    for file in params.changes {
+        match file.typ {
+            FileChangeType::CHANGED => {
+                // This just requires a VFS update
+                if state.vfs.update_fs(file.uri.as_str())? {
+                    state.task(Task::Update(file.uri));
+                }
+            }
+            FileChangeType::CREATED => {
+                // TODO(tumbar)
+            }
+            FileChangeType::DELETED => {
+                // TODO(tumbar)
+            }
+            t => {
+                tracing::warn!(file_change_type = ?t, "dropping invalid file event type");
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -120,7 +148,6 @@ pub fn handle_semantic_tokens_full(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensParams,
 ) -> Result<Option<SemanticTokensResult>> {
-    // TODO(tumbar) We probably don't need to run a reparse here
     let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
 
@@ -136,7 +163,6 @@ pub fn handle_semantic_tokens_range(
     state: &GlobalState,
     request: lsp_types::SemanticTokensRangeParams,
 ) -> Result<Option<SemanticTokensRangeResult>> {
-    // TODO(tumbar) We probably don't need to run a reparse here
     let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     Ok(Some(SemanticTokensRangeResult::Tokens(
@@ -148,7 +174,6 @@ pub fn handle_semantic_tokens_full_delta(
     state: &mut GlobalState,
     request: lsp_types::SemanticTokensDeltaParams,
 ) -> Result<Option<SemanticTokensFullDeltaResult>> {
-    // TODO(tumbar) We probably don't need to run a reparse here
     let (text, src, parse) = parse_text_document(&state, &request.text_document.uri)?;
 
     let semantic_tokens = lsp::semantic_tokens::compute(state, src, &text, &parse).finish(None);
@@ -295,7 +320,6 @@ pub fn handle_document_link_request(
     state: &GlobalState,
     request: lsp_types::DocumentLinkParams,
 ) -> Result<Option<Vec<DocumentLink>>> {
-    // TODO(tumbar) We probably don't need to run a reparse here
     let (text, _, parse) = parse_text_document(&state, &request.text_document.uri)?;
     let lines = state.vfs.get_lines(request.text_document.uri.as_str())?;
 

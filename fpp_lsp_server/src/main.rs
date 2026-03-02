@@ -10,6 +10,7 @@ mod util;
 
 mod lsp;
 mod vfs;
+mod progress;
 
 pub use vfs::*;
 
@@ -20,8 +21,7 @@ use std::error::Error;
 use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
-fn setup_stderr_logging() -> anyhow::Result<()> {
-    let stderr_log_level = tracing_subscriber::filter::LevelFilter::INFO;
+fn setup_stderr_logging(level: tracing_subscriber::filter::LevelFilter) -> anyhow::Result<()> {
     let stderr_layer = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
 
     tracing_subscriber::registry()
@@ -32,7 +32,7 @@ fn setup_stderr_logging() -> anyhow::Result<()> {
                 .with_target(false)
                 .with_file(true)
                 .with_line_number(true)
-                .with_filter(stderr_log_level),
+                .with_filter(level),
         )
         .try_init()?;
 
@@ -53,12 +53,15 @@ struct Args {
     /// The port is passed as next arg or with --port=
     #[arg(long)]
     socket: Option<u16>,
+    /// Server logging level
+    #[arg(long)]
+    log_level: tracing_subscriber::filter::LevelFilter
 }
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     let arg = Args::parse();
 
-    setup_stderr_logging()?;
+    setup_stderr_logging(arg.log_level)?;
 
     // transport
     let (connection, io_threads) = {

@@ -12,6 +12,7 @@ use std::ffi::OsStr;
 use std::fmt::{Display, Formatter};
 use std::mem;
 use std::str::FromStr;
+use std::time::Instant;
 use url::Url;
 
 #[derive(Debug)]
@@ -113,6 +114,8 @@ impl GlobalState {
             Task::LoadLocsFile(locs_uri) => {
                 tracing::info!("reloading locs file");
 
+                let now = Instant::now();
+
                 // Read the locs file to build a list of files to add to the analysis
                 let locs_content = match self.vfs.read(locs_uri.as_str()) {
                     Ok(locs_content) => locs_content,
@@ -123,7 +126,6 @@ impl GlobalState {
                 };
 
                 // Refresh the context and all caches
-                self.context = CompilerContext::new(self.diagnostics.clone());
                 self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
@@ -132,10 +134,9 @@ impl GlobalState {
 
                 let vfs = self.vfs.clone();
 
-                let mut ctx = mem::replace(
-                    &mut self.context,
-                    CompilerContext::new(self.diagnostics.clone()),
-                );
+                let mut progress = self.new_progress("Indexing locs file", 1);
+
+                let mut ctx = CompilerContext::new(self.diagnostics.clone());
                 self.cache = fpp_core::run(&mut ctx, || {
                     let mut file_locs = FxHashMap::default();
 
@@ -173,10 +174,17 @@ impl GlobalState {
                         })
                         .collect();
 
+                    progress.set_total(files.len());
+
                     let out = files
                         .into_iter()
-                        .filter_map(
-                            |file_uri| match self.new_translation_unit_cache(&file_uri) {
+                        .filter_map(|file_uri| {
+                            let filename = &file_uri
+                                [(file_uri.rfind("/").unwrap_or(0) + 1).min(file_uri.len())..];
+                            progress.report(&filename);
+
+                            tracing::debug!(uri = %file_uri, "processing file from locs");
+                            match self.new_translation_unit_cache(&file_uri) {
                                 Ok(tu_cache) => Some((tu_cache.file, Arc::new(tu_cache))),
                                 Err(err) => {
                                     Diagnostic::new(
@@ -188,21 +196,30 @@ impl GlobalState {
                                     .emit();
                                     None
                                 }
-                            },
-                        )
+                            }
+                        })
                         .collect();
 
                     locs_gc.cleanup();
                     out
                 });
 
+                // Replace the context and drop the old one
                 let _ = mem::replace(&mut self.context, ctx);
 
-                tracing::info!("finished reparsing workspace");
+                tracing::info!(
+                    "finished reparsing workspace in {:.1}s",
+                    now.elapsed().as_secs_f64()
+                );
                 self.task(Task::Analysis);
                 self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});
+                progress.finish(None);
             }
             Task::LoadFullWorkspace => {
+                let now = Instant::now();
+
+                let mut progress = self.new_progress("Indexing workspace", 1);
+
                 let workspace_folders = match &self.workspace_folders {
                     None => {
                         tracing::warn!("ignoring load workspace index without a workspace loaded");
@@ -252,22 +269,23 @@ impl GlobalState {
                 }
 
                 tracing::info!("found {} FPP files", files.len());
+                progress.set_total(files.len());
 
                 // Refresh the context and all caches
-                self.context = CompilerContext::new(self.diagnostics.clone());
                 self.diagnostics.clear();
                 self.cache = Default::default();
                 self.files = Default::default();
                 self.analysis = Arc::new(Analysis::new());
                 self.workspace = Workspace::FullWorkspace;
 
-                let mut ctx = mem::replace(
-                    &mut self.context,
-                    CompilerContext::new(self.diagnostics.clone()),
-                );
+                let mut ctx = CompilerContext::new(self.diagnostics.clone());
                 let cache = fpp_core::run(&mut ctx, || {
                     let mut cache = FxHashMap::default();
                     for file in files {
+                        let path = file.path().as_str();
+                        let filename = &path[(path.rfind("/").unwrap_or(0) + 1).min(path.len())..];
+                        progress.report(filename);
+
                         match self.new_translation_unit_cache(&file.as_str()) {
                             Ok(tu_cache) => {
                                 cache.insert(tu_cache.file, Arc::new(tu_cache));
@@ -281,9 +299,15 @@ impl GlobalState {
                     cache
                 });
 
+                // Replace the context and drop the old one
                 let _ = mem::replace(&mut self.context, ctx);
 
-                tracing::info!("finished reparsing workspace");
+                tracing::info!(
+                    "finished reparsing workspace in {:.1}s",
+                    now.elapsed().as_secs_f64()
+                );
+                progress.finish(None);
+
                 self.cache = cache;
                 self.task(Task::Analysis);
                 self.send_request::<lsp_types::request::SemanticTokensRefresh>((), |_, _| {});

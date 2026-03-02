@@ -19,6 +19,7 @@ class LspCli(private val project: Project, private val lspConfiguration: LspConf
             withWorkDirectory(project.basePath)
             withCharset(Charsets.UTF_8)
             withExePath(lspConfiguration.executablePath.toString())
+            withParameters("--stdio")
             withEnvironment("RUST_BACKTRACE", "1")
         }
     }

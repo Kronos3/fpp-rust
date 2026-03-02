@@ -69,6 +69,33 @@ impl Vfs {
         }
     }
 
+    pub(crate) fn update_fs(&self, path: &str) -> anyhow::Result<bool> {
+        match self.files.read().unwrap().get(path) {
+            None => {}
+            Some(file) => {
+                if let FileContent::Lsp(_) = file.content {
+                    return Ok(false);
+                }
+            }
+        }
+
+        let path_uri = Uri::from_str(&path)?;
+        let fs_path = path_uri.path().to_string();
+        match std::fs::read_to_string(&fs_path) {
+            Ok(text) => {
+                self.files.write().unwrap().insert(
+                    path.to_string(),
+                    File::new(FileContent::Fs(FsFile {
+                        path: path.to_string(),
+                        text,
+                    })),
+                );
+                Ok(true)
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
     pub fn clear(&self) {
         let _ = self
             .files

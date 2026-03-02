@@ -4,12 +4,7 @@ import * as ext from "./lsp_ext";
 
 export interface WorkspaceFileScanner {
     label(): string;
-
-    scan(
-        client: LanguageClient,
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
-        token: vscode.CancellationToken,
-    ): Promise<void>;
+    scan(client: LanguageClient): Promise<void>;
 }
 
 export class LocsFileScanner implements WorkspaceFileScanner {
@@ -20,15 +15,8 @@ export class LocsFileScanner implements WorkspaceFileScanner {
     }
 
     async scan(
-        client: LanguageClient,
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
-        token: vscode.CancellationToken,
+        client: LanguageClient
     ): Promise<void> {
-        // Read the locsFile file
-        progress.report({
-            message: "Loading FPP workspace through locs file",
-        });
-
         await client.sendRequest(ext.setLocsWorkspace, { uri: this.locsFile.toString() });
     }
 }
@@ -41,17 +29,11 @@ export class EntireWorkspaceScanner implements WorkspaceFileScanner {
         return "Workspace";
     }
 
-    async scan(client: LanguageClient, progress: vscode.Progress<{ message?: string; increment?: number; }>, token: vscode.CancellationToken): Promise<void> {
+    async scan(client: LanguageClient): Promise<void> {
         if (!vscode.workspace.workspaceFolders) {
             // No workspace is loaded, cannot load FPP project
             return;
         }
-
-        // Glob the entire workspace
-        progress.report({
-            message: "Scanning for .fpp files in workspace",
-            increment: 0
-        });
 
         await client.sendRequest(ext.setFullWorkspace);
     }

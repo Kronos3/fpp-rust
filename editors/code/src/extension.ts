@@ -55,6 +55,7 @@ class FppExtension implements vscode.Disposable {
             run: {
                 command: serverPath,
                 transport: TransportKind.stdio,
+                args: ["--log-level", Settings.lspServerRunLogLevel()],
                 options: {
                     env: {
                         "RUST_BACKTRACE": "1"
@@ -64,6 +65,7 @@ class FppExtension implements vscode.Disposable {
             debug: {
                 command: serverPath,
                 transport: TransportKind.stdio,
+                args: ["--log-level", Settings.lspServerDevLogLevel()],
                 options: {
                     env: {
                         "RUST_BACKTRACE": "1"
@@ -281,6 +283,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 extension.searchForLocs().then((f) => extension.setProjectLocs(f));
             }
         }),
+        Settings.onLspServerLogLevelChanged(() => {
+            extension.initializeClient();
+        })
     );
 
     await extension.initializeClient();

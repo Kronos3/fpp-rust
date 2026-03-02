@@ -1,11 +1,12 @@
 pub use crate::analysis::Task;
 use crate::diagnostics::LspDiagnosticsEmitter;
+use crate::progress::Progress;
 use crate::{lsp, vfs};
 use crossbeam_channel::{Receiver, Sender};
 use fpp_analysis::Analysis;
 use fpp_core::{CompilerContext, SourceFile};
 use lsp_server::RequestId;
-use lsp_types::{SemanticTokens, Uri, WorkspaceFolder};
+use lsp_types::{ProgressToken, SemanticTokens, Uri, WorkspaceFolder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
 use std::time::Instant;
@@ -186,6 +187,21 @@ impl GlobalState {
                 tracing::error!(err = %e, "failed to queue task")
             }
         }
+    }
+
+    pub fn new_progress(&mut self, title: &str, total: usize) -> Progress {
+        let token = ProgressToken::String(format!("fpp/{title}"));
+        assert_ne!(total, 0);
+
+        // Tell the client that work is being done
+        self.send_request::<lsp_types::request::WorkDoneProgressCreate>(
+            lsp_types::WorkDoneProgressCreateParams {
+                token: token.clone(),
+            },
+            |_, _| (),
+        );
+
+        Progress::begin(token, title, total, self.sender.clone())
     }
 
     fn main_loop(&mut self, receiver: Receiver<lsp_server::Message>) {

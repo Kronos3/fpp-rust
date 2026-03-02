@@ -52,9 +52,9 @@ export class FppProject implements vscode.Disposable {
         }
     }
 
-    private async scan(client: LanguageClient, progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) {
+    private async scan(client: LanguageClient) {
         this.loadingProject = true;
-        this.files = await this.workspace?.scan(client, progress, token) ?? new Set();
+        this.files = await this.workspace?.scan(client) ?? new Set();
         this.loadingProject = false;
     }
 
@@ -71,13 +71,7 @@ export class FppProject implements vscode.Disposable {
         this.locsReload.busy = true;
 
         try {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Indexing FPP Project",
-                cancellable: true
-            }, async (progress, token) => {
-                await this.scan(client, progress, token);
-            });
+            await this.scan(client);
         } catch (e) {
             console.error(e);
             vscode.window.showErrorMessage(`Failed to load workspace: ${e}`);

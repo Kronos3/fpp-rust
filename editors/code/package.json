@@ -167,153 +167,193 @@
                 "fpp.enableCodeLens": {
                     "type": "boolean",
                     "default": true
+                },
+                "fpp.lspServerRunLogLevel": {
+                    "type": "string",
+                    "default": "error",
+                    "markdownDescription": "LSP executable logging level during normal execution",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error",
+                        "off"
+                    ]
+                },
+                "fpp.lspServerDevLogLevel": {
+                    "type": "string",
+                    "default": "info",
+                    "markdownDescription": "LSP executable logging level during development",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error",
+                        "off"
+                    ]
                 }
             }
         },
         "semanticTokenTypes": [
             {
                 "id": "module",
-                "superType": "namespace"
+                "superType": "namespace",
+                "description": "A module definition or use"
             },
             {
                 "id": "topology",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A topology definition or use"
             },
             {
                 "id": "component",
-                "superType": "class"
+                "superType": "class",
+                "description": "A component definition or use"
             },
             {
                 "id": "interface",
-                "superType": "interface"
+                "superType": "interface",
+                "description": "A port interface definition or use"
             },
             {
                 "id": "componentInstance",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A component instance definition or use"
             },
             {
                 "id": "constant",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A constant definition or use"
             },
             {
                 "id": "enumConstant",
-                "superType": "enumMember"
+                "superType": "enumMember",
+                "description": "A enum constant definition or use"
             },
             {
                 "id": "structMember",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A struct member definition or use"
             },
             {
                 "id": "graphGroup",
-                "superType": "namespace"
+                "superType": "namespace",
+                "description": "A connection graph definition"
             },
             {
                 "id": "portInstance",
-                "superType": "function"
+                "superType": "function",
+                "description": "A port instance definition or use"
             },
             {
                 "id": "port",
-                "superType": "class"
+                "superType": "class",
+                "description": "A port definition or use"
             },
             {
                 "id": "abstractType",
-                "superType": "type"
+                "superType": "type",
+                "description": "An abstract type definition or use"
             },
             {
                 "id": "aliasType",
-                "superType": "type"
+                "superType": "type",
+                "description": "An alias type definition or use"
             },
             {
                 "id": "arrayType",
-                "superType": "type"
+                "superType": "type",
+                "description": "An array type definition or use"
             },
             {
                 "id": "enumType",
-                "superType": "type"
+                "superType": "type",
+                "description": "An enum type definition or use"
             },
             {
                 "id": "structType",
-                "superType": "type"
+                "superType": "type",
+                "description": "A struct type definition or use"
             },
             {
                 "id": "primitiveType",
-                "superType": "keyword"
+                "superType": "keyword",
+                "description": "A primitive type use"
             },
             {
                 "id": "formalParameter",
-                "superType": "parameter"
+                "superType": "parameter",
+                "description": "A formal parameter definition"
             },
             {
                 "id": "command",
-                "superType": "function"
+                "superType": "function",
+                "description": "A command definition"
             },
             {
                 "id": "event",
-                "superType": "function"
+                "superType": "function",
+                "description": "An event definition"
             },
             {
                 "id": "telemetry",
-                "superType": "function"
+                "superType": "function",
+                "description": "A telemetry channel definition or use"
             },
             {
                 "id": "parameter",
-                "superType": "function"
+                "superType": "function",
+                "description": "A parameter definition"
             },
             {
                 "id": "dataProduct",
-                "superType": "function"
+                "superType": "function",
+                "description": "A data product record or container definition"
             },
             {
                 "id": "stateMachine",
-                "superType": "class"
+                "superType": "class",
+                "description": "A state machine definition or use"
             },
             {
                 "id": "stateMachineInstance",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A state machine instance specifier"
             },
             {
                 "id": "telemetryPacketSet",
-                "superType": "class"
+                "superType": "class",
+                "description": "A telemetry packet set definition"
             },
             {
                 "id": "telemetryPacket",
-                "superType": "class"
+                "superType": "class",
+                "description": "A telemetry packet definition"
             },
             {
                 "id": "action",
-                "superType": "function"
+                "superType": "function",
+                "description": "An topology definition or use"
             },
             {
                 "id": "guard",
-                "superType": "variable"
+                "superType": "variable",
+                "description": "A guard definition or use"
             },
             {
                 "id": "signal",
-                "superType": "event"
+                "superType": "event",
+                "description": "A signal definition or use"
             },
             {
                 "id": "state",
-                "superType": "varialbe"
+                "superType": "variable",
+                "description": "A state definition or use"
             },
             {
                 "id": "annotation",
-                "superType": "comment"
-            },
-            {
-                "id": "comment",
-                "superType": "comment"
-            },
-            {
-                "id": "number",
-                "superType": "number"
-            },
-            {
-                "id": "string",
-                "superType": "string"
-            },
-            {
-                "id": "keyword",
-                "superType": "keyword"
+                "superType": "comment",
+                "description": "A documentation annotation"
             }
         ],
         "semanticTokenScopes": [
