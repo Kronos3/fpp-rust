@@ -24,14 +24,14 @@ class LspCli(private val project: Project, private val lspConfiguration: LspConf
     }
 
     fun queryVersion(): Version {
-        val firstLine = CapturingProcessHandler(GeneralCommandLine().apply {
+        val versionString = CapturingProcessHandler(GeneralCommandLine().apply {
             withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             withCharset(Charsets.UTF_8)
             withWorkDirectory(project.basePath)
             withExePath(lspConfiguration.executablePath.toString())
             addParameter("--version")
 //                 TODO: Do lazy reading?
-        }).runProcess().stdoutLines.first()
-        return Version.parse(firstLine)
+        }).runProcess().stdoutLines.first().split(" ")[1]
+        return Version.parse(versionString)
     }
 }

@@ -40,7 +40,7 @@ fn setup_stderr_logging() -> anyhow::Result<()> {
 }
 
 #[derive(Parser, Debug)]
-#[command(version)]
+#[command(version, author)]
 struct Args {}
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
