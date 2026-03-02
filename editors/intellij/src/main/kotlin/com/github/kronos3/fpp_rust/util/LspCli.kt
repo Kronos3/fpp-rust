@@ -30,7 +30,6 @@ class LspCli(private val project: Project, private val lspConfiguration: LspConf
             withWorkDirectory(project.basePath)
             withExePath(lspConfiguration.executablePath.toString())
             addParameter("--version")
-//                 TODO: Do lazy reading?
         }).runProcess().stdoutLines.first().split(" ")[1]
         return Version.parse(versionString)
     }

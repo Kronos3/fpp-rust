@@ -1,10 +1,18 @@
 package com.github.kronos3.fpp_rust.util
 
+private val versionRegex = Regex("""(\d+)\.(\d+)\.(\d+)(?:-a(\d+))?""")
+
 sealed class Version : Comparable<Version> {
     data class Semantic(
-        val major: Int, val minor: Int, val patch: Int
+        val major: Int, val minor: Int, val patch: Int, val alpha: Int? = null,
     ) : Version() {
-        override fun toString(): String = "$major.$minor.$patch"
+        override fun toString(): String {
+            return if (alpha != null) {
+                "$major.$minor.${patch}-a$alpha"
+            } else {
+                "$major.$minor.$patch"
+            }
+        }
         override fun compareTo(other: Version): Int {
             return when (other) {
                 is Semantic -> compareValuesBy(this, other, { it.major }, { it.minor }, { it.patch })
@@ -14,15 +22,17 @@ sealed class Version : Comparable<Version> {
 
         companion object {
             fun parse(version: String): Semantic {
-                val parts = version.split('.')
-                if (parts.size != 3) throw MalformedSemanticVersionException(version)
-                return try {
-                    Semantic(
-                        parts[0].toInt(), parts[1].toInt(), parts[2].toInt()
-                    )
-                } catch (e: NumberFormatException) {
-                    throw MalformedSemanticVersionException(version)
-                }
+                val match = versionRegex.matchEntire(version)
+                if (match != null) {
+                    return try {
+                        Semantic(
+                            match.groupValues[1].toInt(), match.groupValues[2].toInt(), match.groupValues[3].toInt(),
+                            match.groupValues.getOrNull(4)?.toInt(),
+                        )
+                    } catch (_: Exception) {
+                        throw MalformedSemanticVersionException(version)
+                    }
+                } else throw MalformedSemanticVersionException(version)
             }
         }
     }
